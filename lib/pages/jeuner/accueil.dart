@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/mes_formations_page.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_list_page.dart';
+import 'package:repartir_frontend/pages/jeuner/mentors_list_page.dart';
 
 // Constantes de couleurs pour plus de facilité
 const Color kPrimaryBlue = Color(0xFF2196F3); // Couleur bleue mise à jour
@@ -21,7 +22,7 @@ class _AccueilPageState extends State<AccueilPage> {
   // Liste des pages à afficher
   static final List<Widget> _pages = <Widget>[
     const _HomePageContent(), // Page d'accueil originale
-    const Center(child: Text('Mentors')), // Placeholder
+    const MentorsListPage(), // Page des mentors
     const ChatListPage(),
     const Center(child: Text('Formations')), // Placeholder
     const Center(child: Text('Profil')), // Placeholder
