@@ -2,13 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/mes_formations_page.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_list_page.dart';
 import 'package:repartir_frontend/pages/jeuner/mentors_list_page.dart';
+import 'package:repartir_frontend/pages/jeuner/profil_page.dart';
+import 'package:repartir_frontend/pages/jeuner/centre_list_page.dart';
+import 'package:repartir_frontend/pages/jeuner/offre_list_page.dart';
+import 'package:repartir_frontend/pages/jeuner/mes_mentors_page.dart';
+import 'package:repartir_frontend/pages/jeuner/all_centres_list_page.dart';
+
+// Définition des couleurs primaires de l'application
+const Color kPrimaryBlue = Color(0xFF2196F3); // Un bleu vif et moderne
+const Color kLightGreyBackground = Color(0xFFEEEEEE); // Un gris clair pour les fonds
+const Color kLogoBlue = Color(0xFF00BFFF); // Bleu ciel pour le logo
+const Color kLogoGreen = Color(0xFF4CAF50); // Vert pour le logo
 
 // Constantes de couleurs pour plus de facilité
-const Color kPrimaryBlue = Color(0xFF2196F3); // Couleur bleue mise à jour
-const Color kLightGreyBackground = Color(0xFFEEEEEE); // Couleur de fond du Scaffold
-const Color kLogoBlue = Color(0xFF00BFFF); // Bleu clair pour la flèche du logo
-const Color kLogoGreen = Color(0xFF4CAF50); // Vert pour l'icône dans le logo
-
+//
+//
+//
+//
 class AccueilPage extends StatefulWidget {
   const AccueilPage({super.key});
 
@@ -24,8 +34,8 @@ class _AccueilPageState extends State<AccueilPage> {
     const _HomePageContent(), // Page d'accueil originale
     const MentorsListPage(), // Page des mentors
     const ChatListPage(),
-    const Center(child: Text('Formations')), // Placeholder
-    const Center(child: Text('Profil')), // Placeholder
+    const CentreListPage(), // Placeholder
+    const ProfilePage(), // Placeholder
   ];
 
   void _onItemTapped(int index) {
@@ -119,10 +129,12 @@ class _HomePageContent extends StatelessWidget {
               ),
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 70, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _buildSloganCard(),
+                  const SizedBox(height: 24),
                   _buildQuickActions(context),
                   const SizedBox(height: 24),
                   _buildRecommended(),
@@ -132,6 +144,35 @@ class _HomePageContent extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  // --- Slogan Card ---
+  Widget _buildSloganCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.blue.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.lightbulb_outline, color: Colors.blue, size: 40),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Text(
+              "Donnez un nouvel élan à votre carrière.",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -201,7 +242,7 @@ class _HomePageContent extends StatelessWidget {
       {'icon': Icons.grid_view_sharp, 'title': 'Centre de formation'},
       {'icon': Icons.apartment_sharp, 'title': 'Mes parcours'},
       {'icon': Icons.cached, 'title': 'Offres d\'emploi'},
-      {'icon': Icons.track_changes_sharp, 'title': 'Kabakoo Academies'},
+      {'icon': Icons.people, 'title': 'Mes Mentors'},
     ];
 
     return Column(
@@ -245,10 +286,26 @@ class _HomePageContent extends StatelessWidget {
                   ),
                   child: InkWell(
                     onTap: () {
-                      if (index == 1) {
+                      // Gérer le clic sur les actions rapides
+                      if (index == 0) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AllCentresListPage()),
+                        );
+                      } else if (index == 1) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const MesFormationsPage()),
+                        );
+                      } else if (index == 2) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const OffreListPage()),
+                        );
+                      } else if (index == 3) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const MesMentorsPage()),
                         );
                       }
                     },

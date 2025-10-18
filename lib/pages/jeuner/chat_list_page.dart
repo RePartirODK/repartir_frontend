@@ -21,12 +21,12 @@ class ChatListPage extends StatefulWidget {
 class _ChatListPageState extends State<ChatListPage> {
   // Données factices pour la liste des chats
   final List<ChatContact> _allContacts = [
-    ChatContact(name: 'Fatoumata Diawara', lastMessage: 'À bientôt pour ton entretien !', imageUrl: 'assets/images/user1.png'),
-    ChatContact(name: 'Bakary Diallo', lastMessage: 'Super ! Merci pour ton aide', imageUrl: 'assets/images/user2.png'),
-    ChatContact(name: 'Djibril Maiga', lastMessage: 'J\'ai trouvé un stage intéressant pour toi', imageUrl: 'assets/images/user3.png'),
-    ChatContact(name: 'Amadou Diallo', lastMessage: 'On se retrouve à la bibliothèque ?', imageUrl: 'assets/images/user4.png'),
-    ChatContact(name: 'Madjess Sylla', lastMessage: 'N\'oublie pas de préparer ton CV', imageUrl: 'assets/images/user5.png'),
-    ChatContact(name: 'Ibrahim S Diallo', lastMessage: 'Voici le lien pour la formation', imageUrl: 'assets/images/user6.png'),
+    ChatContact(name: 'Fatoumata Diawara', lastMessage: 'À bientôt pour ton entretien !', imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=FD'),
+    ChatContact(name: 'Bakary Diallo', lastMessage: 'Super ! Merci pour ton aide', imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=BD'),
+    ChatContact(name: 'Djibril Maiga', lastMessage: 'J\'ai trouvé un stage intéressant pour toi', imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=DM'),
+    ChatContact(name: 'Amadou Diallo', lastMessage: 'On se retrouve à la bibliothèque ?', imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=AD'),
+    ChatContact(name: 'Madjess Sylla', lastMessage: 'N\'oublie pas de préparer ton CV', imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=MS'),
+    ChatContact(name: 'Ibrahim S Diallo', lastMessage: 'Voici le lien pour la formation', imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=ID'),
   ];
 
   List<ChatContact> _filteredContacts = [];
@@ -128,7 +128,7 @@ class _ChatListPageState extends State<ChatListPage> {
                           contentPadding: EdgeInsets.zero,
                           leading: CircleAvatar(
                             radius: 28,
-                            backgroundColor: Colors.blue[100], // Placeholder pour l'avatar
+                            backgroundImage: NetworkImage(contact.imageUrl),
                           ),
                           title: Text(contact.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Text(contact.lastMessage, overflow: TextOverflow.ellipsis),
