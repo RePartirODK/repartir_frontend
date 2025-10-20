@@ -1,0 +1,495 @@
+import 'package:flutter/material.dart';
+
+// Définition des couleurs (doivent correspondre à celles utilisées dans detail_page.dart)
+const Color primaryBlue = Color(0xFF2196F3);
+const Color primaryGreen = Color(0xFF4CAF50);
+const Color primaryOrange = Color(0xFFFF9800);
+const Color primaryRed = Color(0xFFF44336);
+
+// --- MODÈLE DE DONNÉES ---
+class Formation {
+  final String id;
+  final String centerName;
+  final String centerLocation;
+  final String title;
+  final String description;
+  final String startDate;
+  final String endDate;
+  final String link;
+  final int placesAvailable;
+  final bool needsFunding;
+  
+  Formation({
+    required this.id,
+    required this.centerName,
+    required this.centerLocation,
+    required this.title,
+    required this.description,
+    required this.startDate,
+    required this.endDate,
+    required this.link,
+    required this.placesAvailable,
+    required this.needsFunding,
+  });
+}
+
+// --- COMPOSANTS RÉUTILISABLES (Clipper et NavBar) ---
+
+// 1. CLASSE CLIPPER (pour la forme 'blob' de l'en-tête)
+class CustomShapeClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(0, 0);
+    final double startY = size.height * 0.8; 
+    path.lineTo(0, startY);
+    
+    // Courbe cubique pour la forme irrégulière
+    final controlPoint1 = Offset(size.width * 0.25, size.height * 1.15); 
+    final controlPoint2 = Offset(size.width * 0.75, size.height * 0.55);
+    final endPoint = Offset(size.width, size.height * 0.65);
+    
+    path.cubicTo(
+      controlPoint1.dx, controlPoint1.dy, 
+      controlPoint2.dx, controlPoint2.dy, 
+      endPoint.dx, endPoint.dy,
+    );
+    path.lineTo(size.width, 0);
+    path.close();
+    return path;
+  }
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+// 2. CustomBottomNavBar (Barre de navigation inférieure)
+class CustomBottomNavBar extends StatelessWidget {
+  final int selectedIndex;
+  final Function(int) onItemTapped;
+
+  const CustomBottomNavBar({
+    Key? key,
+    required this.selectedIndex,
+    required this.onItemTapped,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return BottomNavigationBar(
+      backgroundColor: Colors.white,
+      type: BottomNavigationBarType.fixed, 
+      elevation: 10,
+      currentIndex: selectedIndex,
+      selectedItemColor: primaryBlue,
+      unselectedItemColor: Colors.grey,
+      onTap: onItemTapped,
+      items: const <BottomNavigationBarItem>[
+        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Accueil'),
+        BottomNavigationBarItem(icon: Icon(Icons.handshake_outlined), activeIcon: Icon(Icons.handshake), label: 'Parrainage'),
+        BottomNavigationBarItem(icon: Icon(Icons.school_outlined), activeIcon: Icon(Icons.school), label: 'Formations'),
+        BottomNavigationBarItem(icon: Icon(Icons.person_outlined), activeIcon: Icon(Icons.person), label: 'Profil'),
+      ],
+    );
+  }
+}
+
+// --- PAGE PRINCIPALE : FORMATIONS ---
+class FormationPage extends StatefulWidget {
+  const FormationPage({Key? key}) : super(key: key);
+
+  @override
+  State<FormationPage> createState() => _FormationPageState();
+}
+
+class _FormationPageState extends State<FormationPage> with SingleTickerProviderStateMixin {
+  int _selectedIndex = 2; // Index 'Formations'
+  bool _isLoading = true;
+  List<Formation> _formations = [];
+  
+  // Contrôleur pour les onglets 'Toutes' et 'Nouvelles'
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _fetchFormations();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  // LOGIQUE FUTURE POUR LE BACKEND : Récupération des formations
+  void _fetchFormations() async {
+    // Simuler un appel API pour récupérer la liste des formations
+    await Future.delayed(const Duration(seconds: 1)); 
+
+    List<Formation> loadedFormations = [
+      Formation(
+        id: 'f1',
+        centerName: 'ODC_MALI',
+        centerLocation: 'Bamako, Mali',
+        title: 'Formation Développeur Web',
+        description: 'Apprenez les bases du développement web avec HTML, CSS et JavaScript',
+        startDate: '15 Sept 2023',
+        endDate: '15 Mars 2024',
+        link: 'www.formation-dev.com/web',
+        placesAvailable: 5,
+        needsFunding: true,
+      ),
+      Formation(
+        id: 'f2',
+        centerName: 'Kabakoo Academies',
+        centerLocation: 'En ligne / Régional',
+        title: 'Design Thinking et Innovation',
+        description: 'Découvrez les méthodes d\'innovation centrées sur l\'utilisateur.',
+        startDate: '01 Jan 2024',
+        endDate: '30 Juin 2024',
+        link: 'www.kabakoo.com',
+        placesAvailable: 12,
+        needsFunding: false,
+      ),
+      // Ajouter une autre formation pour un défilement visible
+      Formation(
+        id: 'f3',
+        centerName: 'ODC_MALI',
+        centerLocation: 'Bamako, Mali',
+        title: 'Initiation à la Data Science',
+        description: 'Premiers pas dans l\'analyse de données avec Python et R.',
+        startDate: '01 Oct 2024',
+        endDate: '01 Avr 2025',
+        link: 'www.odc-data.com',
+        placesAvailable: 3,
+        needsFunding: true,
+      ),
+    ];
+
+    if (mounted) {
+      setState(() {
+        _formations = loadedFormations;
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // TODO: Logique de navigation
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double headerClipperHeight = 250.0; // Hauteur généreuse pour englober la recherche
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+      ),
+      
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: primaryBlue))
+          : NestedScrollView(
+              headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+                return <Widget>[
+                  SliverList(
+                    delegate: SliverChildListDelegate([
+                      // --- 1. En-tête (Structure fixe avec le "blob", titre, recherche et onglets) ---
+                      _buildHeader(context, headerClipperHeight),
+                    ]),
+                  ),
+                ];
+              },
+              // --- 2. Contenu Scrollable (Liste des formations) ---
+              body: TabBarView(
+                controller: _tabController,
+                children: [
+                  // Onglet 1: Toutes les formations
+                  _buildFormationList(_formations),
+                  
+                  // Onglet 2: Nouvelles formations (simplement les 2 dernières)
+                  _buildFormationList(_formations.sublist(_formations.length > 2 ? _formations.length - 2 : 0)),
+                ],
+              ),
+            ),
+    );
+  }
+
+
+  // --- WIDGETS DE LA STRUCTURE DE LA PAGE ---
+
+Widget _buildHeader(BuildContext context, double height) {
+  return Column(
+    children: [
+      Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // --- Fond bleu courbé ---
+          ClipPath(
+            clipper: CustomShapeClipper(),
+            child: Container(
+              height: height,
+              color: primaryBlue,
+            ),
+          ),
+
+          // --- Logo ---
+          const Positioned(
+            top: 40,
+            left: 20,
+            child: CircleAvatar(
+              radius: 25,
+              backgroundColor: Colors.white,
+              child: Icon(Icons.school, size: 30, color: primaryBlue),
+            ),
+          ),
+
+          // --- Titre + Bouton retour ---
+          Positioned(
+            top: 100, // légèrement plus bas
+            left: 0,
+            right: 0,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 20),
+                  const Text(
+                    'Formations',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+
+      // --- Barre de recherche ---
+      Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+        child: _buildSearchBar(),
+      ),
+
+      // --- Onglets ---
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: _buildFilterTabs(),
+      ),
+    ],
+  );
+}
+
+  
+  // Barre de Recherche
+  Widget _buildSearchBar() {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: const TextField(
+        decoration: InputDecoration(
+          hintText: 'Rechercher une formation',
+          hintStyle: TextStyle(color: Colors.grey),
+          prefixIcon: Icon(Icons.search, color: Colors.grey),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(vertical: 15.0),
+        ),
+      ),
+    );
+  }
+
+  // Onglets "Toutes" et "Nouvelles"
+Widget _buildFilterTabs() {
+  return Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+    ),
+    child: TabBar(
+      controller: _tabController,
+      indicatorSize: TabBarIndicatorSize.tab,
+      indicator: BoxDecoration(
+        color: primaryBlue.withOpacity(0.63),
+        borderRadius: BorderRadius.circular(25),
+      
+      ),
+      labelColor: Colors.white,
+       dividerColor: Colors.transparent,
+      unselectedLabelColor: primaryBlue,
+      labelStyle: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+      unselectedLabelStyle: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.normal,
+      ),
+      tabs: const [
+        Tab(text: 'Toutes'),
+        Tab(text: 'Nouvelles'),
+      ],
+    ),
+  );
+}
+
+  // Liste des formations
+  Widget _buildFormationList(List<Formation> list) {
+    if (list.isEmpty) {
+      return const Center(child: Text('Aucune formation trouvée.'));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 10, left: 10, right: 10),
+      itemCount: list.length,
+      itemBuilder: (context, index) {
+        return _buildFormationCard(context, list[index]);
+      },
+    );
+  }
+
+  // Fiche de Formation individuelle
+  Widget _buildFormationCard(BuildContext context, Formation formation) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 20),
+      elevation: 2,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Logo et Nom du Centre
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.black,
+                  radius: 20,
+                  // Icône temporaire pour le logo ODC
+                  child: Text('ODC', style: TextStyle(color: primaryOrange, fontSize: 10, fontWeight: FontWeight.bold)), 
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      formation.centerName,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                        const SizedBox(width: 5),
+                        Text(
+                          formation.centerLocation,
+                          style: const TextStyle(color: Colors.grey, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+
+            // Titre de la Formation
+            Text(
+              formation.title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+
+            // Description
+            Text(
+              formation.description,
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+            ),
+            const SizedBox(height: 15),
+
+            // Détails (Dates, Lien, Places, Financement)
+            _buildDetailRow(Icons.calendar_today, 'Du ${formation.startDate} au ${formation.endDate}'),
+            _buildDetailRow(Icons.link, formation.link, color: primaryBlue),
+            _buildDetailRow(Icons.person, '${formation.placesAvailable} places disponibles'),
+            _buildDetailRow(
+              Icons.attach_money, 
+              'Besoin de financement : ${formation.needsFunding ? 'Oui' : 'Non'}',
+              color: formation.needsFunding ? primaryRed : primaryGreen,
+            ),
+            
+            const SizedBox(height: 10),
+
+            // Bouton Voir détails
+          // Bouton Voir détails
+Align(
+  alignment: Alignment.centerRight,
+  child: ElevatedButton.icon(
+    onPressed: () {
+      // TODO: Naviguer vers DetailPage en passant l'ID de la formation
+      debugPrint('Naviguer vers les détails de ${formation.title}');
+    },
+   
+    label: const Text(
+      'Voir détails',
+      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+    ),
+    style: ElevatedButton.styleFrom(
+      shadowColor: Colors.black45,
+      backgroundColor: Colors.white, //
+      foregroundColor: primaryBlue, // 🩶 texte et icône blancs
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      elevation: 3, // ou 2 si tu veux un petit effet d'ombre
+    ),
+  ),
+),
+
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Ligne de détail avec icône
+  Widget _buildDetailRow(IconData icon, String text, {Color color = Colors.black87}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 14, color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
