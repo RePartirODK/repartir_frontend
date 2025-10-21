@@ -36,7 +36,6 @@ class SponsoredYouth {
   final String formation;
   final bool hasCertificate; // Le nouvel indicateur
   final String avatarAsset; // Asset pour l'avatar (simulé)
-
   SponsoredYouth(this.name, this.formation, this.hasCertificate, this.avatarAsset);
 }
 
@@ -48,10 +47,10 @@ class SponsoredYouthPage extends StatelessWidget {
   // Données de simulation avec le nouvel indicateur
   final List<SponsoredYouth> youths = [
     SponsoredYouth('Ousmane Diallo', 'Mécanique', true, 'male'),
-    SponsoredYouth('Kadidja Traoré', 'Couture', false, 'female'),
+    SponsoredYouth('Kadidja Traoré', 'Couture', true, 'female'),
     SponsoredYouth('Mamadou Kane', 'Développement Web', true, 'male'),
     SponsoredYouth('Aïcha Sidibé', 'Hôtellerie', true, 'female'),
-    SponsoredYouth('Issa Touré', 'Électricité Bâtiment', false, 'male'),
+    SponsoredYouth('Issa Touré', 'Électricité Bâtiment', true, 'male'),
     SponsoredYouth('Fatou Camara', 'Design Graphique', true, 'female'),
   ];
 
@@ -81,7 +80,7 @@ class SponsoredYouthPage extends StatelessWidget {
                     ...youths.map((youth) => Padding(
                       padding: const EdgeInsets.only(bottom: 15.0),
                       child: _buildYouthCard(youth),
-                    )).toList(),
+                    )),
                     
                     const SizedBox(height: 40), // Espace en bas
                   ],
@@ -166,7 +165,7 @@ class SponsoredYouthPage extends StatelessWidget {
           Icon(
             Icons.favorite_border, 
             color: primaryGreen, 
-            size: 30
+            size: 60
           )
         ],
       ),

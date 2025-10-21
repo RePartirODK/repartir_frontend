@@ -3,6 +3,7 @@ import 'package:repartir_frontend/pages/accueilparrain.dart';
 import 'package:repartir_frontend/pages/detailsdemande.dart';
 import 'package:repartir_frontend/pages/dons.dart';
 import 'package:repartir_frontend/pages/formationdetails.dart';
+import 'package:repartir_frontend/pages/inscription.dart';
 import 'package:repartir_frontend/pages/jeunesparraines.dart';
 import 'package:repartir_frontend/pages/pagepaiement.dart';
 import 'package:repartir_frontend/pages/profil.dart';
@@ -23,7 +24,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => SponsoredYouthPage(),
+        '/': (context) => RegistrationPage(),
          '/donation': (context) => const DonationsPage(),
          '/details': (context)=> const DetailPage(),
          '/formations': (context) => const FormationPage(),
@@ -31,6 +32,7 @@ class MyApp extends StatelessWidget {
          '/formationdetails': (context)=> const FormationDetailsPage(),
          '/paiementform': (context)=> const PaymentPage(),
          '/parrainés' : (context) => SponsoredYouthPage(),
+         '/inscriptionparrain': (context)=>RegistrationPage()
 
       },
     );

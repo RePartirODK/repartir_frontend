@@ -218,7 +218,7 @@ class ProfilePage extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, 2),
@@ -256,7 +256,8 @@ class ProfilePage extends StatelessWidget {
   }
 
   // Widget pour un élément de paramètre du compte
-  Widget _buildSettingItem(BuildContext context, String title, VoidCallback onTap, {bool isDestructive = false}) {
+  Widget _buildSettingItem(BuildContext context, String title, VoidCallback onTap, 
+  {bool isDestructive = false}) {
     return InkWell(
       onTap: onTap,
       child: Container(

@@ -333,7 +333,7 @@ Widget _buildFilterTabs() {
       controller: _tabController,
       indicatorSize: TabBarIndicatorSize.tab,
       indicator: BoxDecoration(
-        color: primaryBlue.withOpacity(0.63),
+        color: primaryBlue.withValues(alpha:0.63),
         borderRadius: BorderRadius.circular(25),
       
       ),

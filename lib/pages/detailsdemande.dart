@@ -265,7 +265,7 @@ class _DetailPageState extends State<DetailPage> {
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
-                                  color: primaryBlue.withOpacity(0.8), // Bleu un peu plus clair
+                                  color: primaryBlue.withValues(alpha:0.8), // Bleu un peu plus clair
                                 ),
                               ),
                   ),

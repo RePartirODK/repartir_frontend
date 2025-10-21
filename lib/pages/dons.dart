@@ -232,7 +232,7 @@ class _DonationsPageState extends State<DonationsPage> {
         border: Border.all(color: Colors.grey.shade300),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha:0.1),
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, 2),
@@ -258,7 +258,7 @@ class _DonationsPageState extends State<DonationsPage> {
   }) {
     return Card(
       elevation: 5,
-      shadowColor: Colors.grey.withOpacity(0.3),
+      shadowColor: Colors.grey.withValues(alpha:0.3),
       color: Colors.white,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       shape: RoundedRectangleBorder(
