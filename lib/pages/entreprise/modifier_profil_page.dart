@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart'; // Pour les constantes de couleur
+import 'package:repartir_frontend/components/custom_header.dart';
 
 class ModifierProfilPage extends StatefulWidget {
   const ModifierProfilPage({super.key});
@@ -33,26 +34,14 @@ class _ModifierProfilPageState extends State<ModifierProfilPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Modifier le profil',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Contenu principal
+          Positioned.fill(
+            top: 120,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
@@ -282,7 +271,21 @@ class _ModifierProfilPageState extends State<ModifierProfilPage> {
               const SizedBox(height: 20),
             ],
           ),
-        ),
+              ),
+            ),
+          ),
+          
+          // En-tête bleu avec forme ondulée (au-dessus du contenu) avec bouton retour
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              showBackButton: true,
+              title: 'Modifier le profil',
+            ),
+          ),
+        ],
       ),
     );
   }

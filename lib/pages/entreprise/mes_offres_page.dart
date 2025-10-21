@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart'; // Pour les constantes de couleur
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
 import 'package:repartir_frontend/pages/entreprise/profil_entreprise_page.dart';
+import 'package:repartir_frontend/pages/entreprise/detail_offre_page.dart';
+import 'package:repartir_frontend/pages/entreprise/nouvelle_offre_page.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 class MesOffresPage extends StatefulWidget {
   const MesOffresPage({super.key});
@@ -46,22 +49,6 @@ class _MesOffresPageState extends State<MesOffresPage> {
           // Arrière-plan de la page
           Container(color: Colors.white),
 
-          // En-tête bleu
-          Container(
-            height: 180,
-            decoration: const BoxDecoration(
-              color: kPrimaryBlue,
-            ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
-                  _buildHeaderContent(),
-                ],
-              ),
-            ),
-          ),
-
           // Contenu principal scrollable avec la courbe
           Positioned(
             top: 120,
@@ -78,27 +65,17 @@ class _MesOffresPageState extends State<MesOffresPage> {
               ),
               child: Column(
                 children: [
-                  // Section titre et bouton d'ajout
+                  // Section bouton d'ajout
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        const Expanded(
-                          child: Text(
-                            'Mes offres publiées',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
                         GestureDetector(
                           onTap: () {
-                            // TODO: Naviguer vers la page d'ajout d'offre
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Ajouter une nouvelle offre')),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const NouvelleOffrePage()),
                             );
                           },
                           child: Container(
@@ -147,6 +124,11 @@ class _MesOffresPageState extends State<MesOffresPage> {
                 ],
               ),
             ),
+          ),
+          
+          // En-tête bleu avec forme ondulée (au-dessus du contenu)
+          CustomHeader(
+            title: 'Mes offres publiées',
           ),
         ],
       ),
@@ -236,9 +218,11 @@ class _MesOffresPageState extends State<MesOffresPage> {
             children: [
               TextButton(
                 onPressed: () {
-                  // TODO: Naviguer vers les détails de l'offre
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Voir détails de ${offre['titre']}')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DetailOffrePage(offre: offre),
+                    ),
                   );
                 },
                 child: const Text(
