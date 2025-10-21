@@ -100,7 +100,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                             // Plus tard, cette logique sera conditionnelle au rôle de l'utilisateur.
                             Navigator.pushAndRemoveUntil(
                               context,
-                              MaterialPageRoute(builder: (context) => const AccueilEntreprisePage()),
+                              MaterialPageRoute(builder: (context) => const AccueilPage()),
                               (Route<dynamic> route) => false,
                             );
                           },

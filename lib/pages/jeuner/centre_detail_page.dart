@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/formation_detail_page.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 class CentreDetailPage extends StatelessWidget {
   const CentreDetailPage({Key? key}) : super(key: key);
@@ -28,25 +29,13 @@ class CentreDetailPage extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          Container(
-            height: 180,
-            color: Colors.blue,
-            child: SafeArea(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 120.0),
+          // Contenu principal
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: Container(
-              height: double.infinity,
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
@@ -68,6 +57,19 @@ class CentreDetailPage extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+          ),
+          
+          // Header avec bouton retour et titre
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              showBackButton: true,
+              onBackPressed: () => Navigator.pop(context),
+              title: 'Détail Centre',
+              height: 120,
             ),
           ),
         ],

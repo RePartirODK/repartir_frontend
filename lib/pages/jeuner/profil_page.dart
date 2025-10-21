@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'edit_profil_page.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -47,23 +48,22 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                ClipPath(
-                  clipper: ProfilePageClipper(),
-                  child: Container(
-                    height: 200,
-                    color: Colors.blue,
-                  ),
-                ),
-                Positioned(
-                  top: 150, // Adjust this value to position the avatar
-                  child: CircleAvatar(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Contenu principal
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Avatar
+                  CircleAvatar(
                     radius: 50,
                     backgroundColor: Colors.white,
                     child: CircleAvatar(
@@ -72,32 +72,19 @@ class _ProfilePageState extends State<ProfilePage> {
                           'https://via.placeholder.com/150'), // Placeholder image
                     ),
                   ),
-                ),
-              ],
-            ),
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(60),
-                topRight: Radius.circular(60),
-              ),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(60),
-                  topRight: Radius.circular(60),
-                ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 70, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
+                  const SizedBox(height: 20),
+                  
+                  // Nom
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  
+                  // Bouton Edit Profile
                       ElevatedButton.icon(
                         onPressed: () {
                           _navigateToEditProfile(context);
@@ -105,78 +92,91 @@ class _ProfilePageState extends State<ProfilePage> {
                         icon: const Icon(Icons.edit, color: Colors.white),
                         label: const Text('Edit Profile', style: TextStyle(color: Colors.white)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
+                          backgroundColor: const Color(0xFF3EB2FF),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "À propos de moi",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                about,
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            ],
+                  const SizedBox(height: 20),
+                  
+                  // À propos de moi
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "À propos de moi",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Contact Information",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              ListTile(
-                                leading: const Icon(Icons.email, color: Colors.blue),
-                                title: Text(email),
-                              ),
-                              const Divider(),
-                              ListTile(
-                                leading: const Icon(Icons.phone, color: Colors.blue),
-                                title: Text(phone),
-                              ),
-                            ],
+                          const SizedBox(height: 10),
+                          Text(
+                            about,
+                            style: const TextStyle(fontSize: 16),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 20),
+                  
+                  // Informations de contact
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Contact Information",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          ListTile(
+                            leading: const Icon(Icons.email, color: Color(0xFF3EB2FF)),
+                            title: Text(email),
+                          ),
+                          const Divider(),
+                          ListTile(
+                            leading: const Icon(Icons.phone, color: Color(0xFF3EB2FF)),
+                            title: Text(phone),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+          
+          // Header avec titre (sans bouton retour)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              title: 'Mon Profil',
+              height: 120,
+            ),
+          ),
+        ],
       ),
     );
   }

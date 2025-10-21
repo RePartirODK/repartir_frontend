@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/centre_detail_page.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 class AllCentresListPage extends StatelessWidget {
   const AllCentresListPage({Key? key}) : super(key: key);
@@ -32,54 +33,41 @@ class AllCentresListPage extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          Container(
-            height: 160,
-            color: Colors.blue,
-          ),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: BackButton(color: Colors.white),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 80.0),
+          // Contenu principal
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: Container(
-              height: double.infinity,
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
+                  topLeft: Radius.circular(60),
+                  topRight: Radius.circular(60),
                 ),
               ),
-              child: Padding(
+              child: ListView.builder(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Tous les centres',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Expanded(
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: centres.length,
-                        itemBuilder: (context, index) {
-                          final centre = centres[index];
-                          return CentreListItemCard(centre: centre);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+                itemCount: centres.length,
+                itemBuilder: (context, index) {
+                  final centre = centres[index];
+                  return CentreListItemCard(centre: centre);
+                },
               ),
+            ),
+          ),
+          
+          // Header avec bouton retour et titre
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              showBackButton: true,
+              onBackPressed: () => Navigator.pop(context),
+              title: 'Tous les centres',
+              height: 120,
             ),
           ),
         ],
@@ -136,7 +124,7 @@ class CentreListItemCard extends StatelessWidget {
                 },
                 child: const Text('Voir le centre'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: const Color(0xFF3EB2FF),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
