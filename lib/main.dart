@@ -32,7 +32,8 @@ class MyApp extends StatelessWidget {
          '/formationdetails': (context)=> const FormationDetailsPage(),
          '/paiementform': (context)=> const PaymentPage(),
          '/parrainés' : (context) => SponsoredYouthPage(),
-         '/inscriptionparrain': (context)=>RegistrationPage()
+         '/inscriptionparrain': (context)=>RegistrationPage(),
+         '/accueil': (context)=> ParrainHomePage(),
 
       },
     );
