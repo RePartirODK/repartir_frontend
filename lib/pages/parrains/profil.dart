@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 // --- COULEURS ET CONSTANTES GLOBALES ---
 const Color primaryBlue = Color(0xFF2196F3); // Couleur principale bleue
@@ -45,25 +46,10 @@ class _ProfilePageState extends State<ProfilePage> {
   final String userEmail = 'adiallo7485@gmail.com';
   final String userPhone = '+22376412209';
 
-  // Pour la navigation (exemple)
-  int _selectedIndex = 3;
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // Logique de navigation si nécessaire
-    print('Onglet sélectionné : $index');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // bottomNavigationBar: CustomBottomNavBar(
-      //   selectedIndex: _selectedIndex,
-      //   onItemTapped: _onItemTapped,
-      // ),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -105,10 +91,9 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildProfileHeader(BuildContext context) {
     return Stack(
       children: [
-        ClipPath(
-          clipper: CustomShapeClipper(),
-          child: Container(height: 300, color: primaryBlue),
-        ),
+      CustomHeader(
+        title: "Profile",
+      ),
         Column(
           children: [
             Padding(
@@ -118,10 +103,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
-                  ),
-                  const Text(
-                    'Profile',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ],
               ),

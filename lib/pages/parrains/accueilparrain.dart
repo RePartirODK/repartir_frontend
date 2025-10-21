@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/pages/parrains/dons.dart';
+import 'package:repartir_frontend/pages/parrains/jeunesparraines.dart';
 // Importez le composant de barre de navigation si dans un fichier séparé
 // import 'custom_bottom_nav_bar.dart';
 
@@ -17,6 +19,7 @@ class ParrainHomePage extends StatefulWidget {
 class _ParrainHomePageState extends State<ParrainHomePage> {
   // État pour la barre de navigation inférieure
 
+  // ignore: non_constant_identifier_names
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,7 +30,10 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             // --- Zone de Tête (Header) ---
-            _buildHeader(context),
+            CustomHeader(
+              title: 'Accueil',
+              showBackButton: true, // Pas de bouton retour sur la home
+            ),
 
             // Padding pour le reste du contenu
             Padding(
@@ -73,10 +79,15 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
                   // Bouton Donations
                   _buildActionButton(
                     text: 'Donations',
-                    color: primaryBlue.withOpacity(0.2),
+                    color: primaryBlue.withValues(alpha: 0.2),
                     textColor: Colors.black,
                     onPressed: () {
-                     
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DonationsPage(),
+                        ),
+                      );
                     },
                   ),
                   const SizedBox(height: 16),
@@ -84,10 +95,17 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
                   // Bouton Jeunes déjà parrainés
                   _buildActionButton(
                     text: 'Jeunes déjà parrainés',
-                    color: primaryBlue.withOpacity(0.2), // Bleu très clair
+                    color: primaryBlue.withValues(
+                      alpha: 0.2,
+                    ), // Bleu très clair
                     textColor: Colors.black, // Texte en noir
                     onPressed: () {
-                      /* Logique de navigation */
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SponsoredYouthPage(),
+                        ),
+                      );
                     },
                   ),
                   const SizedBox(height: 40),
@@ -103,50 +121,6 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
   /// -------------------------------------------
   /// WIDGETS DE COMPOSANTS DÉTAILLÉS
   /// -------------------------------------------
-
-  /// Construit la zone de tête (Header) avec la vague bleue.
-  Widget _buildHeader(BuildContext context) {
-    return ClipPath(
-      // Utilisation d'un Clipper pour la forme de vague
-      clipper: CustomShapeClipper(),
-      child: Container(
-        height: 180, // Hauteur du header
-        width: double.infinity,
-        color: primaryBlue,
-        child: Padding(
-          padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top,
-            left: 24.0,
-            right: 24.0,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              // Logo 'RePartir'
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: Center(
-                  child: Image.asset(
-                    'assets/repartir_logo.png', // Remplacez par le chemin de votre image de logo
-                    height: 50,
-                  ),
-                ),
-              ),
-              // Ici, j'ai utilisé un placeholder pour le logo, si vous voulez le recréer
-              // un Container avec le texte 'RePartir' stylisé avec la couleur verte.
-              // Vous devriez utiliser votre propre asset ou créer un widget plus complexe.
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   /// Construit la section du profil (image, nom, statut).
   Widget _buildProfileSection() {
@@ -284,54 +258,4 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
       ),
     );
   }
-}
-
-/// CLASSER POUR DESSINER LA VAGUE EN HAUT
-class CustomShapeClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-
-    // 1. Commence au coin supérieur gauche (0, 0)
-    path.lineTo(0, 0);
-
-    // 2. Descend le long du bord gauche.
-    // La courbe commence verticalement un peu avant la hauteur totale du clipper (ex: 80%)
-    final double startY = size.height * 0.8;
-    path.lineTo(0, startY);
-
-    // 3. Définition de la COURBE CUBIQUE DE BÉZIER (4 points pour un meilleur contrôle)
-
-    // Le premier point de contrôle (pour tirer la courbe vers le bas, créant la 'bosse' à gauche)
-    final controlPoint1 = Offset(
-      size.width * 0.25,
-      size.height * 1.15,
-    ); // Notez le 1.15 pour un dip sous le container
-
-    // Le deuxième point de contrôle (pour remonter la courbe de manière douce vers la droite)
-    final controlPoint2 = Offset(size.width * 0.75, size.height * 0.55);
-
-    // Le point final de la courbe (où la courbe touche le bord droit)
-    final endPoint = Offset(size.width, size.height * 0.65);
-
-    // Ajout de la courbe au chemin
-    path.cubicTo(
-      controlPoint1.dx,
-      controlPoint1.dy,
-      controlPoint2.dx,
-      controlPoint2.dy,
-      endPoint.dx,
-      endPoint.dy,
-    );
-
-    // 4. Trace le chemin restant vers le coin supérieur droit (size.width, 0)
-    path.lineTo(size.width, 0);
-
-    // 5. Ferme le chemin
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

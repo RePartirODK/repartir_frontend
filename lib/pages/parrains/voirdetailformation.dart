@@ -1,33 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 // --- COULEURS ET CONSTANTES GLOBALES ---
-const Color primaryBlue = Color(0xFF2196F3); // Couleur principale bleue
+const Color primaryBlue = Color(0xFF3EB2FF); // Couleur principale bleue
 const Color primaryOrange = Color(0xFFFF9800); // Couleur Orange pour le logo ODC
 
-// --- 1. CLASSE CLIPPER (pour la forme 'blob' de l'en-tête) ---
-class CustomShapeClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, size.height * 0.85); // Début du clip sur la gauche
-    
-    // Courbe cubique pour la forme irrégulière (le "blob" pour l'en-tête)
-    final controlPoint1 = Offset(size.width * 0.25, size.height * 1.15); 
-    final controlPoint2 = Offset(size.width * 0.75, size.height * 0.55);
-    final endPoint = Offset(size.width, size.height * 0.65);
-    
-    path.cubicTo(
-      controlPoint1.dx, controlPoint1.dy, 
-      controlPoint2.dx, controlPoint2.dy, 
-      endPoint.dx, endPoint.dy,
-    );
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
 
 // --- 2. WIDGET PRINCIPAL : FormationDetailsPage ---
 class FormationDetailsPage extends StatelessWidget {
@@ -44,45 +21,15 @@ class FormationDetailsPage extends StatelessWidget {
             top: 0,
             left: 0,
             right: 0,
-            child: ClipPath(
-              clipper: CustomShapeClipper(),
-              child: Container(
-                height: 250, // Hauteur de l'en-tête bleu
-                color: primaryBlue,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 40.0, left: 10.0, right: 20.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Bouton retour
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(context), 
-                      ),
-                      // Titre
-                      Expanded(
-                        child: Text(
-                          'Formations Details',
-                          style: const TextStyle(
-                            fontSize: 22, 
-                            fontWeight: FontWeight.bold, 
-                            color: Colors.white
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      // Logo RePartir (simulé en tant qu'espace pour le logo existant)
-                      const SizedBox(width: 48), 
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            child:CustomHeader(
+              title: "Formations Details",
+              showBackButton: true,
+            )
           ),
           
           // 2. Contenu principal (scrollable)
           Positioned.fill(
-            top: 230, // Démarre le contenu sous le titre
+            top: 150, // Démarre le contenu sous le titre
             child: SingleChildScrollView(
               padding: const EdgeInsets.only(top: 15),
               child: Padding(
@@ -117,9 +64,6 @@ class FormationDetailsPage extends StatelessWidget {
                     _buildPracticalDetailsCard(),
                     const SizedBox(height: 40),
 
-                    // --- 2.6 Bouton d'Action (S'inscrire) ---
-                    _buildEnrollButton(context),
-                    const SizedBox(height: 40), // Espace en bas
                   ],
                 ),
               ),
@@ -279,33 +223,6 @@ class FormationDetailsPage extends StatelessWidget {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryBlue),
         ),
       ],
-    );
-  }
-
-  // Bouton d'inscription
-  Widget _buildEnrollButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: () {
-          // Logique d'inscription
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Action: Procéder à l\'inscription')),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryBlue,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          elevation: 5,
-        ),
-        child: const Text(
-          "S'inscrire",
-          style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
     );
   }
 }

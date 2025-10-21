@@ -1,42 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/pages/jeuner/formation_detail_page.dart';
 import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
+import 'package:repartir_frontend/pages/parrains/detailsdemande.dart';
 import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
 import 'package:repartir_frontend/pages/parrains/profil.dart';
 
 // Définition des couleurs
 const Color primaryBlue = Color(0xFF3EB2FF);
 const Color primaryGreen = Color(0xFF4CAF50);
-
-// -------------------- CUSTOM NAVBAR --------------------
-
-// -------------------- CUSTOM CLIPPER --------------------
-class CustomShapeClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, size.height * 0.8);
-
-    final controlPoint1 = Offset(size.width * 0.25, size.height * 1.15);
-    final controlPoint2 = Offset(size.width * 0.75, size.height * 0.55);
-    final endPoint = Offset(size.width, size.height * 0.65);
-
-    path.cubicTo(
-      controlPoint1.dx,
-      controlPoint1.dy,
-      controlPoint2.dx,
-      controlPoint2.dy,
-      endPoint.dx,
-      endPoint.dy,
-    );
-
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
 
 // -------------------- PAGE DONATIONS --------------------
 class DonationsPage extends StatefulWidget {
@@ -47,40 +19,6 @@ class DonationsPage extends StatefulWidget {
 }
 
 class _DonationsPageState extends State<DonationsPage> {
-  int _selectedIndex = 1; // 'Accueil' est sélectionné par défaut
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-   
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ParrainHomePage()),
-        );
-        break;
-      case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const DonationsPage()),
-        );
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const FormationPage()),
-        );
-        break;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfilePage()),
-        );
-        break;
-    }
-  }
-
   // Données fictives
   final List<Map<String, String>> donationNeeds = [
     {
@@ -92,8 +30,12 @@ class _DonationsPageState extends State<DonationsPage> {
       'description': 'Besoin d\'équipement pour un atelier de menuiserie',
     },
     {
-      'name': 'Aïcha Coulibaly',
+      'name': 'Ali Coulibaly',
       'description': 'Recherche une bourse pour des études en informatique',
+    },
+    {
+      'name': 'Ousmane Traoré',
+      'description': 'Besoin de fournitures scolaires',
     },
     {
       'name': 'Ousmane Traoré',
@@ -103,66 +45,14 @@ class _DonationsPageState extends State<DonationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    const double headerHeight = 180.0;
-
     return Scaffold(
       backgroundColor: Colors.white,
-      // bottomNavigationBar: CustomBottomNavBar(
-      //   selectedIndex: _selectedIndex,
-      //   onItemTapped: _onItemTapped,
-      // ),
+
       body: SingleChildScrollView(
         child: Column(
           children: [
             // ---------------- HEADER ----------------
-            Stack(
-              children: [
-                ClipPath(
-                  clipper: CustomShapeClipper(),
-                  child: Container(height: headerHeight, color: primaryBlue),
-                ),
-                // Logo (inchangé)
-                Positioned(
-                  top: 40,
-                  left: 20,
-                  child: CircleAvatar(
-                    radius: 25,
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.school, size: 30, color: primaryBlue),
-                    // TODO: Remplacer par votre logo
-                    // child: Image.asset('assets/logo_repartir.png', height: 40),
-                  ),
-                ),
-                // Titre "Donations" descendu
-                Positioned(
-                  top: 100, // Descendu pour ne pas toucher le logo
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: const Text(
-                      'Donations',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                // Bouton retour descendu
-                Positioned(
-                  top: 95, // Descendu pour aligner avec le titre
-                  left: 0,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-              ],
-            ),
-
+            CustomHeader(title: "Donations", showBackButton: true),
             const SizedBox(height: 20),
 
             // ---------------- MESSAGE ----------------
@@ -199,7 +89,12 @@ class _DonationsPageState extends State<DonationsPage> {
                     name: need['name']!,
                     description: need['description']!,
                     onTap: () {
-                      debugPrint('Détails pour ${need['name']}');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DetailPage(),
+                        ),
+                      );
                     },
                   );
                 }).toList(),
@@ -299,8 +194,8 @@ class _DonationsPageState extends State<DonationsPage> {
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                      color: primaryGreen.withOpacity(
-                        0.2,
+                      color: primaryGreen.withValues(
+                        alpha: 0.2,
                       ), // Cercle vert clair semi-transparent
                       shape: BoxShape.circle,
                     ),

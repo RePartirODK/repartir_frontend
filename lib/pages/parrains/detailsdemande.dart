@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
 import 'package:repartir_frontend/pages/parrains/dons.dart';
 import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
+import 'package:repartir_frontend/pages/parrains/pagepaiement.dart';
 import 'package:repartir_frontend/pages/parrains/profil.dart';
 
 // Assurez-vous d'avoir CustomBottomNavBar, CustomShapeClipper, primaryBlue, et primaryGreen définis
@@ -16,34 +18,6 @@ const Color lightRed = Color(0xFFFDD8D8); // Couleur pour le badge "En attente"
 
 // --- DÉBUT DE LA CLASSE DE NAVIGATION (Copie pour référence si vous l'avez perdue) ---
 
-
-// --- DÉBUT DE LA CLASSE CLIPPER (pour la forme 'blob') ---
-// ... (Copiez/Collez CustomShapeClipper ici si elle n'est pas dans un fichier séparé) ...
-class CustomShapeClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, 0);
-    final double startY = size.height * 0.8;
-    path.lineTo(0, startY);
-    final controlPoint1 = Offset(size.width * 0.25, size.height * 1.15); 
-    final controlPoint2 = Offset(size.width * 0.75, size.height * 0.55);
-    final endPoint = Offset(size.width, size.height * 0.65);
-    path.cubicTo(
-      controlPoint1.dx, controlPoint1.dy, 
-      controlPoint2.dx, controlPoint2.dy, 
-      endPoint.dx, endPoint.dy,
-    );
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
-// --- FIN DE LA CLASSE CLIPPER ---
-
-
 // --- PAGE PRINCIPALE ---
 class DetailPage extends StatefulWidget {
   const DetailPage({super.key});
@@ -53,8 +27,6 @@ class DetailPage extends StatefulWidget {
 }
 
 class _DetailPageState extends State<DetailPage> {
-  
-
   // Données factices pour l'exemple
   final String jeuneName = "Kadiatou Tall";
   final String formationType = "Couture";
@@ -65,73 +37,26 @@ class _DetailPageState extends State<DetailPage> {
   final String trainingCenter = "Centre de formations Sabatiso";
   final String situation = "Attbougou 1008 logements en face de la boulangerie";
 
-     int _selectedIndex = 1;
-    void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-     switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ParrainHomePage()),
-        );
-        break;
-      case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const DonationsPage()),
-        );
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const FormationPage()),
-        );
-        break;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfilePage()),
-        );
-        break;
-    }
-  }
-
-  
-
   @override
   Widget build(BuildContext context) {
     final double headerClipperHeight = 200.0; // Hauteur pour le clipper blob
-    final double contentStartOffset = 200.0; // Où le SingleChildScrollView doit commencer
+    final double contentStartOffset =
+        200.0; // Où le SingleChildScrollView doit commencer
 
     return Scaffold(
       backgroundColor: Colors.white,
-      
-      //   bottomNavigationBar: CustomBottomNavBar(
-      //   selectedIndex: _selectedIndex,
-      //   onItemTapped: _onItemTapped,
-      // ),
       body: Stack(
         children: <Widget>[
           // --- 1. Header (Fond bleu 'blob') ---
-          ClipPath(
-            clipper: CustomShapeClipper(),
-            child: Container(
-              height: headerClipperHeight,
-              color: primaryBlue,
-            ),
-          ),
-          
+          CustomHeader(title: "Détails"),
           // --- 2. Logo (Positionné en haut à gauche) ---
           Positioned(
-            top: 40, 
+            top: 40,
             left: 20,
             child: CircleAvatar(
               radius: 25,
               backgroundColor: Colors.white,
-              // TODO: Remplacer par votre logo 'RePartir'
-              child: Image.asset('assets/logo_repartir.png', height: 40), 
+              child: Image.asset('assets/images/logo_repartir.png', height: 40),
             ),
           ),
 
@@ -149,31 +74,23 @@ class _DetailPageState extends State<DetailPage> {
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () {
-                      Navigator.pop(context); 
+                      Navigator.pop(context);
                     },
                   ),
                   const SizedBox(width: 20), // Espace
-                  // Titre de la page
-                  Center(
-                    child: const Text(
-                      'Details',
-                      style: TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
-          
+
           // --- 4. Contenu Principal Scrollable ---
           Padding(
-           padding: EdgeInsets.only(top: contentStartOffset), // Démarre le contenu sous le header visible
+            padding: EdgeInsets.only(
+              top: contentStartOffset,
+            ), // Démarre le contenu sous le header visible
             child: SingleChildScrollView(
-              padding: EdgeInsets.zero, // Padding géré par les éléments internes
+              padding:
+                  EdgeInsets.zero, // Padding géré par les éléments internes
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
@@ -204,7 +121,10 @@ class _DetailPageState extends State<DetailPage> {
                     child: _buildGradientButton(
                       text: 'Procéder au payement',
                       onPressed: () {
-                        debugPrint('Procéder au paiement');
+                        //navigation vers la page de paiement
+                        Navigator.push(context,
+                        MaterialPageRoute(builder: 
+                        (context)=> PaymentPage()));
                       },
                     ),
                   ),
@@ -231,7 +151,7 @@ class _DetailPageState extends State<DetailPage> {
             radius: 50,
             backgroundColor: primaryBlue, // Couleur d'arrière-plan de l'avatar
             // TODO: Remplacer par l'image de profil du jeune
-            child: Icon(Icons.person, size: 70, color: Colors.white), 
+            child: Icon(Icons.person, size: 70, color: Colors.white),
           ),
           const SizedBox(height: 10),
           Text(
@@ -259,12 +179,13 @@ class _DetailPageState extends State<DetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
           const SizedBox(height: 10),
           Card(
             color: Colors.white,
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -272,13 +193,15 @@ class _DetailPageState extends State<DetailPage> {
                 children: [
                   Center(
                     child: Text(
-                                'Formations',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: primaryBlue.withValues(alpha:0.8), // Bleu un peu plus clair
-                                ),
-                              ),
+                      'Formations',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: primaryBlue.withValues(
+                          alpha: 0.8,
+                        ), // Bleu un peu plus clair
+                      ),
+                    ),
                   ),
                   Center(
                     child: Text(
@@ -290,7 +213,7 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                     ),
                   ),
-                  
+
                   _buildDetailRow('Date début', startDate),
                   _buildDetailRow('Date Fin', endDate),
                   _buildDetailRow('Certification', certification),
@@ -332,7 +255,9 @@ class _DetailPageState extends State<DetailPage> {
           Card(
             elevation: 2,
             color: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -349,36 +274,29 @@ class _DetailPageState extends State<DetailPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Center(
-                    child: Text(
-                      centre,
-                    ),
-                  ),
+                  Center(child: Text(centre)),
                   const SizedBox(height: 8),
-                Row(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Padding(
-      padding: const EdgeInsets.only(right: 10.0),
-      child: const Text(
-        "Situation",
-        style: TextStyle(
-          fontSize: 14,
-        ),
-      ),
-    ),
-    Expanded(
-      child: Text(
-        situation,
-        style: const TextStyle(
-          fontSize: 14,
-          color: Colors.black54,
-        ),
-      ),
-    ),
-  ],
-)
-
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 10.0),
+                        child: const Text(
+                          "Situation",
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          situation,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -397,10 +315,7 @@ class _DetailPageState extends State<DetailPage> {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
           ),
           Text(
             value,
@@ -438,7 +353,10 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   /// Bouton avec dégradé
-  Widget _buildGradientButton({required String text, required VoidCallback onPressed}) {
+  Widget _buildGradientButton({
+    required String text,
+    required VoidCallback onPressed,
+  }) {
     return Container(
       width: double.infinity,
       height: 55,

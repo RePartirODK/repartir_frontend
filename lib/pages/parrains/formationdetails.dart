@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
 import 'package:repartir_frontend/pages/parrains/dons.dart';
 import 'package:repartir_frontend/pages/parrains/profil.dart';
+import 'package:repartir_frontend/pages/parrains/voirdetailformation.dart';
 
 // Définition des couleurs (doivent correspondre à celles utilisées dans detail_page.dart)
 const Color primaryBlue = Color(0xFF3EB2FF);
@@ -21,7 +23,7 @@ class Formation {
   final String link;
   final int placesAvailable;
   final bool needsFunding;
-  
+
   Formation({
     required this.id,
     required this.centerName,
@@ -39,31 +41,6 @@ class Formation {
 // --- COMPOSANTS RÉUTILISABLES (Clipper et NavBar) ---
 
 // 1. CLASSE CLIPPER (pour la forme 'blob' de l'en-tête)
-class CustomShapeClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, 0);
-    final double startY = size.height * 0.8; 
-    path.lineTo(0, startY);
-    
-    // Courbe cubique pour la forme irrégulière
-    final controlPoint1 = Offset(size.width * 0.25, size.height * 1.15); 
-    final controlPoint2 = Offset(size.width * 0.75, size.height * 0.55);
-    final endPoint = Offset(size.width, size.height * 0.65);
-    
-    path.cubicTo(
-      controlPoint1.dx, controlPoint1.dy, 
-      controlPoint2.dx, controlPoint2.dy, 
-      endPoint.dx, endPoint.dy,
-    );
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
 
 // 2. CustomBottomNavBar (Barre de navigation inférieure)
 
@@ -75,11 +52,11 @@ class FormationPage extends StatefulWidget {
   State<FormationPage> createState() => _FormationPageState();
 }
 
-class _FormationPageState extends State<FormationPage> with SingleTickerProviderStateMixin {
-  int _selectedIndex = 2; // Index 'Formations'
+class _FormationPageState extends State<FormationPage>
+    with SingleTickerProviderStateMixin {
   bool _isLoading = true;
   List<Formation> _formations = [];
-  
+
   // Contrôleur pour les onglets 'Toutes' et 'Nouvelles'
   late TabController _tabController;
 
@@ -99,7 +76,7 @@ class _FormationPageState extends State<FormationPage> with SingleTickerProvider
   // LOGIQUE FUTURE POUR LE BACKEND : Récupération des formations
   void _fetchFormations() async {
     // Simuler un appel API pour récupérer la liste des formations
-    await Future.delayed(const Duration(seconds: 1)); 
+    await Future.delayed(const Duration(seconds: 1));
 
     List<Formation> loadedFormations = [
       Formation(
@@ -107,7 +84,8 @@ class _FormationPageState extends State<FormationPage> with SingleTickerProvider
         centerName: 'ODC_MALI',
         centerLocation: 'Bamako, Mali',
         title: 'Formation Développeur Web',
-        description: 'Apprenez les bases du développement web avec HTML, CSS et JavaScript',
+        description:
+            'Apprenez les bases du développement web avec HTML, CSS et JavaScript',
         startDate: '15 Sept 2023',
         endDate: '15 Mars 2024',
         link: 'www.formation-dev.com/web',
@@ -119,7 +97,8 @@ class _FormationPageState extends State<FormationPage> with SingleTickerProvider
         centerName: 'Kabakoo Academies',
         centerLocation: 'En ligne / Régional',
         title: 'Design Thinking et Innovation',
-        description: 'Découvrez les méthodes d\'innovation centrées sur l\'utilisateur.',
+        description:
+            'Découvrez les méthodes d\'innovation centrées sur l\'utilisateur.',
         startDate: '01 Jan 2024',
         endDate: '30 Juin 2024',
         link: 'www.kabakoo.com',
@@ -132,7 +111,8 @@ class _FormationPageState extends State<FormationPage> with SingleTickerProvider
         centerName: 'ODC_MALI',
         centerLocation: 'Bamako, Mali',
         title: 'Initiation à la Data Science',
-        description: 'Premiers pas dans l\'analyse de données avec Python et R.',
+        description:
+            'Premiers pas dans l\'analyse de données avec Python et R.',
         startDate: '01 Oct 2024',
         endDate: '01 Avr 2025',
         link: 'www.odc-data.com',
@@ -149,22 +129,13 @@ class _FormationPageState extends State<FormationPage> with SingleTickerProvider
     }
   }
 
-  
- 
-
-  
-
   @override
   Widget build(BuildContext context) {
-    final double headerClipperHeight = 250.0; // Hauteur généreuse pour englober la recherche
+    final double headerClipperHeight =
+        250.0; // Hauteur généreuse pour englober la recherche
 
     return Scaffold(
       backgroundColor: Colors.white,
-      // bottomNavigationBar: CustomBottomNavBar(
-      //   selectedIndex: _selectedIndex,
-      //   onItemTapped: _onItemTapped,
-      // ),
-      
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: primaryBlue))
           : NestedScrollView(
@@ -173,7 +144,18 @@ class _FormationPageState extends State<FormationPage> with SingleTickerProvider
                   SliverList(
                     delegate: SliverChildListDelegate([
                       // --- 1. En-tête (Structure fixe avec le "blob", titre, recherche et onglets) ---
-                      _buildHeader(context, headerClipperHeight),
+                      CustomHeader(title: "Formations"),
+                      // --- 2. Barre de recherche ---
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                        child: _buildSearchBar(),
+                      ),
+
+                      // --- 3. Onglets (Toutes / Nouvelles) ---
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: _buildFilterTabs(),
+                      ),
                     ]),
                   ),
                 ];
@@ -184,89 +166,21 @@ class _FormationPageState extends State<FormationPage> with SingleTickerProvider
                 children: [
                   // Onglet 1: Toutes les formations
                   _buildFormationList(_formations),
-                  
+
                   // Onglet 2: Nouvelles formations (simplement les 2 dernières)
-                  _buildFormationList(_formations.sublist(_formations.length > 2 ? _formations.length - 2 : 0)),
+                  _buildFormationList(
+                    _formations.sublist(
+                      _formations.length > 2 ? _formations.length - 2 : 0,
+                    ),
+                  ),
                 ],
               ),
             ),
     );
   }
 
-
   // --- WIDGETS DE LA STRUCTURE DE LA PAGE ---
 
-Widget _buildHeader(BuildContext context, double height) {
-  return Column(
-    children: [
-      Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // --- Fond bleu courbé ---
-          ClipPath(
-            clipper: CustomShapeClipper(),
-            child: Container(
-              height: height,
-              color: primaryBlue,
-            ),
-          ),
-
-          // --- Logo ---
-          const Positioned(
-            top: 40,
-            left: 20,
-            child: CircleAvatar(
-              radius: 25,
-              backgroundColor: Colors.white,
-              child: Icon(Icons.school, size: 30, color: primaryBlue),
-            ),
-          ),
-
-          // --- Titre + Bouton retour ---
-          Positioned(
-            top: 100, // légèrement plus bas
-            left: 0,
-            right: 0,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(width: 20),
-                  const Text(
-                    'Formations',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-
-      // --- Barre de recherche ---
-      Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-        child: _buildSearchBar(),
-      ),
-
-      // --- Onglets ---
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: _buildFilterTabs(),
-      ),
-    ],
-  );
-}
-
-  
   // Barre de Recherche
   Widget _buildSearchBar() {
     return Container(
@@ -276,7 +190,7 @@ Widget _buildHeader(BuildContext context, double height) {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withValues(alpha: 0.2),
             spreadRadius: 2,
             blurRadius: 5,
             offset: const Offset(0, 3),
@@ -296,37 +210,31 @@ Widget _buildHeader(BuildContext context, double height) {
   }
 
   // Onglets "Toutes" et "Nouvelles"
-Widget _buildFilterTabs() {
-  return Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-    ),
-    child: TabBar(
-      controller: _tabController,
-      indicatorSize: TabBarIndicatorSize.tab,
-      indicator: BoxDecoration(
-        color: primaryBlue.withValues(alpha:0.63),
-        borderRadius: BorderRadius.circular(25),
-      
+  Widget _buildFilterTabs() {
+    return Container(
+      decoration: BoxDecoration(color: Colors.white),
+      child: TabBar(
+        controller: _tabController,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: BoxDecoration(
+          color: primaryBlue.withValues(alpha: 0.63),
+          borderRadius: BorderRadius.circular(25),
+        ),
+        labelColor: Colors.white,
+        dividerColor: Colors.transparent,
+        unselectedLabelColor: primaryBlue,
+        labelStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.normal,
+        ),
+        tabs: const [
+          Tab(text: 'Toutes'),
+          Tab(text: 'Nouvelles'),
+        ],
       ),
-      labelColor: Colors.white,
-       dividerColor: Colors.transparent,
-      unselectedLabelColor: primaryBlue,
-      labelStyle: const TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-      ),
-      unselectedLabelStyle: const TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.normal,
-      ),
-      tabs: const [
-        Tab(text: 'Toutes'),
-        Tab(text: 'Nouvelles'),
-      ],
-    ),
-  );
-}
+    );
+  }
 
   // Liste des formations
   Widget _buildFormationList(List<Formation> list) {
@@ -361,7 +269,14 @@ Widget _buildFilterTabs() {
                   backgroundColor: Colors.black,
                   radius: 20,
                   // Icône temporaire pour le logo ODC
-                  child: Text('ODC', style: TextStyle(color: primaryOrange, fontSize: 10, fontWeight: FontWeight.bold)), 
+                  child: Text(
+                    'ODC',
+                    style: TextStyle(
+                      color: primaryOrange,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Column(
@@ -369,15 +284,25 @@ Widget _buildFilterTabs() {
                   children: [
                     Text(
                       formation.centerName,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                        const Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(width: 5),
                         Text(
                           formation.centerLocation,
-                          style: const TextStyle(color: Colors.grey, fontSize: 13),
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
@@ -402,44 +327,56 @@ Widget _buildFilterTabs() {
             const SizedBox(height: 15),
 
             // Détails (Dates, Lien, Places, Financement)
-            _buildDetailRow(Icons.calendar_today, 'Du ${formation.startDate} au ${formation.endDate}'),
-            _buildDetailRow(Icons.link, formation.link, color: primaryBlue),
-            _buildDetailRow(Icons.person, '${formation.placesAvailable} places disponibles'),
             _buildDetailRow(
-              Icons.attach_money, 
+              Icons.calendar_today,
+              'Du ${formation.startDate} au ${formation.endDate}',
+            ),
+            _buildDetailRow(Icons.link, formation.link, color: primaryBlue),
+            _buildDetailRow(
+              Icons.person,
+              '${formation.placesAvailable} places disponibles',
+            ),
+            _buildDetailRow(
+              Icons.attach_money,
               'Besoin de financement : ${formation.needsFunding ? 'Oui' : 'Non'}',
               color: formation.needsFunding ? primaryRed : primaryGreen,
             ),
-            
+
             const SizedBox(height: 10),
 
             // Bouton Voir détails
-          // Bouton Voir détails
-Align(
-  alignment: Alignment.centerRight,
-  child: ElevatedButton.icon(
-    onPressed: () {
-      // TODO: Naviguer vers DetailPage en passant l'ID de la formation
-      debugPrint('Naviguer vers les détails de ${formation.title}');
-    },
-   
-    label: const Text(
-      'Voir détails',
-      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-    ),
-    style: ElevatedButton.styleFrom(
-      shadowColor: Colors.black45,
-      backgroundColor: Colors.white, //
-      foregroundColor: primaryBlue, // 🩶 texte et icône blancs
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      elevation: 3, // ou 2 si tu veux un petit effet d'ombre
-    ),
-  ),
-),
+            // Bouton Voir détails
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FormationDetailsPage(),
+                    ),
+                  );
+                },
 
+                label: const Text(
+                  'Voir détails',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                style: ElevatedButton.styleFrom(
+                  shadowColor: Colors.black45,
+                  backgroundColor: Colors.white, //
+                  foregroundColor: primaryBlue, // 🩶 texte et icône blancs
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 3, // ou 2 si tu veux un petit effet d'ombre
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -447,7 +384,11 @@ Align(
   }
 
   // Ligne de détail avec icône
-  Widget _buildDetailRow(IconData icon, String text, {Color color = Colors.black87}) {
+  Widget _buildDetailRow(
+    IconData icon,
+    String text, {
+    Color color = Colors.black87,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4.0),
       child: Row(
@@ -455,10 +396,7 @@ Align(
           Icon(icon, size: 16, color: color),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              text,
-              style: TextStyle(fontSize: 14, color: color),
-            ),
+            child: Text(text, style: TextStyle(fontSize: 14, color: color)),
           ),
         ],
       ),

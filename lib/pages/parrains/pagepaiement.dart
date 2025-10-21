@@ -1,35 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 // --- COULEURS ET CONSTANTES GLOBALES ---
 const Color primaryBlue = Color(0xFF2196F3); // Couleur principale bleue
 const Color primaryGreen = Color(0xFF4CAF50); // Vert pour Montant payé
 const Color primaryRed = Color(0xFFF44336);  // Rouge pour Montant restant
-
-// --- 1. CLASSE CLIPPER (pour la forme 'blob' de l'en-tête) ---
-class CustomShapeClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, size.height * 0.85); // Début du clip sur la gauche
-    
-    // Courbe cubique pour la forme irrégulière (le "blob" pour l'en-tête)
-    final controlPoint1 = Offset(size.width * 0.25, size.height * 1.15); 
-    final controlPoint2 = Offset(size.width * 0.75, size.height * 0.55);
-    final endPoint = Offset(size.width, size.height * 0.65);
-    
-    path.cubicTo(
-      controlPoint1.dx, controlPoint1.dy, 
-      controlPoint2.dx, controlPoint2.dy, 
-      endPoint.dx, endPoint.dy,
-    );
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
-
 // --- 2. WIDGET PRINCIPAL : PaymentPage ---
 class PaymentPage extends StatefulWidget {
   const PaymentPage({super.key});
@@ -65,7 +40,17 @@ class _PaymentPageState extends State<PaymentPage> {
       body: Stack(
         children: [
           // 1. En-tête bleu et barre de titre
-          _buildHeader(),
+          Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: CustomHeader(
+            title: "Paiement",
+            showBackButton: true,
+            height: 150,
+          ),
+        ),
+         
           
           // 2. Contenu principal (scrollable)
           Positioned.fill(
@@ -108,49 +93,6 @@ class _PaymentPageState extends State<PaymentPage> {
 
   // --- WIDGETS DE CONSTRUCTION ---
   
-  // En-tête avec le clipper et le titre
-  Widget _buildHeader() {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: ClipPath(
-        clipper: CustomShapeClipper(),
-        child: Container(
-          height: 250, // Hauteur de l'en-tête bleu
-          color: primaryBlue,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 40.0, left: 10.0, right: 20.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Bouton retour
-                IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context), 
-                ),
-                // Titre
-                Expanded(
-                  child: Text(
-                    'Paiement',
-                    style: const TextStyle(
-                      fontSize: 22, 
-                      fontWeight: FontWeight.bold, 
-                      color: Colors.white
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                // Placeholder pour le logo RePartir (alignement)
-                const SizedBox(width: 48), 
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   // Carte de résumé de la formation
   Widget _buildFormationSummaryCard() {
     return Container(
