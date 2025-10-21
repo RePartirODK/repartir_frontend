@@ -150,7 +150,6 @@ class _DetailPageState extends State<DetailPage> {
           const CircleAvatar(
             radius: 50,
             backgroundColor: primaryBlue, // Couleur d'arrière-plan de l'avatar
-            // TODO: Remplacer par l'image de profil du jeune
             child: Icon(Icons.person, size: 70, color: Colors.white),
           ),
           const SizedBox(height: 10),
