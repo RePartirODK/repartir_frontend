@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/auth/role_selection_page.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
+import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart'; // Import de la page d'accueil entreprise
 
 class AuthenticationPage extends StatefulWidget {
   const AuthenticationPage({super.key});
@@ -95,6 +96,8 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                             foregroundColor: Colors.white,
                           ),
                           onPressed: () {
+                            // Pour l'instant, nous redirigeons directement vers AccueilEntreprisePage.
+                            // Plus tard, cette logique sera conditionnelle au rôle de l'utilisateur.
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(builder: (context) => const AccueilPage()),

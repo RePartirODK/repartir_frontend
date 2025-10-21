@@ -2,6 +2,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/auth/jeune_signup_page.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
+import 'package:repartir_frontend/pages/auth/entreprise_signup_page.dart';
+import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
 
 class RoleSelectionPage extends StatelessWidget {
   const RoleSelectionPage({super.key});
@@ -83,7 +85,12 @@ class RoleSelectionPage extends StatelessWidget {
                           icon: Icons.apartment_outlined,
                           title: 'Entreprise',
                           subtitle: 'Je publie des offres d\'emploie',
-                          onTap: () {}, // TODO: Implement navigation
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const EntrepriseSignupPage()),
+                            );
+                          },
                         ),
                       ),
                     ],
