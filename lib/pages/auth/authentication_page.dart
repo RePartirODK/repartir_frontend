@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/auth/role_selection_page.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart'; // Import de la page d'accueil entreprise
+import 'package:repartir_frontend/components/custom_header.dart';
 
 class AuthenticationPage extends StatefulWidget {
   const AuthenticationPage({super.key});
@@ -17,19 +18,31 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 25.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/images/logo_repartir.png',
-                  height: 150,
-                ),
-                const SizedBox(height: 50),
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Arrière-plan
+          Container(color: Colors.white),
+          
+          // En-tête bleu avec forme ondulée
+          const CustomHeader(
+            height: 200,
+          ),
+          
+          // Contenu principal
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 80),
+                    Image.asset(
+                      'assets/images/logo_repartir.png',
+                      height: 120,
+                    ),
+                    const SizedBox(height: 30),
                 Container(
                   padding: const EdgeInsets.all(25),
                   decoration: BoxDecoration(
@@ -100,7 +113,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                             // Plus tard, cette logique sera conditionnelle au rôle de l'utilisateur.
                             Navigator.pushAndRemoveUntil(
                               context,
-                              MaterialPageRoute(builder: (context) => const AccueilPage()),
+                              MaterialPageRoute(builder: (context) => const AccueilEntreprisePage()),
                               (Route<dynamic> route) => false,
                             );
                           },
@@ -130,10 +143,12 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                     ],
                   ),
                 ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
