@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/pages/accueilparrain.dart';
+import 'package:repartir_frontend/pages/dons.dart';
+import 'package:repartir_frontend/pages/formationdetails.dart';
+import 'package:repartir_frontend/pages/profil.dart';
 
 // Assurez-vous d'avoir CustomBottomNavBar, CustomShapeClipper, primaryBlue, et primaryGreen définis
 // Si vous utilisez des fichiers séparés, n'oubliez pas d'importer :
@@ -6,42 +10,12 @@ import 'package:flutter/material.dart';
 // import 'custom_shape_clipper.dart';
 
 // Définition des couleurs
-const Color primaryBlue = Color(0xFF2196F3);
+const Color primaryBlue = Color(0xFF3EB2FF);
 const Color primaryGreen = Color(0xFF4CAF50);
 const Color lightRed = Color(0xFFFDD8D8); // Couleur pour le badge "En attente"
 
 // --- DÉBUT DE LA CLASSE DE NAVIGATION (Copie pour référence si vous l'avez perdue) ---
-// ... (Copiez/Collez CustomBottomNavBar ici si elle n'est pas dans un fichier séparé) ...
-class CustomBottomNavBar extends StatelessWidget {
-  final int selectedIndex;
-  final Function(int) onItemTapped;
 
-  const CustomBottomNavBar({
-    super.key,
-    required this.selectedIndex,
-    required this.onItemTapped,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      backgroundColor: Colors.white,
-      type: BottomNavigationBarType.fixed, 
-      elevation: 10,
-      currentIndex: selectedIndex,
-      selectedItemColor: primaryBlue,
-      unselectedItemColor: Colors.grey,
-      onTap: onItemTapped,
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Accueil'),
-        BottomNavigationBarItem(icon: Icon(Icons.handshake_outlined), activeIcon: Icon(Icons.handshake), label: 'Parrainage'),
-        BottomNavigationBarItem(icon: Icon(Icons.school_outlined), activeIcon: Icon(Icons.school), label: 'Formations'),
-        BottomNavigationBarItem(icon: Icon(Icons.person_outlined), activeIcon: Icon(Icons.person), label: 'Profil'),
-      ],
-    );
-  }
-}
-// --- FIN DE LA CLASSE DE NAVIGATION ---
 
 // --- DÉBUT DE LA CLASSE CLIPPER (pour la forme 'blob') ---
 // ... (Copiez/Collez CustomShapeClipper ici si elle n'est pas dans un fichier séparé) ...
@@ -91,6 +65,40 @@ class _DetailPageState extends State<DetailPage> {
   final String trainingCenter = "Centre de formations Sabatiso";
   final String situation = "Attbougou 1008 logements en face de la boulangerie";
 
+     int _selectedIndex = 1;
+    void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+     switch (index) {
+      case 0:
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ParrainHomePage()),
+        );
+        break;
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const DonationsPage()),
+        );
+        break;
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const FormationPage()),
+        );
+        break;
+      case 3:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfilePage()),
+        );
+        break;
+    }
+  }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +108,10 @@ class _DetailPageState extends State<DetailPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       
-      
+      //   bottomNavigationBar: CustomBottomNavBar(
+      //   selectedIndex: _selectedIndex,
+      //   onItemTapped: _onItemTapped,
+      // ),
       body: Stack(
         children: <Widget>[
           // --- 1. Header (Fond bleu 'blob') ---

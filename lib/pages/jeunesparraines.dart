@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // --- COULEURS ET CONSTANTES GLOBALES ---
-const Color primaryBlue = Color(0xFF2196F3); // Couleur principale bleue
+const Color primaryBlue = Color(0xFF3EB2FF); // Couleur principale bleue
 const Color primaryGreen = Color(0xFF4CAF50); // Vert pour l'indicateur de succès
 const Color lightGreenBackground = Color(0xFFE8F5E9); // Fond vert très clair pour les cartes
 
@@ -181,7 +181,7 @@ class SponsoredYouthPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha:0.1),
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, 2),
@@ -193,10 +193,10 @@ class SponsoredYouthPage extends StatelessWidget {
           // Avatar du jeune (simulé)
           CircleAvatar(
             radius: 30,
-            backgroundColor: primaryBlue.withOpacity(0.1),
+            backgroundColor: primaryBlue.withValues(alpha:0.1),
             child: Icon(
               youth.avatarAsset == 'male' ? Icons.person : Icons.person_3,
-              color: primaryBlue.withOpacity(0.8),
+              color: primaryBlue.withValues(alpha:0.8),
               size: 40,
             ),
           ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // Définition des couleurs
-const Color primaryBlue = Color(0xFF2196F3);
+const Color primaryBlue = Color(0xFF3EB2FF);
 const Color primaryGreen = Color(0xFF4CAF50);
 
 /// La barre de navigation inférieure personnalisée pour toute l'application.

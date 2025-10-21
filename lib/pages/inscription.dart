@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/pages/accueilparrain.dart';
+import 'package:repartir_frontend/pages/nav.dart';
 
 // --- COULEURS ET CONSTANTES GLOBALES ---
-const Color primaryBlue = Color(0xFF2196F3); // Couleur principale bleue
+const Color primaryBlue = Color(0xFF3EB2FF); // Couleur principale bleue
 const Color inputBackground = Color(0xFFF5F5F5); // Fond légèrement gris pour les champs
 const Color secondaryText = Color(0xFF757575); // Couleur pour les textes secondaires
 
@@ -63,21 +65,71 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   // Fonction de simulation d'inscription
   void _handleRegistration() {
-    // Ici, vous ajouteriez la logique d'appel API pour l'inscription
-    final nom = _nomController.text;
-    final email = _emailController.text;
-    
-    // Simulation de l'action
-    if (nom.isNotEmpty && email.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Inscription de $nom ($email) en cours...')),
+  final nom = _nomController.text;
+  final email = _emailController.text;
+
+  if (nom.isNotEmpty && email.isNotEmpty) {
+    // SnackBar de succès stylé
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating, // Flottant au-dessus du contenu
+        margin: const EdgeInsets.all(16), // Espacement avec les bords
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        backgroundColor: Colors.green.withValues(alpha:0.9),
+        duration: const Duration(seconds: 3),
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Inscription de $nom ($email) en cours...',
+                style: const TextStyle(fontSize: 16, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  
+    //navigation vers la page suivante
+     Future.delayed(const Duration(seconds: 4), () {
+      Navigator.pushReplacement(
+        // ignore: use_build_context_synchronously
+        context,
+        MaterialPageRoute(builder: (context) => const NavHomePage()),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez remplir tous les champs requis.')),
-      );
-    }
+    });
+  } else {
+    // SnackBar d’erreur stylé
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        backgroundColor: Colors.redAccent.withValues(alpha:0.9),
+        duration: const Duration(seconds: 3),
+        content: Row(
+          children: const [
+            Icon(Icons.warning_amber_rounded, color: Colors.white),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Veuillez remplir tous les champs.',
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

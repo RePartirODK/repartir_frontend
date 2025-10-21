@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/pages/accueilparrain.dart';
+import 'package:repartir_frontend/pages/dons.dart';
+import 'package:repartir_frontend/pages/profil.dart';
 
 // Définition des couleurs (doivent correspondre à celles utilisées dans detail_page.dart)
-const Color primaryBlue = Color(0xFF2196F3);
+const Color primaryBlue = Color(0xFF3EB2FF);
 const Color primaryGreen = Color(0xFF4CAF50);
 const Color primaryOrange = Color(0xFFFF9800);
 const Color primaryRed = Color(0xFFF44336);
@@ -63,35 +66,6 @@ class CustomShapeClipper extends CustomClipper<Path> {
 }
 
 // 2. CustomBottomNavBar (Barre de navigation inférieure)
-class CustomBottomNavBar extends StatelessWidget {
-  final int selectedIndex;
-  final Function(int) onItemTapped;
-
-  const CustomBottomNavBar({
-    Key? key,
-    required this.selectedIndex,
-    required this.onItemTapped,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      backgroundColor: Colors.white,
-      type: BottomNavigationBarType.fixed, 
-      elevation: 10,
-      currentIndex: selectedIndex,
-      selectedItemColor: primaryBlue,
-      unselectedItemColor: Colors.grey,
-      onTap: onItemTapped,
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Accueil'),
-        BottomNavigationBarItem(icon: Icon(Icons.handshake_outlined), activeIcon: Icon(Icons.handshake), label: 'Parrainage'),
-        BottomNavigationBarItem(icon: Icon(Icons.school_outlined), activeIcon: Icon(Icons.school), label: 'Formations'),
-        BottomNavigationBarItem(icon: Icon(Icons.person_outlined), activeIcon: Icon(Icons.person), label: 'Profil'),
-      ],
-    );
-  }
-}
 
 // --- PAGE PRINCIPALE : FORMATIONS ---
 class FormationPage extends StatefulWidget {
@@ -175,12 +149,10 @@ class _FormationPageState extends State<FormationPage> with SingleTickerProvider
     }
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // TODO: Logique de navigation
-  }
+  
+ 
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -188,10 +160,10 @@ class _FormationPageState extends State<FormationPage> with SingleTickerProvider
 
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
-      ),
+      // bottomNavigationBar: CustomBottomNavBar(
+      //   selectedIndex: _selectedIndex,
+      //   onItemTapped: _onItemTapped,
+      // ),
       
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: primaryBlue))

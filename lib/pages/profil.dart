@@ -13,7 +13,6 @@ class CustomShapeClipper extends CustomClipper<Path> {
     final double startY = size.height * 0.8; 
     path.lineTo(0, startY);
     
-    // Courbe cubique pour la forme irrégulière (le "blob")
     final controlPoint1 = Offset(size.width * 0.25, size.height * 1.15); 
     final controlPoint2 = Offset(size.width * 0.75, size.height * 0.55);
     final endPoint = Offset(size.width, size.height * 0.65);
@@ -31,63 +30,67 @@ class CustomShapeClipper extends CustomClipper<Path> {
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
-
 // --- WIDGET PRINCIPAL : ProfilePage ---
-
-class ProfilePage extends StatelessWidget {
-  // Simuler les données utilisateur (à remplacer par un modèle/backend)
-  final String userName = 'Ousmane Diallo';
-  final String userRole = 'Menuisier'; // Peut être Jeune, Parrain, ou un titre pro.
-  final String userEmail = 'adiallo7485@gmail.com';
-  final String userPhone = '+22376412209';
-
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  // Simuler les données utilisateur (à remplacer par un modèle/backend)
+  final String userName = 'Ousmane Diallo';
+  final String userRole = 'Menuisier';
+  final String userEmail = 'adiallo7485@gmail.com';
+  final String userPhone = '+22376412209';
+
+  // Pour la navigation (exemple)
+  int _selectedIndex = 3;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Logique de navigation si nécessaire
+    print('Onglet sélectionné : $index');
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Utiliser SingleChildScrollView pour assurer la responsivité sur tous les appareils
     return Scaffold(
+      backgroundColor: Colors.white,
+      // bottomNavigationBar: CustomBottomNavBar(
+      //   selectedIndex: _selectedIndex,
+      //   onItemTapped: _onItemTapped,
+      // ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. En-tête et Avatar
             _buildProfileHeader(context),
-            
-            // 2. Sections du profil
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Section 2.1: Information Personnelle ---
                   const Text(
                     'Information Personnelle',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryBlue),
                   ),
                   const SizedBox(height: 15),
-                  // Carte Email
                   _buildInfoCard(Icons.email, 'Email', userEmail),
                   const SizedBox(height: 10),
-                  // Carte Téléphone
                   _buildInfoCard(Icons.phone, 'Téléphone', userPhone),
-                  
                   const SizedBox(height: 40),
-                  
-                  // --- Section 2.2: Paramètres du Compte ---
                   const Text(
                     'Paramètres du compte',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryBlue),
                   ),
                   const SizedBox(height: 15),
-                  
-                  // Option Changer le mot de passe
                   _buildSettingItem(context, 'Changer le mot de passe', () {
-                    // Logique pour changer le mot de passe
                     print('Action: Changer mot de passe');
                   }),
-                  // Option Supprimer mon compte
                   _buildSettingItem(context, 'Supprimer mon compte', () {
-                    // Logique pour supprimer le compte
                     print('Action: Supprimer mon compte');
                   }, isDestructive: true),
                 ],
@@ -98,28 +101,23 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
-  
-  // En-tête de la page de profil
+
   Widget _buildProfileHeader(BuildContext context) {
     return Stack(
       children: [
-        // Arrière-plan bleu avec le clipper
         ClipPath(
           clipper: CustomShapeClipper(),
           child: Container(height: 300, color: primaryBlue),
         ),
-        
-        // Contenu de l'en-tête (Titre, Avatar, Nom)
         Column(
           children: [
-            // Barre de titre et Bouton Retour
             Padding(
               padding: const EdgeInsets.only(top: 40, left: 10, right: 20),
               child: Row(
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context), 
+                    onPressed: () => Navigator.pop(context),
                   ),
                   const Text(
                     'Profile',
@@ -128,20 +126,15 @@ class ProfilePage extends StatelessWidget {
                 ],
               ),
             ),
-            
             const SizedBox(height: 20),
-            
-            // Avatar de l'utilisateur avec bouton d'édition
             Stack(
               alignment: Alignment.bottomRight,
               children: [
-                // Avatar principal (simulé)
                 const CircleAvatar(
                   radius: 60,
                   backgroundColor: Colors.white,
-                  child: Icon(Icons.person, size: 80, color: Colors.blueGrey), 
+                  child: Icon(Icons.person, size: 80, color: Colors.blueGrey),
                 ),
-                // Bouton d'édition d'image
                 Positioned(
                   bottom: 0,
                   right: 0,
@@ -164,32 +157,22 @@ class ProfilePage extends StatelessWidget {
                 ),
               ],
             ),
-            
             const SizedBox(height: 10),
-            
-            // Nom et Rôle
             Text(
               userName,
-              style: const TextStyle(
-                fontSize: 24, fontWeight: FontWeight.bold, 
-                color: Colors.black),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             Text(
               userRole,
-              style: TextStyle(fontSize: 16, color: Colors.black
-              .withValues(alpha: 0.8)),
+              style: TextStyle(fontSize: 16, color: Colors.black.withOpacity(0.8)),
             ),
-            
             const SizedBox(height: 15),
-            
-            // Bouton Modifier le Profil
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SizedBox(
                 height: 45,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // Logique pour l'édition de profil
                     print('Edit Profile Pressed');
                   },
                   icon: const Icon(Icons.edit, size: 20, color: Colors.white),
@@ -207,8 +190,7 @@ class ProfilePage extends StatelessWidget {
       ],
     );
   }
-  
-  // Widget pour afficher les informations (Email/Téléphone)
+
   Widget _buildInfoCard(IconData icon, String title, String value) {
     return Container(
       padding: const EdgeInsets.all(15),
@@ -218,7 +200,7 @@ class ProfilePage extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
+            color: Colors.grey.withOpacity(0.1),
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, 2),
@@ -229,23 +211,16 @@ class ProfilePage extends StatelessWidget {
         children: [
           Icon(icon, color: primaryBlue, size: 24),
           const SizedBox(width: 15),
-          Expanded( // Assure que la colonne prend l'espace restant
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
+                Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(height: 4),
-                // FittedBox assure que le texte ne déborde pas sur de petits écrans (responsivité)
-                FittedBox( 
+                FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    value,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
+                  child: Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                 ),
               ],
             ),
@@ -255,15 +230,12 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // Widget pour un élément de paramètre du compte
-  Widget _buildSettingItem(BuildContext context, String title, VoidCallback onTap, 
-  {bool isDestructive = false}) {
+  Widget _buildSettingItem(BuildContext context, String title, VoidCallback onTap, {bool isDestructive = false}) {
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 15),
         decoration: BoxDecoration(
-          // Bordure inférieure pour la séparation
           border: Border(
             bottom: BorderSide(color: Colors.grey.shade200, width: 1),
           ),
@@ -273,11 +245,7 @@ class ProfilePage extends StatelessWidget {
           children: [
             Text(
               title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: isDestructive ? primaryRed : Colors.black87,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: isDestructive ? primaryRed : Colors.black87),
             ),
             Icon(Icons.arrow_forward_ios, size: 16, color: isDestructive ? primaryRed : Colors.grey),
           ],
@@ -286,4 +254,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 }
+
+// --- NOTE ---
+// N'oublie pas d'importer ton CustomBottomNavBar si elle est dans un fichier séparé :
 

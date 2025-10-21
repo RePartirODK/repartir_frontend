@@ -16,25 +16,11 @@ class ParrainHomePage extends StatefulWidget {
 
 class _ParrainHomePageState extends State<ParrainHomePage> {
   // État pour la barre de navigation inférieure
-  int _selectedIndex = 0; // 'Accueil' est sélectionné par défaut
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // TODO: Ajoutez ici la logique de navigation (ex: Navigator.push ou PageView)
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // La barre de navigation personnalisée
-      bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
-      ),
-
       // Le corps de la page avec SingleChildScrollView pour le défilement
       body: SingleChildScrollView(
         child: Column(
