@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/pages/dons.dart';
+import 'package:repartir_frontend/pages/parrains/dons.dart';
 // Importez le composant de barre de navigation si dans un fichier séparé
 // import 'custom_bottom_nav_bar.dart';
 

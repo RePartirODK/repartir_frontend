@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/pages/accueilparrain.dart';
-import 'package:repartir_frontend/pages/dons.dart';
-import 'package:repartir_frontend/pages/profil.dart';
+import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
+import 'package:repartir_frontend/pages/parrains/dons.dart';
+import 'package:repartir_frontend/pages/parrains/profil.dart';
 
 // Définition des couleurs (doivent correspondre à celles utilisées dans detail_page.dart)
 const Color primaryBlue = Color(0xFF3EB2FF);

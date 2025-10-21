@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/pages/accueilparrain.dart';
-import 'package:repartir_frontend/pages/detailsdemande.dart';
-import 'package:repartir_frontend/pages/dons.dart';
-import 'package:repartir_frontend/pages/formationdetails.dart';
-import 'package:repartir_frontend/pages/inscription.dart';
-import 'package:repartir_frontend/pages/jeunesparraines.dart';
-import 'package:repartir_frontend/pages/pagepaiement.dart';
-import 'package:repartir_frontend/pages/profil.dart';
-import 'package:repartir_frontend/pages/voirdetailformation.dart';
+import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
+import 'package:repartir_frontend/pages/parrains/detailsdemande.dart';
+import 'package:repartir_frontend/pages/parrains/dons.dart';
+import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
+import 'package:repartir_frontend/pages/parrains/inscription.dart';
+import 'package:repartir_frontend/pages/parrains/jeunesparraines.dart';
+import 'package:repartir_frontend/pages/parrains/pagepaiement.dart';
+import 'package:repartir_frontend/pages/parrains/profil.dart';
+import 'package:repartir_frontend/pages/parrains/voirdetailformation.dart';
 
 void main() {
   runApp(const MyApp());

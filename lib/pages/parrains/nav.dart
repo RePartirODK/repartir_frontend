@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/pages/accueilparrain.dart';
-import 'package:repartir_frontend/pages/barnavcustom.dart';
-import 'package:repartir_frontend/pages/dons.dart';
-import 'package:repartir_frontend/pages/formationdetails.dart';
-import 'package:repartir_frontend/pages/inscription.dart';
-import 'package:repartir_frontend/pages/profil.dart';
+import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
+import 'package:repartir_frontend/pages/parrains/barnavcustom.dart';
+import 'package:repartir_frontend/pages/parrains/dons.dart';
+import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
+import 'package:repartir_frontend/pages/parrains/inscription.dart';
+import 'package:repartir_frontend/pages/parrains/profil.dart';
 
 // Couleurs
 const Color primaryBlue = Color(0xFF2196F3);
