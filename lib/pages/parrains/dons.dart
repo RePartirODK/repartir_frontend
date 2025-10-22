@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/pages/jeuner/formation_detail_page.dart';
-import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
 import 'package:repartir_frontend/pages/parrains/detailsdemande.dart';
-import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
-import 'package:repartir_frontend/pages/parrains/profil.dart';
-
 // Définition des couleurs
 const Color primaryBlue = Color(0xFF3EB2FF);
 const Color primaryGreen = Color(0xFF4CAF50);

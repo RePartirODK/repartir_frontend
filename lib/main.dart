@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/pages/parrains/nav.dart';
+import 'package:repartir_frontend/pages/centres/acceuil.dart';
+import 'package:repartir_frontend/pages/centres/inscription.dart';
+import 'package:repartir_frontend/pages/centres/navcentre.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Import pages
-import 'package:repartir_frontend/pages/onboarding/onboarding_page.dart';
-import 'package:repartir_frontend/pages/auth/authentication_page.dart';
+
 import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
 import 'package:repartir_frontend/pages/parrains/detailsdemande.dart';
 import 'package:repartir_frontend/pages/parrains/dons.dart';
@@ -39,7 +40,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => NavHomePage(),
+        '/': (context) => NavHomeCentrePage(),
         '/donation': (context) => const DonationsPage(),
         '/details': (context) => const DetailPage(),
         '/formations': (context) => const FormationPage(),
@@ -49,6 +50,8 @@ class MyApp extends StatelessWidget {
         '/parrainés': (context) => SponsoredYouthPage(),
         '/inscriptionparrain': (context) => const RegistrationPage(),
         '/accueil': (context) => const ParrainHomePage(),
+        '/inscriptioncentre': (context)=> InscriptionCentrePage(),
+        '/homecentre':(context)=> EnhanceHome()
       },
     );
   }

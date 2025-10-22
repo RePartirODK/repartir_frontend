@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
-import 'package:repartir_frontend/pages/parrains/dons.dart';
-import 'package:repartir_frontend/pages/parrains/profil.dart';
 import 'package:repartir_frontend/pages/parrains/voirdetailformation.dart';
 
 // Définition des couleurs (doivent correspondre à celles utilisées dans detail_page.dart)
@@ -131,9 +128,6 @@ class _FormationPageState extends State<FormationPage>
 
   @override
   Widget build(BuildContext context) {
-    final double headerClipperHeight =
-        250.0; // Hauteur généreuse pour englober la recherche
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: _isLoading

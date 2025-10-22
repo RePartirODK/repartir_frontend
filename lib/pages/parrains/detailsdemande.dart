@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
-import 'package:repartir_frontend/pages/parrains/dons.dart';
-import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
 import 'package:repartir_frontend/pages/parrains/pagepaiement.dart';
-import 'package:repartir_frontend/pages/parrains/profil.dart';
 
 // Assurez-vous d'avoir CustomBottomNavBar, CustomShapeClipper, primaryBlue, et primaryGreen définis
 // Si vous utilisez des fichiers séparés, n'oubliez pas d'importer :
@@ -39,7 +35,6 @@ class _DetailPageState extends State<DetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double headerClipperHeight = 200.0; // Hauteur pour le clipper blob
     final double contentStartOffset =
         200.0; // Où le SingleChildScrollView doit commencer
 
@@ -150,7 +145,6 @@ class _DetailPageState extends State<DetailPage> {
           const CircleAvatar(
             radius: 50,
             backgroundColor: primaryBlue, // Couleur d'arrière-plan de l'avatar
-            // TODO: Remplacer par l'image de profil du jeune
             child: Icon(Icons.person, size: 70, color: Colors.white),
           ),
           const SizedBox(height: 10),
