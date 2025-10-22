@@ -3,7 +3,6 @@ import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
 import 'package:repartir_frontend/pages/parrains/barnavcustom.dart';
 import 'package:repartir_frontend/pages/parrains/dons.dart';
 import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
-import 'package:repartir_frontend/pages/parrains/inscription.dart';
 import 'package:repartir_frontend/pages/parrains/profil.dart';
 
 // Couleurs

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/pages/centres/formation.dart';
-import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
 
 // Définition de la couleur principale
 const Color kPrimaryColor = Color(0xFF3EB2FF);
+const Color kSecondaryColor = Color(0xFF4CAF50);
 const double kHeaderHeight = 200.0;
 
 class EnhanceHome extends StatelessWidget {
@@ -22,7 +23,7 @@ class EnhanceHome extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             // 1. Le Header Incurvé avec le logo (importé de l'autre page)
-            CurvedHeader(),
+            CustomHeader(),
 
             // 2. Titre de bienvenue (placé sous le header)
             Padding(
@@ -80,10 +81,10 @@ class EnhanceHome extends StatelessWidget {
             title: "Formation en cours",
             value: "5",
             icon: Icons.school_outlined,
-            cardColor: const Color(0xFFE0F7FA), // Bleu très doux
-            valueColor: Colors.blueGrey[800]!,
+            cardColor: kPrimaryColor.withValues(alpha: 0.34),
+            valueColor: Colors.black,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 40),
 
           // Carte 2: Nombre de formations
           _buildStatCard(
@@ -91,8 +92,8 @@ class EnhanceHome extends StatelessWidget {
             title: "Nombre de formations",
             value: "10",
             icon: Icons.school_outlined,
-            cardColor: const Color(0xFFF1F8E9), // Vert très doux
-            valueColor: Colors.blueGrey[800]!,
+            cardColor: kSecondaryColor.withValues(alpha: 0.34), // Vert très doux
+            valueColor: Colors.black,
           ),
         ],
       ),
@@ -124,23 +125,27 @@ class EnhanceHome extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[700],
+                    fontSize: 18,
+                    color: valueColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 55,
-                    fontWeight: FontWeight.w900,
-                    color: valueColor,
+                const SizedBox(height: 2),
+                Padding(
+                  padding: const EdgeInsets.only(left: 40.0),
+                  child: Text(
+                    value,
+                    
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.w900,
+                      color: valueColor,
+                    ),
                   ),
                 ),
               ],
             ),
-            Icon(icon, size: 85, color: Colors.black.withValues(alpha: 0.15)),
+            Icon(icon, size: 80, color: Colors.black.withValues(alpha: 0.80)),
           ],
         ),
       ),
@@ -154,7 +159,7 @@ class EnhanceHome extends StatelessWidget {
         "Actions Rapides",
         style: TextStyle(
           fontSize: 22,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w900,
           color: Colors.black87,
         ),
       ),
@@ -188,8 +193,7 @@ class EnhanceHome extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: 
-                    (context)=> const FormationsPageCentre()
+                    builder: (context) => const FormationsPageCentre(),
                   ),
                 );
               },
@@ -225,103 +229,4 @@ class EnhanceHome extends StatelessWidget {
       ),
     );
   }
-}
-// ------------------------------------------------------------------
-// --- WIDGETS ET CLIPPER DU HEADER INCURVÉ (réutilisés) ---
-
-class CurvedHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: kHeaderHeight,
-      child: Stack(
-        children: <Widget>[
-          // La courbe bleue personnalisée
-          ClipPath(
-            clipper: BottomWaveClipper(),
-            child: Container(height: kHeaderHeight, color: kPrimaryColor),
-          ),
-          // Le Logo "RePartir"
-          const Positioned(top: 50, left: 20, child: _LogoWidget()),
-          // Optionnel: Ajouter l'heure et les icônes de la barre de statut
-          // (cela demande une gestion plus fine de l'espace si l'on veut les centrer parfaitement)
-        ],
-      ),
-    );
-  }
-}
-
-class _LogoWidget extends StatelessWidget {
-  const _LogoWidget();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 4.0,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.group_work, color: kPrimaryColor, size: 30),
-            const Text(
-              'RePartir',
-              style: TextStyle(
-                color: kPrimaryColor,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class BottomWaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, size.height * 0.7);
-
-    var firstControlPoint = Offset(size.width / 4, size.height);
-    var firstEndPoint = Offset(size.width / 2, size.height * 0.85);
-
-    path.quadraticBezierTo(
-      firstControlPoint.dx,
-      firstControlPoint.dy,
-      firstEndPoint.dx,
-      firstEndPoint.dy,
-    );
-
-    var secondControlPoint = Offset(size.width * 3 / 4, size.height * 0.7);
-    var secondEndPoint = Offset(size.width, size.height * 0.8);
-
-    path.quadraticBezierTo(
-      secondControlPoint.dx,
-      secondControlPoint.dy,
-      secondEndPoint.dx,
-      secondEndPoint.dy,
-    );
-
-    path.lineTo(size.width, 0);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

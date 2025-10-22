@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 // Définition de la couleur principale
 const Color kPrimaryColor = Color(0xFF3EB2FF);
@@ -79,26 +80,21 @@ class _AddFormationPageState extends State<AddFormationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white, // Fond blanc pour le formulaire lui-même
-      appBar: AppBar(
-        backgroundColor: Colors.white, // Barre d'appli blanche
-        elevation: 0, // Pas d'ombre sous l'AppBar
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Formations', // Le titre de la page parente
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
+      
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+        
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             // Intitulé de la formation
-            _buildLabeledTextField(
+            CustomHeader(
+              title: "Nouvelle formation",
+              showBackButton: true,
+            ),
+            Padding(padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: <Widget>[
+                   _buildLabeledTextField(
               label: 'Intitulé de la formation',
               hintText: 'Entrez le nom de la formation',
               controller: _titleController,
@@ -115,8 +111,7 @@ class _AddFormationPageState extends State<AddFormationPage> {
               icon: Icons.description,
             ),
             const SizedBox(height: 20),
-
-            // Durée & Coût
+             // Durée & Coût
             Row(
               children: <Widget>[
                 Expanded(
@@ -129,6 +124,7 @@ class _AddFormationPageState extends State<AddFormationPage> {
                   ),
                 ),
                 const SizedBox(width: 20),
+                
                 Expanded(
                   child: _buildLabeledTextField(
                     label: 'Coût',
@@ -138,6 +134,8 @@ class _AddFormationPageState extends State<AddFormationPage> {
                     icon: Icons.attach_money,
                   ),
                 ),
+
+
               ],
             ),
             const SizedBox(height: 20),
@@ -171,7 +169,7 @@ class _AddFormationPageState extends State<AddFormationPage> {
             const SizedBox(height: 20),
 
             // Nombre de places
-            _buildLabeledTextField(
+             _buildLabeledTextField(
               label: 'Nombre de places',
               hintText: 'Entrez le nombre de places de la formation',
               controller: _placesController,
@@ -213,7 +211,7 @@ class _AddFormationPageState extends State<AddFormationPage> {
             ),
             const SizedBox(height: 40),
 
-            // Boutons d'action
+                        // Boutons d'action
             Row(
               children: <Widget>[
                 Expanded(
@@ -253,6 +251,10 @@ class _AddFormationPageState extends State<AddFormationPage> {
                 ),
               ],
             ),
+              ],
+            ),
+            ),
+
           ],
         ),
       ),

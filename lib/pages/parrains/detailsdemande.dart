@@ -35,7 +35,6 @@ class _DetailPageState extends State<DetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double headerClipperHeight = 200.0; // Hauteur pour le clipper blob
     final double contentStartOffset =
         200.0; // Où le SingleChildScrollView doit commencer
 

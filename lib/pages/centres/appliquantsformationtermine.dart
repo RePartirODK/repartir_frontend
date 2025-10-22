@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/pages/centres/voirappliquant.dart';
 
 const Color kPrimaryColor = Color(0xFF3EB2FF);
@@ -58,31 +59,21 @@ class ApplicantsFormationTerminePage extends StatefulWidget {
 
 class _ApplicantsFormationTerminePageState
     extends State<ApplicantsFormationTerminePage> {
-  // L'index 1 correspond à "Appliquants" dans la BottomNavigationBar
-  int _selectedIndex = 1;
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      // Ajoutez ici la logique de navigation vers la page correspondante
-      print("Navigating to index: $_selectedIndex");
-    });
-  }
+  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: _buildBottomNavigationBar(
-        _selectedIndex,
-        _onItemTapped,
-      ),
 
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           // 1. Header Incurvé
-          CurvedHeader(),
+          CustomHeader(
+            title: "Appliquant",
+            showBackButton: true,
+          ),
 
           // 2. Contenu scrollable
           Expanded(
@@ -92,7 +83,7 @@ class _ApplicantsFormationTerminePageState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   // 2.1. Titre et Flèche de Retour
-                  _buildTitleSection(context),
+                 
 
                   // 2.2. Compteur d'Appliquants
                   const Padding(
@@ -126,35 +117,6 @@ class _ApplicantsFormationTerminePageState
   }
 
   // --- Widgets de construction des sections ---
-
-  Widget _buildTitleSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10.0, bottom: 20.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black, size: 28),
-            onPressed: () => Navigator.of(context).pop(), // Action de retour
-          ),
-          const Expanded(
-            child: Center(
-              child: Text(
-                'Appliquants',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-          ),
-          // Espace pour aligner le titre
-          const SizedBox(width: 48),
-        ],
-      ),
-    );
-  }
 
   Widget _buildApplicantCard(Applicant applicant) {
     return Card(
@@ -258,122 +220,8 @@ class _ApplicantsFormationTerminePageState
     );
   }
 
-  Widget _buildBottomNavigationBar(int currentIndex, Function(int) onTap) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: kPrimaryColor,
-      unselectedItemColor: Colors.grey[600],
-      currentIndex: currentIndex,
-      onTap: onTap,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
-        BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Appliquants'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.menu_book),
-          label: 'Formations',
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
-      ],
-    );
-  }
 }
 
 // ------------------------------------------------------------------
 // --- WIDGETS DU HEADER INCURVÉ (réutilisés) ---
 
-class CurvedHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    double finalHeaderHeight = kHeaderHeight * 0.9;
-
-    return Container(
-      height: finalHeaderHeight,
-      child: Stack(
-        children: <Widget>[
-          ClipPath(
-            clipper: BottomWaveClipper(),
-            child: Container(height: finalHeaderHeight, color: kPrimaryColor),
-          ),
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 10,
-            left: 20,
-            child: _LogoWidget(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LogoWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 4.0,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.group_work, color: kPrimaryColor, size: 30),
-            const Text(
-              'RePartir',
-              style: TextStyle(
-                color: kPrimaryColor,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class BottomWaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, size.height * 0.7);
-
-    var firstControlPoint = Offset(size.width / 4, size.height);
-    var firstEndPoint = Offset(size.width / 2, size.height * 0.85);
-
-    path.quadraticBezierTo(
-      firstControlPoint.dx,
-      firstControlPoint.dy,
-      firstEndPoint.dx,
-      firstEndPoint.dy,
-    );
-
-    var secondControlPoint = Offset(size.width * 3 / 4, size.height * 0.7);
-    var secondEndPoint = Offset(size.width, size.height * 0.8);
-
-    path.quadraticBezierTo(
-      secondControlPoint.dx,
-      secondControlPoint.dy,
-      secondEndPoint.dx,
-      secondEndPoint.dy,
-    );
-
-    path.lineTo(size.width, 0);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}

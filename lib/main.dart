@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/centres/acceuil.dart';
-import 'package:repartir_frontend/pages/centres/centreprofile.dart';
 import 'package:repartir_frontend/pages/centres/inscription.dart';
 import 'package:repartir_frontend/pages/centres/navcentre.dart';
 import 'package:shared_preferences/shared_preferences.dart';

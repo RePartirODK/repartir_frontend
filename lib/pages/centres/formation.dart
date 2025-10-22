@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/pages/centres/addformation.dart';
 import 'package:repartir_frontend/pages/centres/appliquantsformationtermine.dart';
 import 'package:repartir_frontend/pages/centres/appliquantsnoncertifie.dart';
@@ -62,36 +63,23 @@ class FormationsPageCentre extends StatefulWidget {
 
 class _FormationsPageCentreState extends State<FormationsPageCentre> {
   // État actuel de l'index de navigation (Formations est l'index 2)
-  int _selectedIndex = 2;
-
-  // Fonction pour mettre à jour l'index sélectionné
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      // Ici, vous ajouteriez la logique de navigation vers la page correspondante
-      print("Navigating to index: $_selectedIndex");
-    });
-  }
+ 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       // Utilisation de l'état _selectedIndex pour la barre de navigation
-      bottomNavigationBar: _buildBottomNavigationBar(
-        _selectedIndex,
-        _onItemTapped,
-      ),
-
+    
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             // Header Incurvé
-            CurvedHeader(),
+            CustomHeader(
+              title: "Formation",
+            ),
 
-            // Section Titre "Formations"
-            _buildTitleSection(context),
 
             // Section "Vos formations" et Bouton Ajouter
             _buildHeaderAndAddButton(),
@@ -106,25 +94,7 @@ class _FormationsPageCentreState extends State<FormationsPageCentre> {
     );
   }
 
-  // --- Widgets de construction de la page ---
-
-  Widget _buildTitleSection(BuildContext context) {
-    // ... (Reste inchangé)
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.only(top: 0.0, bottom: 20.0),
-        child: Text(
-          'Formations',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-      ),
-    );
-  }
-
+ 
   Widget _buildHeaderAndAddButton() {
     // ... (Reste inchangé)
     return Padding(
@@ -348,126 +318,7 @@ class _FormationsPageCentreState extends State<FormationsPageCentre> {
     );
   }
 
-  Widget _buildBottomNavigationBar(int currentIndex, Function(int) onTap) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: kPrimaryColor,
-      unselectedItemColor: Colors.grey[600],
-      currentIndex: currentIndex,
-      onTap: onTap, // Utilise la fonction de mise à jour de l'état
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
-        BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Appliquants'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.menu_book),
-          label: 'Formations',
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
-      ],
-    );
-  }
+
+
 }
 
-// ------------------------------------------------------------------
-// --- WIDGETS DU HEADER INCURVÉ (réutilisés) ---
-
-class CurvedHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    double finalHeaderHeight = kHeaderHeight * 0.9;
-
-    return Container(
-      height: finalHeaderHeight,
-      child: Stack(
-        children: <Widget>[
-          // La courbe bleue personnalisée
-          ClipPath(
-            clipper: BottomWaveClipper(),
-            child: Container(height: finalHeaderHeight, color: kPrimaryColor),
-          ),
-          // Le Logo "RePartir"
-          Positioned(
-            top:
-                MediaQuery.of(context).padding.top +
-                10, // Utiliser le padding de la status bar
-            left: 20,
-            child: _LogoWidget(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LogoWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 4.0,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.group_work, color: kPrimaryColor, size: 30),
-            const Text(
-              'RePartir',
-              style: TextStyle(
-                color: kPrimaryColor,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class BottomWaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, size.height * 0.7);
-
-    var firstControlPoint = Offset(size.width / 4, size.height);
-    var firstEndPoint = Offset(size.width / 2, size.height * 0.85);
-
-    path.quadraticBezierTo(
-      firstControlPoint.dx,
-      firstControlPoint.dy,
-      firstEndPoint.dx,
-      firstEndPoint.dy,
-    );
-
-    var secondControlPoint = Offset(size.width * 3 / 4, size.height * 0.7);
-    var secondEndPoint = Offset(size.width, size.height * 0.8);
-
-    path.quadraticBezierTo(
-      secondControlPoint.dx,
-      secondControlPoint.dy,
-      secondEndPoint.dx,
-      secondEndPoint.dy,
-    );
-
-    path.lineTo(size.width, 0);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}

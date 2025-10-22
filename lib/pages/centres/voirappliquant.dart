@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 // Définition des constantes
 const Color kPrimaryColor = Color(0xFF3EB2FF);
@@ -91,13 +92,15 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: _buildBottomNavigationBar(_selectedIndex, _onItemTapped),
+
       
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           // 1. Header Incurvé
-          CurvedHeader(),
+          CustomHeader(title: "Formations",
+          showBackButton: true,
+          ),
 
           // 2. Contenu scrollable (y compris le titre, l'avatar et les listes)
           Expanded(
@@ -131,26 +134,10 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 10.0, bottom: 20.0, left: 20, right: 20),
+          padding: const EdgeInsets.only(top: 15.0, bottom: 20.0, left: 20, right: 20),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black, size: 28),
-                onPressed: () => Navigator.of(context).pop(), 
-              ),
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    'Formations', // Le titre de la page est 'Formations'
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-              ),
               // Espace pour aligner le titre
               const SizedBox(width: 48), 
             ],
@@ -160,7 +147,7 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
         // Avatar et Nom
         CircleAvatar(
           radius: 50,
-          backgroundColor: applicant.avatarColor.withOpacity(0.8),
+          backgroundColor: applicant.avatarColor.withValues(alpha: 0.8),
           child: Icon(applicant.icon, color: Colors.white, size: 60),
         ),
         const SizedBox(height: 8),
@@ -207,7 +194,7 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: kPrimaryColor.withOpacity(0.3),
+                      color: kPrimaryColor.withValues(alpha:0.3),
                       blurRadius: 5,
                       offset: const Offset(0, 3),
                     )
@@ -368,33 +355,6 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
     );
   }
 
-  Widget _buildBottomNavigationBar(int currentIndex, Function(int) onTap) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: kPrimaryColor,
-      unselectedItemColor: Colors.grey[600],
-      currentIndex: currentIndex,
-      onTap: onTap,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Accueil',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.group),
-          label: 'Appliquants',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.menu_book),
-          label: 'Formations',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profil',
-        ),
-      ],
-    );
-  }
 }
 
 // ------------------------------------------------------------------
@@ -409,13 +369,8 @@ class CurvedHeader extends StatelessWidget {
       height: finalHeaderHeight, 
       child: Stack(
         children: <Widget>[
-          ClipPath(
-            clipper: BottomWaveClipper(),
-            child: Container(
-              height: finalHeaderHeight,
-              color: kPrimaryColor, 
-            ),
-          ),
+         CustomHeader(title: "Appliquant",
+         showBackButton: true,),
           Positioned(
             top: MediaQuery.of(context).padding.top + 10, 
             left: 20, 
@@ -431,8 +386,8 @@ class _LogoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 80,
-      height: 80,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         color: Colors.white, 
         shape: BoxShape.circle,
@@ -448,7 +403,7 @@ class _LogoWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.group_work, color: kPrimaryColor, size: 30), 
+            const Icon(Icons.group_work, color: kPrimaryColor, size: 20), 
             const Text(
               'RePartir',
               style: TextStyle(
