@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/centres/voirappliquant.dart';
 
-// Définition des constantes et modèles de données
 const Color kPrimaryColor = Color(0xFF3EB2FF);
 const double kHeaderHeight = 200.0;
 
 class Applicant {
   final String name;
+  final bool isCertified;
   final Color avatarColor;
-  final IconData icon; 
+  final IconData icon; // Pour simuler différents avatars
 
   Applicant({
     required this.name,
+    this.isCertified = true,
     required this.avatarColor,
     required this.icon,
   });
 }
 
-// Données statiques simulées
+// Données statiques simulées (qui viendront du backend)
 final List<Applicant> dummyApplicants = [
   Applicant(
     name: 'Alima Traoré',
@@ -25,22 +26,7 @@ final List<Applicant> dummyApplicants = [
     icon: Icons.person_3_sharp,
   ),
   Applicant(
-    name: 'Moussa Touré',
-    avatarColor: Colors.cyan[600]!,
-    icon: Icons.person_4_sharp,
-  ),
-  Applicant(
-    name: 'Moussa Touré',
-    avatarColor: Colors.cyan[600]!,
-    icon: Icons.person_4_sharp,
-  ),
-  Applicant(
-    name: 'Moussa Touré',
-    avatarColor: Colors.cyan[600]!,
-    icon: Icons.person_4_sharp,
-  ),
-  Applicant(
-    name: 'Aïssata Barry',
+    name: 'Alima Traoré',
     avatarColor: Colors.brown[400]!,
     icon: Icons.person_3_sharp,
   ),
@@ -49,24 +35,29 @@ final List<Applicant> dummyApplicants = [
     avatarColor: Colors.cyan[600]!,
     icon: Icons.person_4_sharp,
   ),
+  Applicant(
+    name: 'Dramane Touré',
+    avatarColor: Colors.cyan[600]!,
+    icon: Icons.person_4_sharp,
+  ),
+  Applicant(
+    name: 'Aïssata Barry',
+    avatarColor: Colors.brown[400]!,
+    icon: Icons.person_3_sharp,
+  ),
 ];
-
-// **************************************************
-// WIDGET STATEFUL POUR LA PAGE APPLICANTS
-// **************************************************
-
-class GeneralApplicantsPage extends StatefulWidget {
-  const GeneralApplicantsPage({super.key});
+class ApplicantsFormationNonTerminePage extends StatefulWidget {
+  const ApplicantsFormationNonTerminePage({super.key});
 
   @override
   // ignore: library_private_types_in_public_api
-  _GeneralApplicantsPageState createState() => _GeneralApplicantsPageState();
+  _ApplicantsFormationNonTerminePageState createState() => 
+  _ApplicantsFormationNonTerminePageState();
 }
 
-class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
+class _ApplicantsFormationNonTerminePageState extends State<ApplicantsFormationNonTerminePage> {
   // L'index 1 correspond à "Appliquants" dans la BottomNavigationBar
   int _selectedIndex = 1; 
-  final TextEditingController _searchController = TextEditingController();
 
   void _onItemTapped(int index) {
     setState(() {
@@ -74,12 +65,6 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
       // Ajoutez ici la logique de navigation vers la page correspondante
       print("Navigating to index: $_selectedIndex");
     });
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   @override
@@ -94,22 +79,30 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
           // 1. Header Incurvé
           CurvedHeader(),
 
-          // Contenu scrollable (y compris le titre, la barre de recherche et la liste)
+          // 2. Contenu scrollable
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  // 2. Titre et Flèche de Retour
+                  // 2.1. Titre et Flèche de Retour
                   _buildTitleSection(context),
 
-                  // 3. Barre de Recherche
-                  _buildSearchBar(),
+                  // 2.2. Compteur d'Appliquants
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 20.0),
+                    child: Text(
+                      "5 Appliquants",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green, // Couleur verte pour le compteur
+                      ),
+                    ),
+                  ),
 
-                  const SizedBox(height: 20),
-
-                  // 4. Liste des Appliquants
+                  // 2.3. Liste des Appliquants
                   ...dummyApplicants.map((applicant) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 15.0),
@@ -158,42 +151,6 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
     );
   }
 
-  Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha:  0.15),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 3), // Ombre subtile
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Rechercher une formation',
-          hintStyle: TextStyle(color: Colors.grey[500]),
-          prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide.none, // Pas de bordure visible
-          ),
-        ),
-        onChanged: (value) {
-          // Logique de filtrage de la liste ici
-          print("Searching for: $value");
-        },
-      ),
-    );
-  }
-
   Widget _buildApplicantCard(Applicant applicant) {
     return Card(
       elevation: 2.0,
@@ -222,27 +179,43 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
               ),
             ),
 
-            // Bouton "Voir" (Aligné à droite)
-            _buildViewButton('Voir'),
+            // Boutons d'action/Statut (Alignés à droite)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const SizedBox(height: 5),
+                _buildActionButton('Voir', isPrimary: false),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildViewButton(String text) {
-    // Le style du bouton "Voir"
+  Widget _buildActionButton(String text, {required bool isPrimary}) {
+    // Le style des boutons (Certifié et Voir)
     return Container(
       width: 90, // Largeur fixe pour l'alignement
       decoration: BoxDecoration(
-        color: kPrimaryColor.withValues(alpha:0.7),
+        color: kPrimaryColor.withValues(alpha:  0.7),
         borderRadius: BorderRadius.circular(5.0),
+        // Pour "Certifié", on peut simuler un badge plus voyant
+        boxShadow: isPrimary
+            ? [
+                BoxShadow(
+                  color: kPrimaryColor.withValues(alpha:  0.3),
+                  blurRadius: 3,
+                  offset: const Offset(0, 2),
+                )
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            /**
+             /**
              * Navigation vers la page profil de l'appliquant
              */
             Navigator.push(context, 
@@ -252,7 +225,7 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
             );
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
             child: Center(
               child: Text(
                 text,

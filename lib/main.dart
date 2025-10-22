@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/centres/acceuil.dart';
+import 'package:repartir_frontend/pages/centres/centreprofile.dart';
 import 'package:repartir_frontend/pages/centres/inscription.dart';
+import 'package:repartir_frontend/pages/centres/navcentre.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Import pages
@@ -39,7 +41,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => EnhanceHome(),
+        '/': (context) => NavHomeCentrePage(),
         '/donation': (context) => const DonationsPage(),
         '/details': (context) => const DetailPage(),
         '/formations': (context) => const FormationPage(),

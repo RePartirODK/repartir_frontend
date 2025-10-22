@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/centres/voirappliquant.dart';
 
-// Définition des constantes et modèles de données
 const Color kPrimaryColor = Color(0xFF3EB2FF);
 const double kHeaderHeight = 200.0;
 
 class Applicant {
   final String name;
+  final bool isCertified;
   final Color avatarColor;
-  final IconData icon; 
+  final IconData icon; // Pour simuler différents avatars
 
   Applicant({
     required this.name,
+    this.isCertified = true,
     required this.avatarColor,
     required this.icon,
   });
 }
 
-// Données statiques simulées
+// Données statiques simulées (qui viendront du backend)
 final List<Applicant> dummyApplicants = [
   Applicant(
     name: 'Alima Traoré',
@@ -25,22 +26,7 @@ final List<Applicant> dummyApplicants = [
     icon: Icons.person_3_sharp,
   ),
   Applicant(
-    name: 'Moussa Touré',
-    avatarColor: Colors.cyan[600]!,
-    icon: Icons.person_4_sharp,
-  ),
-  Applicant(
-    name: 'Moussa Touré',
-    avatarColor: Colors.cyan[600]!,
-    icon: Icons.person_4_sharp,
-  ),
-  Applicant(
-    name: 'Moussa Touré',
-    avatarColor: Colors.cyan[600]!,
-    icon: Icons.person_4_sharp,
-  ),
-  Applicant(
-    name: 'Aïssata Barry',
+    name: 'Alima Traoré',
     avatarColor: Colors.brown[400]!,
     icon: Icons.person_3_sharp,
   ),
@@ -49,24 +35,31 @@ final List<Applicant> dummyApplicants = [
     avatarColor: Colors.cyan[600]!,
     icon: Icons.person_4_sharp,
   ),
+  Applicant(
+    name: 'Dramane Touré',
+    avatarColor: Colors.cyan[600]!,
+    icon: Icons.person_4_sharp,
+  ),
+  Applicant(
+    name: 'Aïssata Barry',
+    avatarColor: Colors.brown[400]!,
+    icon: Icons.person_3_sharp,
+  ),
 ];
 
-// **************************************************
-// WIDGET STATEFUL POUR LA PAGE APPLICANTS
-// **************************************************
-
-class GeneralApplicantsPage extends StatefulWidget {
-  const GeneralApplicantsPage({super.key});
+class ApplicantsFormationTerminePage extends StatefulWidget {
+  const ApplicantsFormationTerminePage({super.key});
 
   @override
   // ignore: library_private_types_in_public_api
-  _GeneralApplicantsPageState createState() => _GeneralApplicantsPageState();
+  _ApplicantsFormationTerminePageState createState() =>
+      _ApplicantsFormationTerminePageState();
 }
 
-class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
+class _ApplicantsFormationTerminePageState
+    extends State<ApplicantsFormationTerminePage> {
   // L'index 1 correspond à "Appliquants" dans la BottomNavigationBar
-  int _selectedIndex = 1; 
-  final TextEditingController _searchController = TextEditingController();
+  int _selectedIndex = 1;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -77,39 +70,44 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
   }
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: _buildBottomNavigationBar(_selectedIndex, _onItemTapped), 
-      
+      bottomNavigationBar: _buildBottomNavigationBar(
+        _selectedIndex,
+        _onItemTapped,
+      ),
+
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           // 1. Header Incurvé
           CurvedHeader(),
 
-          // Contenu scrollable (y compris le titre, la barre de recherche et la liste)
+          // 2. Contenu scrollable
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  // 2. Titre et Flèche de Retour
+                  // 2.1. Titre et Flèche de Retour
                   _buildTitleSection(context),
 
-                  // 3. Barre de Recherche
-                  _buildSearchBar(),
+                  // 2.2. Compteur d'Appliquants
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 20.0),
+                    child: Text(
+                      "5 Appliquants",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green, // Couleur verte pour le compteur
+                      ),
+                    ),
+                  ),
 
-                  const SizedBox(height: 20),
-
-                  // 4. Liste des Appliquants
+                  // 2.3. Liste des Appliquants
                   ...dummyApplicants.map((applicant) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 15.0),
@@ -152,44 +150,8 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
             ),
           ),
           // Espace pour aligner le titre
-          const SizedBox(width: 48), 
+          const SizedBox(width: 48),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha:  0.15),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 3), // Ombre subtile
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Rechercher une formation',
-          hintStyle: TextStyle(color: Colors.grey[500]),
-          prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide.none, // Pas de bordure visible
-          ),
-        ),
-        onChanged: (value) {
-          // Logique de filtrage de la liste ici
-          print("Searching for: $value");
-        },
       ),
     );
   }
@@ -222,37 +184,64 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
               ),
             ),
 
-            // Bouton "Voir" (Aligné à droite)
-            _buildViewButton('Voir'),
+            // Boutons d'action/Statut (Alignés à droite)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _buildActionButton(
+                  applicant.isCertified ? 'Certifié' : 'Non Certifié',
+                  onTap: () {},
+                  isPrimary: applicant.isCertified,
+                ),
+                const SizedBox(height: 5),
+                _buildActionButton(
+                  'Voir',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context)=>
+                      const ApplicantProfilePage()
+                      ),
+                    );
+                  },
+                  isPrimary: false,
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildViewButton(String text) {
-    // Le style du bouton "Voir"
+  Widget _buildActionButton(
+    String text, {
+    required VoidCallback onTap,
+    required bool isPrimary,
+  }) {
+    // Le style des boutons (Certifié et Voir)
     return Container(
       width: 90, // Largeur fixe pour l'alignement
       decoration: BoxDecoration(
-        color: kPrimaryColor.withValues(alpha:0.7),
+        color: kPrimaryColor.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(5.0),
+        // Pour "Certifié", on peut simuler un badge plus voyant
+        boxShadow: isPrimary
+            ? [
+                BoxShadow(
+                  color: kPrimaryColor.withValues(alpha: 0.3),
+                  blurRadius: 3,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            /**
-             * Navigation vers la page profil de l'appliquant
-             */
-            Navigator.push(context, 
-            MaterialPageRoute(builder: (context)=>
-            const ApplicantProfilePage()
-            )
-            );
-          },
+          onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
             child: Center(
               child: Text(
                 text,
@@ -277,22 +266,13 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
       currentIndex: currentIndex,
       onTap: onTap,
       items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Accueil',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.group),
-          label: 'Appliquants',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
+        BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Appliquants'),
         BottomNavigationBarItem(
           icon: Icon(Icons.menu_book),
           label: 'Formations',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profil',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
       ],
     );
   }
@@ -304,22 +284,19 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
 class CurvedHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    double finalHeaderHeight = kHeaderHeight * 0.9; 
+    double finalHeaderHeight = kHeaderHeight * 0.9;
 
     return Container(
-      height: finalHeaderHeight, 
+      height: finalHeaderHeight,
       child: Stack(
         children: <Widget>[
           ClipPath(
             clipper: BottomWaveClipper(),
-            child: Container(
-              height: finalHeaderHeight,
-              color: kPrimaryColor, 
-            ),
+            child: Container(height: finalHeaderHeight, color: kPrimaryColor),
           ),
           Positioned(
-            top: MediaQuery.of(context).padding.top + 10, 
-            left: 20, 
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 20,
             child: _LogoWidget(),
           ),
         ],
@@ -335,7 +312,7 @@ class _LogoWidget extends StatelessWidget {
       width: 80,
       height: 80,
       decoration: BoxDecoration(
-        color: Colors.white, 
+        color: Colors.white,
         shape: BoxShape.circle,
         boxShadow: const [
           BoxShadow(
@@ -349,7 +326,7 @@ class _LogoWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.group_work, color: kPrimaryColor, size: 30), 
+            const Icon(Icons.group_work, color: kPrimaryColor, size: 30),
             const Text(
               'RePartir',
               style: TextStyle(
@@ -369,11 +346,11 @@ class BottomWaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    path.lineTo(0, size.height * 0.7); 
+    path.lineTo(0, size.height * 0.7);
 
-    var firstControlPoint = Offset(size.width / 4, size.height); 
-    var firstEndPoint = Offset(size.width / 2, size.height * 0.85); 
-    
+    var firstControlPoint = Offset(size.width / 4, size.height);
+    var firstEndPoint = Offset(size.width / 2, size.height * 0.85);
+
     path.quadraticBezierTo(
       firstControlPoint.dx,
       firstControlPoint.dy,
@@ -391,9 +368,9 @@ class BottomWaveClipper extends CustomClipper<Path> {
       secondEndPoint.dy,
     );
 
-    path.lineTo(size.width, 0); 
-    path.close(); 
-    
+    path.lineTo(size.width, 0);
+    path.close();
+
     return path;
   }
 

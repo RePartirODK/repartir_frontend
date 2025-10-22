@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
-import 'package:repartir_frontend/pages/parrains/barnavcustom.dart';
-import 'package:repartir_frontend/pages/parrains/dons.dart';
-import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
-import 'package:repartir_frontend/pages/parrains/profil.dart';
+import 'package:repartir_frontend/pages/centres/acceuil.dart';
+import 'package:repartir_frontend/pages/centres/appliquants.dart';
+import 'package:repartir_frontend/pages/centres/centreprofile.dart';
+import 'package:repartir_frontend/pages/centres/custombarcentre.dart';
+import 'package:repartir_frontend/pages/centres/formation.dart';
 
 // Couleurs
 const Color primaryBlue = Color(0xFF2196F3);
@@ -24,7 +24,8 @@ class _NavHomeCentrePageState extends State<NavHomeCentrePage> {
   @override
   void initState() {
     super.initState();
-    _pages = [ParrainHomePage(),DonationsPage(), FormationPage(), ProfilePage()];
+    _pages = [EnhanceHome(),GeneralApplicantsPage(), FormationsPageCentre(), 
+    ProfileCentrePage()];
   }
 
   void _onItemTapped(int index) {
@@ -37,7 +38,7 @@ class _NavHomeCentrePageState extends State<NavHomeCentrePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _pages),
-      bottomNavigationBar: CustomBottomNavBar(
+      bottomNavigationBar: CustomBottomNavBarCentre(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
       ),

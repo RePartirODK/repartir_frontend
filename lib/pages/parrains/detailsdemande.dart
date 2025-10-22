@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
-import 'package:repartir_frontend/pages/parrains/dons.dart';
-import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
 import 'package:repartir_frontend/pages/parrains/pagepaiement.dart';
-import 'package:repartir_frontend/pages/parrains/profil.dart';
 
 // Assurez-vous d'avoir CustomBottomNavBar, CustomShapeClipper, primaryBlue, et primaryGreen définis
 // Si vous utilisez des fichiers séparés, n'oubliez pas d'importer :

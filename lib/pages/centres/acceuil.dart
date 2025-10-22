@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/pages/centres/formation.dart';
+import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
 
 // Définition de la couleur principale
 const Color kPrimaryColor = Color(0xFF3EB2FF);
-const double kHeaderHeight = 200.0; 
+const double kHeaderHeight = 200.0;
 
 class EnhanceHome extends StatelessWidget {
   const EnhanceHome({super.key});
 
+  VoidCallback? get onPressed => null;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50], // Fond très légèrement gris pour faire ressortir les cards
-      bottomNavigationBar: _buildBottomNavigationBar(),
-      
+      backgroundColor: Colors
+          .grey[50], // Fond très légèrement gris pour faire ressortir les cards
+
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -22,7 +26,10 @@ class EnhanceHome extends StatelessWidget {
 
             // 2. Titre de bienvenue (placé sous le header)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 20.0,
+              ),
               child: _buildWelcomeTitle(),
             ),
 
@@ -72,18 +79,18 @@ class EnhanceHome extends StatelessWidget {
             context,
             title: "Formation en cours",
             value: "5",
-            icon: Icons.school_outlined, 
+            icon: Icons.school_outlined,
             cardColor: const Color(0xFFE0F7FA), // Bleu très doux
             valueColor: Colors.blueGrey[800]!,
           ),
-          const SizedBox(height: 20), 
-          
+          const SizedBox(height: 20),
+
           // Carte 2: Nombre de formations
           _buildStatCard(
             context,
             title: "Nombre de formations",
             value: "10",
-            icon: Icons.school_outlined, 
+            icon: Icons.school_outlined,
             cardColor: const Color(0xFFF1F8E9), // Vert très doux
             valueColor: Colors.blueGrey[800]!,
           ),
@@ -133,11 +140,7 @@ class EnhanceHome extends StatelessWidget {
                 ),
               ],
             ),
-            Icon(
-              icon,
-              size: 85,
-              color: Colors.black.withOpacity(0.15),
-            ),
+            Icon(icon, size: 85, color: Colors.black.withValues(alpha: 0.15)),
           ],
         ),
       ),
@@ -164,11 +167,33 @@ class EnhanceHome extends StatelessWidget {
       child: Row(
         children: <Widget>[
           Expanded(
-            child: _buildActionButton(context, text: "Demande"),
+            child: _buildActionButton(
+              context,
+              text: "Demande",
+              onPressed: () {
+                //navigation vers la page demande
+                print("click");
+              },
+            ),
           ),
-          const SizedBox(width: 15), 
+          const SizedBox(width: 15),
           Expanded(
-            child: _buildActionButton(context, text: "Formations"),
+            child: _buildActionButton(
+              context,
+              text: "Formations",
+
+              //navigation vers la page formation
+              onPressed: () {
+                // Action spécifique pour Demande
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: 
+                    (context)=> const FormationsPageCentre()
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -178,17 +203,18 @@ class EnhanceHome extends StatelessWidget {
   Widget _buildActionButton(
     BuildContext context, {
     required String text,
+    required Null Function() onPressed,
   }) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: kPrimaryColor, 
-        minimumSize: const Size(double.infinity, 60), 
+        backgroundColor: kPrimaryColor,
+        minimumSize: const Size(double.infinity, 60),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10.0),
         ),
         elevation: 5,
       ),
-      onPressed: () {},
+      onPressed: onPressed,
       child: Text(
         text,
         style: const TextStyle(
@@ -199,36 +225,7 @@ class EnhanceHome extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: kPrimaryColor, // Couleur primaire pour l'élément actif
-      unselectedItemColor: Colors.grey[600],
-      currentIndex: 0, 
-      onTap: (index) { /* Gérer le changement de page */ },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Accueil',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.group),
-          label: 'Appliquants',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.menu_book),
-          label: 'Formations',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profil',
-        ),
-      ],
-    );
-  }
 }
-
 // ------------------------------------------------------------------
 // --- WIDGETS ET CLIPPER DU HEADER INCURVÉ (réutilisés) ---
 
@@ -236,24 +233,17 @@ class CurvedHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: kHeaderHeight, 
+      height: kHeaderHeight,
       child: Stack(
         children: <Widget>[
           // La courbe bleue personnalisée
           ClipPath(
             clipper: BottomWaveClipper(),
-            child: Container(
-              height: kHeaderHeight,
-              color: kPrimaryColor, 
-            ),
+            child: Container(height: kHeaderHeight, color: kPrimaryColor),
           ),
           // Le Logo "RePartir"
-          const Positioned(
-            top: 50, 
-            left: 20, 
-            child: _LogoWidget(),
-          ),
-          // Optionnel: Ajouter l'heure et les icônes de la barre de statut 
+          const Positioned(top: 50, left: 20, child: _LogoWidget()),
+          // Optionnel: Ajouter l'heure et les icônes de la barre de statut
           // (cela demande une gestion plus fine de l'espace si l'on veut les centrer parfaitement)
         ],
       ),
@@ -270,7 +260,7 @@ class _LogoWidget extends StatelessWidget {
       width: 80,
       height: 80,
       decoration: BoxDecoration(
-        color: Colors.white, 
+        color: Colors.white,
         shape: BoxShape.circle,
         boxShadow: const [
           BoxShadow(
@@ -284,7 +274,7 @@ class _LogoWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.group_work, color: kPrimaryColor, size: 30), 
+            const Icon(Icons.group_work, color: kPrimaryColor, size: 30),
             const Text(
               'RePartir',
               style: TextStyle(
@@ -304,11 +294,11 @@ class BottomWaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    path.lineTo(0, size.height * 0.7); 
+    path.lineTo(0, size.height * 0.7);
 
-    var firstControlPoint = Offset(size.width / 4, size.height); 
-    var firstEndPoint = Offset(size.width / 2, size.height * 0.85); 
-    
+    var firstControlPoint = Offset(size.width / 4, size.height);
+    var firstEndPoint = Offset(size.width / 2, size.height * 0.85);
+
     path.quadraticBezierTo(
       firstControlPoint.dx,
       firstControlPoint.dy,
@@ -326,9 +316,9 @@ class BottomWaveClipper extends CustomClipper<Path> {
       secondEndPoint.dy,
     );
 
-    path.lineTo(size.width, 0); 
-    path.close(); 
-    
+    path.lineTo(size.width, 0);
+    path.close();
+
     return path;
   }
 
