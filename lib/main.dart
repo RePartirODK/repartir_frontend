@@ -5,6 +5,7 @@ import 'package:repartir_frontend/pages/mentors.dart/formationviewbymentor.dart'
 import 'package:repartir_frontend/pages/mentors.dart/formentoring.dart';
 import 'package:repartir_frontend/pages/mentors.dart/navbarmentor.dart';
 import 'package:repartir_frontend/pages/mentors.dart/pageformation.dart';
+import 'package:repartir_frontend/pages/parrains/nav.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Import pages
@@ -52,7 +53,6 @@ class MyApp extends StatelessWidget {
         '/paiementform': (context) => const PaymentPage(),
         '/parrainés': (context) => SponsoredYouthPage(),
         '/inscriptionparrain': (context) => const RegistrationPage(),
-        '/accueil': (context) => const ParrainHomePage(),
         '/inscriptioncentre': (context)=> InscriptionCentrePage(),
         '/homecentre':(context)=> EnhanceHome()
       },

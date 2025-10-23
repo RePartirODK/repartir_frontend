@@ -24,7 +24,9 @@ class _NavHomePageState extends State<NavHomePage> {
   @override
   void initState() {
     super.initState();
-    _pages = [ParrainHomePage(),DonationsPage(), FormationPage(), ProfilePage()];
+    _pages = [ParrainHomePage(
+      onNavigate: _onItemTapped,
+    ),DonationsPage(), FormationPage(), ProfilePage()];
   }
 
   void _onItemTapped(int index) {

@@ -10,7 +10,8 @@ const Color primaryBlue = Color(0xFF2196F3);
 const Color primaryGreen = Color(0xFF4CAF50);
 
 class ParrainHomePage extends StatefulWidget {
-  const ParrainHomePage({super.key});
+  final ValueChanged<int> onNavigate;
+  const ParrainHomePage({super.key, required this.onNavigate});
 
   @override
   State<ParrainHomePage> createState() => _ParrainHomePageState();
@@ -29,13 +30,33 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            // --- Zone de Tête (Header) ---
+            Stack(
+              children: [
+                 // --- Zone de Tête (Header) ---
             CustomHeader(
-              title: 'Accueil',
-              showBackButton: true, // Pas de bouton retour sur la home
+              title: 'Accueil', 
             ),
-
+            // --- 2. Logo (Positionné en haut à gauche) ---
+          Positioned(
+            height: 80,
+            width: 80,
+            top: 30,
+            left: 20,
+            child: CircleAvatar(
+              radius: 25,
+              backgroundColor: Colors.white,
+              child: 
+              Image.asset('assets/images/logo_repartir.png', 
+              height: 300,
+              width: 300,),
+            ),
+          ),
             // Padding pour le reste du contenu
+           
+              ],
+            ),
+           
+           
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
@@ -82,16 +103,10 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
                     color: primaryBlue.withValues(alpha: 0.2),
                     textColor: Colors.black,
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const DonationsPage(),
-                        ),
-                      );
+                      widget.onNavigate(1);
                     },
                   ),
                   const SizedBox(height: 16),
-
                   // Bouton Jeunes déjà parrainés
                   _buildActionButton(
                     text: 'Jeunes déjà parrainés',
@@ -108,6 +123,7 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
                       );
                     },
                   ),
+                 
                   const SizedBox(height: 40),
                 ],
               ),

@@ -32,6 +32,7 @@ class _MentoringPageState extends State<MentoringPage> {
     DemandeMentoring('Moussa Diallo'),
     DemandeMentoring('Aïcha Konaté'),
     DemandeMentoring('Ibrahim Diop'),
+    DemandeMentoring("Aidan Traoré")
     // Ajoutez plus de données ici
   ];
 

@@ -39,19 +39,18 @@ class _MentoresPageState extends State<MentoresPage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       // 2. CORPS DE LA PAGE (Liste des mentorés)
       body: SingleChildScrollView(
         child: Column(
           children: [
-            CustomHeader(title: "Mentorés", showBackButton: true),
+            CustomHeader(title: "Mentorés"),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end, // aligne à droite
                 children: [
-                  ElevatedButton(
+                  ElevatedButton.icon(
                     onPressed: () {
                       /**
          * Découvrir les formations du système
@@ -72,7 +71,8 @@ class _MentoresPageState extends State<MentoresPage> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
+                    icon: const Icon(Icons.search, size: 20),
+                    label: const Text(
                       'Découvrir',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -80,6 +80,7 @@ class _MentoresPageState extends State<MentoresPage> {
                       ),
                     ),
                   ),
+                
                 ],
               ),
             ),

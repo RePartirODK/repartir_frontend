@@ -65,7 +65,27 @@ class MentorHomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
+            Stack(
+              children: [
             // 1. En-tête et Profil
+            CustomHeader(
+              title: "Acceuil",
+            ),
+             // Logo 'RePartir'
+             Positioned(
+            height: 80,
+            width: 80,
+            top: 30,
+            left: 20,
+            child: CircleAvatar(
+              radius: 25,
+              backgroundColor: Colors.white,
+              child: 
+              Image.asset('assets/images/logo_repartir.png', 
+              height: 300,
+              width: 300,),
+            ),
+          ),],), 
             _buildHeaderAndProfile(context),
 
             const SizedBox(height: 20),
@@ -107,16 +127,11 @@ class MentorHomePage extends StatelessWidget {
     return Stack(
       alignment: Alignment.topCenter,
       children: [
-       CustomHeader(),
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.only(top: 10.0, left: 16.0, right: 16.0),
             child: Column(
               children: [
-                // Logo 'RePartir'
-                _buildLogo(),
-                const SizedBox(height: 70),
-                // Titre et Profil
                 const Text(
                   'Bienvenue Mentor',
                   style: TextStyle(
@@ -131,7 +146,7 @@ class MentorHomePage extends StatelessWidget {
                   backgroundColor: kAccentColor,
                   child: Image.asset(
                     'assets/mentor_profile.png', // Image de profil du mentor
-                    height: 80,
+                    height: 100,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -154,15 +169,15 @@ class MentorHomePage extends StatelessWidget {
 Widget _buildLogo() {
   return Container(
     alignment: AlignmentGeometry.topLeft,
-    height: 100,
-    width: 100.0,
+    height: 80,
+    width: 80.0,
     decoration: BoxDecoration(
       color: Colors.white, // 👈 ou kPrimaryColor si ton logo est clair
       borderRadius: BorderRadius.circular(50),
     ),
     child: Image.asset(
       'assets/images/logo_repartir.png',
-      height: 100,
+      height: 80,
     ),
   );
 }
