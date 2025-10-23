@@ -1,35 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/pages/mentors.dart/editerprofil.dart';
 
 // --- COULEURS ET CONSTANTES GLOBALES ---
-const Color primaryBlue = Color(0xFF2196F3); // Couleur principale bleue
-const Color primaryRed = Color(0xFFF44336);  // Couleur pour les actions destructives
-
-// --- CLASSE CLIPPER (pour la forme 'blob' de l'en-tête) ---
-class CustomShapeClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, 0);
-    final double startY = size.height * 0.8; 
-    path.lineTo(0, startY);
-    
-    final controlPoint1 = Offset(size.width * 0.25, size.height * 1.15); 
-    final controlPoint2 = Offset(size.width * 0.75, size.height * 0.55);
-    final endPoint = Offset(size.width, size.height * 0.65);
-    
-    path.cubicTo(
-      controlPoint1.dx, controlPoint1.dy, 
-      controlPoint2.dx, controlPoint2.dy, 
-      endPoint.dx, endPoint.dy,
-    );
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
+const Color primaryBlue = Color(0xFF3EB2FF); // Couleur principale bleue
+const Color primaryRed = Color(
+  0xFFF44336,
+); // Couleur pour les actions destructives
 
 // --- WIDGET PRINCIPAL : ProfilePage ---
 class ProfilePage extends StatefulWidget {
@@ -46,6 +23,39 @@ class _ProfilePageState extends State<ProfilePage> {
   final String userEmail = 'adiallo7485@gmail.com';
   final String userPhone = '+22376412209';
 
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Déconnexion'),
+          content: const Text('Voulez-vous vraiment vous déconnecter ?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context), // Ferme le dialog
+              child: const Text(
+                'Annuler',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Ferme la boîte de dialogue
+                // 🧹 Logique de déconnexion ici (ex: suppression token, retour à login)
+                print('Utilisateur déconnecté');
+                Navigator.pushReplacementNamed(context, '/login'); // Exemple
+              },
+              child: const Text(
+                'Se déconnecter',
+                style: TextStyle(color: primaryRed),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,7 +71,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   const Text(
                     'Information Personnelle',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryBlue),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: primaryBlue,
+                    ),
                   ),
                   const SizedBox(height: 15),
                   _buildInfoCard(Icons.email, 'Email', userEmail),
@@ -70,7 +84,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 40),
                   const Text(
                     'Paramètres du compte',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryBlue),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: primaryBlue,
+                    ),
                   ),
                   const SizedBox(height: 15),
                   _buildSettingItem(context, 'Changer le mot de passe', () {
@@ -79,6 +97,34 @@ class _ProfilePageState extends State<ProfilePage> {
                   _buildSettingItem(context, 'Supprimer mon compte', () {
                     print('Action: Supprimer mon compte');
                   }, isDestructive: true),
+                  const SizedBox(height: 30),
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _showLogoutDialog(context);
+                      },
+                      icon: const Icon(Icons.logout, color: Colors.white),
+                      label: const Text(
+                        'Se déconnecter',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryRed,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 30,
+                          vertical: 12,
+                        ),
+                        elevation: 2,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -91,19 +137,12 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildProfileHeader(BuildContext context) {
     return Stack(
       children: [
-      CustomHeader(
-        title: "Profile",
-      ),
+        CustomHeader(title: "Profile"),
         Column(
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 40, left: 10, right: 20),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+              child: Row(children: [                  
                 ],
               ),
             ),
@@ -131,7 +170,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       child: const Padding(
                         padding: EdgeInsets.all(4.0),
-                        child: Icon(Icons.camera_alt, color: primaryBlue, size: 20),
+                        child: Icon(
+                          Icons.camera_alt,
+                          color: primaryBlue,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ),
@@ -141,11 +184,18 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 10),
             Text(
               userName,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
             Text(
               userRole,
-              style: TextStyle(fontSize: 16, color: Colors.black.withOpacity(0.8)),
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black.withOpacity(0.8),
+              ),
             ),
             const SizedBox(height: 15),
             Padding(
@@ -154,13 +204,23 @@ class _ProfilePageState extends State<ProfilePage> {
                 height: 45,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    print('Edit Profile Pressed');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EditProfilMentorPage(),
+                      ),
+                    );
                   },
                   icon: const Icon(Icons.edit, size: 20, color: Colors.white),
-                  label: const Text('Edit Profile', style: TextStyle(color: Colors.white, fontSize: 16)),
+                  label: const Text(
+                    'Edit Profile',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryBlue,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                   ),
                 ),
@@ -181,7 +241,7 @@ class _ProfilePageState extends State<ProfilePage> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, 2),
@@ -196,12 +256,21 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(
+                  title,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
                 const SizedBox(height: 4),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -211,7 +280,12 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildSettingItem(BuildContext context, String title, VoidCallback onTap, {bool isDestructive = false}) {
+  Widget _buildSettingItem(
+    BuildContext context,
+    String title,
+    VoidCallback onTap, {
+    bool isDestructive = false,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -226,9 +300,17 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             Text(
               title,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: isDestructive ? primaryRed : Colors.black87),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: isDestructive ? primaryRed : Colors.black87,
+              ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 16, color: isDestructive ? primaryRed : Colors.grey),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: isDestructive ? primaryRed : Colors.grey,
+            ),
           ],
         ),
       ),
@@ -238,4 +320,3 @@ class _ProfilePageState extends State<ProfilePage> {
 
 // --- NOTE ---
 // N'oublie pas d'importer ton CustomBottomNavBar si elle est dans un fichier séparé :
-

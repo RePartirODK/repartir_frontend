@@ -35,6 +35,11 @@ class CustomBottomNavBarMentor extends StatelessWidget {
           activeIcon: Icon(Icons.home), // Icône remplie pour l'état actif
           label: 'Accueil',
         ),
+        BottomNavigationBarItem
+        (
+          icon: Icon(Icons.people_alt_outlined),
+          label: 'Mentorés'
+        ),
      BottomNavigationBarItem(
           icon: Icon(Icons.notifications_outlined),
           label: 'Activité',

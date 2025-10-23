@@ -1,414 +1,157 @@
-// Fichier: models.dart (Suite)
+// mentoring_page.dart
+
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/pages/mentors.dart/formentoringdetails.dart';
 
-// Constantes de Style
-const Color kPrimaryColor = Color(0xFF3EB2FF); // Le bleu #3EB2FF
-const Color kGreenTagColor = Color(0xFF4CAF50); // Vert/Kaki clair pour les tags (simulé)
+// --- Constantes de Style ---
+const Color primaryBlue = Color(0xFF3EB2FF); // Bleu foncé
+const Color kAccentColor = Color(0xFFB3E5FC); // Bleu clair
+const Color kBackgroundColor = Color(0xFFF5F5F5); // Fond légèrement gris
 
-class MentorPrecedent {
+// Modèle de données statique pour une demande de mentoring
+class DemandeMentoring {
   final String nom;
-  final String titre;
-  final String imagePath;
-  final String note;
+  // On pourrait ajouter d'autres champs ici, ex: final String formation;
 
-  MentorPrecedent({
-    required this.nom,
-    required this.titre,
-    required this.imagePath,
-    required this.note,
-  });
+  DemandeMentoring(this.nom);
 }
 
-// Données statiques pour simuler le backend
-final apprenantNom = 'Amadou Diallo';
-final formationsCertifiees = [
-  'Couture',
-  'Vente',
-  'Métallurgie',
-  'Santé',
-  'Mécanique', // Ajout pour tester le Wrap
-  'Cuisine',
-];
+class MentoringPage extends StatefulWidget {
+  const MentoringPage({super.key});
 
-final mentorsPrecedents = [
-  MentorPrecedent(
-    nom: 'Ousmane Diallo',
-    titre: 'Infirmier',
-    imagePath: 'assets/mentor_1.png',
-    note: '15/20',
-  ),
-  MentorPrecedent(
-    nom: 'Djénéba Haïdara',
-    titre: 'Couturière',
-    imagePath: 'assets/mentor_2.png',
-    note: '15/20',
-  ),
-  MentorPrecedent(
-    nom: 'Fatou Ndiaye',
-    titre: 'Comptable',
-    imagePath: 'assets/mentor_3.png',
-    note: '14/20',
-  ),
-  MentorPrecedent(
-    nom: 'Moussa Cissé',
-    titre: 'Menuisier',
-    imagePath: 'assets/mentor_4.png',
-    note: '16/20',
-  ),
-];
+  @override
+  State<MentoringPage> createState() => _MentoringPageState();
+}
 
-
-class ApprenantProfilePage extends StatelessWidget {
-  const ApprenantProfilePage({super.key});
+class _MentoringPageState extends State<MentoringPage> {
+  // 2. DONNÉES STATIQUES (à remplacer par les données de votre backend)
+  final List<DemandeMentoring> demandes = [
+    DemandeMentoring('Abdou Abarchi Ibrahim'),
+    DemandeMentoring('Fatima Zahra Ahmed'),
+    DemandeMentoring('Moussa Diallo'),
+    DemandeMentoring('Aïcha Konaté'),
+    DemandeMentoring('Ibrahim Diop'),
+    // Ajoutez plus de données ici
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      // Le défilement vertical principal
+      // 4. CORPS DE LA PAGE (Liste des demandes)
       body: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            // 1. En-tête (Logo, Flèche de retour, Titre)
-            _buildHeader(context),
-
-            // 2. Avatar et Nom du Mentoré
-            _buildProfileInfo(apprenantNom),
-
-            const SizedBox(height: 30),
-
-            // 3. Formations Certifiées (Utilisation de Wrap pour la responsivité)
-            _buildCertificationsSection(formationsCertifiees),
-
-            const SizedBox(height: 30),
-
-            // 4. Déjà mentoré par (Scrollable Horizontal)
-            _buildMentorsPrecedents(mentorsPrecedents),
-
-            const SizedBox(height: 100), // Espace pour le bouton
+          children: [
+            CustomHeader(title: "Mentoring"),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+              child: ListView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: demandes.length,
+                itemBuilder: (context, index) {
+                  final demande = demandes[index];
+                  return DemandeTile(demande: demande);
+                },
+              ),
+            ),
           ],
         ),
-      ),
-      // Bouton d'action flottant au bas de l'écran (si l'on veut qu'il soit toujours visible)
-      // Sinon, on peut le mettre directement dans la Column, mais on le laisse ici pour qu'il soit sticky.
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          onPressed: () {
-            // Action "Mentorer"
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: kPrimaryColor,
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          child: const Text(
-            'Mentorer',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // --- Widgets de Construction de Sections ---
-
-  Widget _buildHeader(BuildContext context) {
-    // Hauteur pour l'effet de vague et le logo
-    const double waveHeight = 150; 
-    
-    return Stack(
-      children: [
-        // Vague Bleue
-        ClipPath(
-          clipper: ProfilePageClipper(), // Utilisation du Clipper de la page précédente
-          child: Container(
-            height: waveHeight,
-            color: kPrimaryColor,
-          ),
-        ),
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Flèche de retour
-                    InkWell(
-                      onTap: () => Navigator.pop(context),
-                      child: const Icon(Icons.arrow_back, color: Colors.black87),
-                    ),
-                    // Logo RePartir
-                    _buildLogoSmall(),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                const Center(
-                  child: Text(
-                    'Formations',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLogoSmall() {
-    return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: kPrimaryColor, width: 2),
-      ),
-      child: Row(
-        children: const [
-          Icon(Icons.psychology_outlined, color: kPrimaryColor, size: 20),
-          SizedBox(width: 4),
-          Text(
-            'RePartir',
-            style: TextStyle(
-              color: kPrimaryColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileInfo(String nom) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 40,
-          backgroundColor: kPrimaryColor.withValues(alpha:  0.2),
-          child: const Icon(Icons.person, size: 45, color: kPrimaryColor),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          nom,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCertificationsSection(List<String> certifications) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 35,
-                height: 35,
-                decoration: BoxDecoration(
-                  color: kPrimaryColor.withValues(alpha:0.1),
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                child: const Icon(Icons.school_outlined, color: kPrimaryColor),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Formations certifiées',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: kPrimaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          // Utilisation de Wrap pour les tags
-          Wrap(
-            spacing: 10.0, // Espace horizontal entre les tags
-            runSpacing: 10.0, // Espace vertical entre les lignes
-            children: certifications.map((cert) => _buildTag(cert)).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTag(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-      decoration: BoxDecoration(
-        color: kGreenTagColor.withValues(alpha:0.7),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMentorsPrecedents(List<MentorPrecedent> mentors) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 35,
-                height: 35,
-                decoration: BoxDecoration(
-                  color: kPrimaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(50),
-                ),
-                child: const Icon(Icons.people_alt_outlined, color: kPrimaryColor),
-              ),
-              const SizedBox(width: 10),
-              const Text(
-                'Déjà mentoré par',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: kPrimaryColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          // ListView Horizontal pour le défilement
-          SizedBox(
-            height: 150, // Hauteur fixe pour le conteneur du ListView
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: mentors.length,
-              itemBuilder: (context, index) {
-                return _buildMentorCard(mentors[index]);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMentorCard(MentorPrecedent mentor) {
-    return Container(
-      width: 160,
-      margin: const EdgeInsets.only(right: 15),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: kPrimaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 15,
-                backgroundColor: Colors.white,
-                child: const Icon(Icons.person, size: 18, color: kPrimaryColor),
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  mentor.nom.split(' ')[0], // Prénom
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
-          Text(
-            mentor.titre,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.black54,
-            ),
-          ),
-          const Spacer(),
-          const Text(
-            'Note attribuée à l\'apprenant',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            mentor.note,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: kPrimaryColor,
-            ),
-          ),
-        ],
       ),
     );
   }
 }
 
-// NOTE : N'oubliez pas d'inclure la classe ProfilePageClipper de la page précédente.
-// Si vous l'avez omise, la voici à nouveau :
+// Widget réutilisable pour chaque élément de la liste
+class DemandeTile extends StatelessWidget {
+  final DemandeMentoring demande;
 
-class ProfilePageClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    var path = Path();
-    path.lineTo(0, size.height - 50);
-    var firstControlPoint = Offset(size.width / 4, size.height);
-    var firstEndPoint = Offset(size.width / 2.25, size.height - 30.0);
-    path.quadraticBezierTo(firstControlPoint.dx, firstControlPoint.dy,
-        firstEndPoint.dx, firstEndPoint.dy);
-
-    var secondControlPoint =
-        Offset(size.width - (size.width / 3.25), size.height - 65);
-    var secondEndPoint = Offset(size.width, size.height - 40);
-    path.quadraticBezierTo(secondControlPoint.dx, secondControlPoint.dy,
-        secondEndPoint.dx, secondEndPoint.dy);
-
-    path.lineTo(size.width, size.height - 40);
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
-  }
+  const DemandeTile({super.key, required this.demande});
 
   @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) {
-    return false;
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 2, // Légère ombre pour soulever la carte
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 5.0),
+        child: Row(
+          children: <Widget>[
+            // Avatar (Style pour imiter l'image)
+            Container(
+              width: 60,
+              height: 60,
+              margin: const EdgeInsets.only(right: 15),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: primaryBlue.withValues(alpha: 0.1),
+                border: Border.all(color: Colors.grey.shade300, width: 2),
+              ),
+              child: const Icon(
+                Icons.person,
+                size: 30,
+                color: Colors.blueGrey,
+              ), // Placeholder
+            ),
+
+            // Nom de l'utilisateur
+            Expanded(
+              child: Text(
+                demande.nom,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+
+            // Bouton "Voir"
+            Container(
+              margin: const EdgeInsets.only(right: 10),
+              child: ElevatedButton(
+                onPressed: () {
+                  // Logique de navigation vers la page de détail de la demande
+                  /**
+                   * On navigue vers la page qui affiche les détals de la démande
+                   */
+                  final detail = DetailDemande(
+                    nom: demande.nom,
+                    objectif: "Devenir expert en leadership et mentorat",
+                    formations: [
+                      "Communication",
+                      "Coaching",
+                      "Développement personnel",
+                    ],
+                  );
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          DemandeDetailsPage(demande: detail),
+                    ),
+                  );
+                
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryBlue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text('Voir'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/centres/acceuil.dart';
 import 'package:repartir_frontend/pages/centres/inscription.dart';
-import 'package:repartir_frontend/pages/centres/navcentre.dart';
-import 'package:repartir_frontend/pages/jeuner/formation_detail_page.dart';
+import 'package:repartir_frontend/pages/mentors.dart/formationviewbymentor.dart';
 import 'package:repartir_frontend/pages/mentors.dart/formentoring.dart';
-import 'package:repartir_frontend/pages/mentors.dart/message.dart';
 import 'package:repartir_frontend/pages/mentors.dart/navbarmentor.dart';
 import 'package:repartir_frontend/pages/mentors.dart/pageformation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,7 +43,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => FormationDetailPage(),
+        '/': (context) => NavHomeMentorPage(),
         '/donation': (context) => const DonationsPage(),
         '/details': (context) => const DetailPage(),
         '/formations': (context) => const FormationPage(),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/pages/mentors.dart/formentoringdetails.dart';
 
 
 // --- Constantes de Style ---
@@ -53,6 +54,8 @@ final requeteEnAttente = Mentore(
 class MentorHomePage extends StatelessWidget {
   const MentorHomePage({super.key});
 
+  
+
   @override
   Widget build(BuildContext context) {
     // Rend la page scrollable verticalement
@@ -86,7 +89,7 @@ class MentorHomePage extends StatelessWidget {
             // 4. Requête en Attente
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: _buildRequeteEnAttente(requeteEnAttente),
+              child: _buildRequeteEnAttente(requeteEnAttente, context),
             ),
 
             const SizedBox(height: 100), // Espace pour la barre de navigation
@@ -265,11 +268,13 @@ Widget _buildLogo() {
     );
   }
 
-  Widget _buildMentoringEnCours(List<Mentore> mentorings) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
+ Widget _buildMentoringEnCours(List<Mentore> mentorings) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.0),
+        child: Text(
           'Mentoring en cours',
           style: TextStyle(
             fontSize: 20,
@@ -277,44 +282,66 @@ Widget _buildLogo() {
             color: Colors.black87,
           ),
         ),
-        const SizedBox(height: 15),
-        // ListView Horizontal pour le défilement horizontal
-        SizedBox(
-          height: 120, // Hauteur fixe pour le ListView horizontal
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: mentorings.length,
-            itemBuilder: (context, index) {
-              final mentore = mentorings[index];
-              return Container(
-                width: 100, // Largeur fixe pour chaque élément
-                margin: const EdgeInsets.only(right: 15),
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 35,
-                      backgroundColor: kAccentColor.withValues(alpha: 0.3),
-                      // Remplacer par Image.network(mentore.imagePath) en production
-                      child: const Icon(Icons.person, size: 40, color: kPrimaryColor), 
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      mentore.nom.split(' ')[0], // Affiche seulement le prénom ou le premier mot
+      ),
+      const SizedBox(height: 15),
+      
+      // ✅ Scroll horizontal fluide
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Row(
+          children: mentorings.map((mentore) {
+            return Container(
+              width: 120,
+              margin: const EdgeInsets.only(right: 15),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 35,
+                    backgroundColor: kAccentColor.withOpacity(0.4),
+                    child: const Icon(Icons.person, size: 40, color: kPrimaryColor),
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      mentore.nom,
                       textAlign: TextAlign.center,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 14),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
                     ),
-                  ],
-                ),
-              );
-            },
-          ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
         ),
-      ],
-    );
-  }
+      ),
+      const SizedBox(height: 15),
+    ],
+  );
+}
 
-  Widget _buildRequeteEnAttente(Mentore requete) {
+  Widget _buildRequeteEnAttente(Mentore requete, BuildContext context) {
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -362,6 +389,28 @@ Widget _buildLogo() {
               ElevatedButton(
                 onPressed: () {
                   // Action pour voir la requête
+                  /**
+                   * Navigation vers la page
+                   */
+                    final detail = DetailDemande(
+                    nom: "test",
+                    objectif: "Devenir expert en leadership et mentorat",
+                    formations: [
+                      "Communication",
+                      "Coaching",
+                      "Développement personnel",
+                    ],
+                  );
+
+                 
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          DemandeDetailsPage(demande: detail),
+                    ),
+                  );
+                
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrimaryColor,
