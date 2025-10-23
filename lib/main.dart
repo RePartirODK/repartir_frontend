@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/pages/jeuner/accueil.dart';
-import 'package:repartir_frontend/pages/onboarding/onboarding_page.dart';
-import 'package:repartir_frontend/pages/auth/role_selection_page.dart';
-import 'package:repartir_frontend/pages/auth/authentication_page.dart';
+import 'package:repartir_frontend/pages/centres/acceuil.dart';
+import 'package:repartir_frontend/pages/centres/inscription.dart';
+import 'package:repartir_frontend/pages/centres/navcentre.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Import pages
+
+import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
+import 'package:repartir_frontend/pages/parrains/detailsdemande.dart';
+import 'package:repartir_frontend/pages/parrains/dons.dart';
+import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
+import 'package:repartir_frontend/pages/parrains/inscription.dart';
+import 'package:repartir_frontend/pages/parrains/jeunesparraines.dart';
+import 'package:repartir_frontend/pages/parrains/pagepaiement.dart';
+import 'package:repartir_frontend/pages/parrains/profil.dart';
+import 'package:repartir_frontend/pages/parrains/voirdetailformation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +38,21 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2196F3)),
         useMaterial3: true,
       ),
-      home: onboardingComplete ? const AuthenticationPage() : const OnboardingPage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => NavHomeCentrePage(),
+        '/donation': (context) => const DonationsPage(),
+        '/details': (context) => const DetailPage(),
+        '/formations': (context) => const FormationPage(),
+        '/profil': (context) => const ProfilePage(),
+        '/formationdetails': (context) => const FormationDetailsPage(),
+        '/paiementform': (context) => const PaymentPage(),
+        '/parrainés': (context) => SponsoredYouthPage(),
+        '/inscriptionparrain': (context) => const RegistrationPage(),
+        '/accueil': (context) => const ParrainHomePage(),
+        '/inscriptioncentre': (context)=> InscriptionCentrePage(),
+        '/homecentre':(context)=> EnhanceHome()
+      },
     );
   }
 }

@@ -32,60 +32,48 @@ class CustomHeader extends StatelessWidget {
             children: [
               const SizedBox(height: 16),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 8.0),
-                child: centerWidget != null
-                  ? centerWidget! // Si centerWidget existe, l'utiliser directement sans contrainte de hauteur
-                  : SizedBox(
-                      height: 40,
-                      child: Stack(
-                        children: [
-                          // Widget de gauche (bouton retour)
-                          if (showBackButton || leftWidget != null)
-                            Positioned(
-                              left: 16,
-                              top: 0,
-                              child: leftWidget ?? 
-                              GestureDetector(
-                                onTap: onBackPressed ?? () => Navigator.pop(context),
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.arrow_back,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                              ),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Widget de gauche
+                    leftWidget ?? 
+                    (showBackButton 
+                      ? GestureDetector(
+                          onTap: onBackPressed ?? () => Navigator.pop(context),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
                             ),
+                            child: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        )
+                      : const SizedBox(width: 40)),
 
-                          // Titre centré absolument
-                          if (title != null)
-                            Center(
-                              child: Text(
-                                title!,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                    // Widget du centre
+                    centerWidget ??
+                    (title != null 
+                      ? Text(
+                          title!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : const SizedBox(width: 40)),
 
-                          // Widget de droite
-                          if (rightWidget != null)
-                            Positioned(
-                              right: 16,
-                              top: 0,
-                              child: rightWidget!,
-                            ),
-                        ],
-                      ),
-                    ),
+                    // Widget de droite
+                    rightWidget ?? const SizedBox(width: 40),
+                  ],
+                ),
               ),
             ],
           ),
@@ -123,4 +111,3 @@ class ProfilePageClipper extends CustomClipper<Path> {
     return false;
   }
 }
-
