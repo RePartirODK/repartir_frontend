@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/mentor_detail_page.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
-const Color kPrimaryBlue = Color(0xFF2196F3);
+const Color kPrimaryBlue = Color(0xFF3EB2FF);
 
 // --- PAGE D'AFFICHAGE DE LA LISTE DES MENTORS ---
 class MentorsListPage extends StatelessWidget {
@@ -48,56 +49,48 @@ class MentorsListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Arrière-plan de la page
-        Container(color: Colors.white),
-
-        // En-tête bleu
-        Container(
-          height: 160,
-          decoration: const BoxDecoration(
-            color: kPrimaryBlue,
-          ),
-        ),
-
-        // Contenu principal scrollable avec la liste
-        Padding(
-          padding: const EdgeInsets.only(top: 80.0),
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(30),
-                topRight: Radius.circular(30),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Contenu principal
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(60),
+                  topRight: Radius.circular(60),
+                ),
+              ),
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                itemCount: _mentors.length,
+                itemBuilder: (context, index) {
+                  final mentor = _mentors[index];
+                  return _buildMentorListTile(context, mentor);
+                },
+                separatorBuilder: (context, index) => const Divider(indent: 80),
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(24, 24, 24, 16),
-                  child: Text(
-                    'Mentors',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _mentors.length,
-                    itemBuilder: (context, index) {
-                      final mentor = _mentors[index];
-                      return _buildMentorListTile(context, mentor);
-                    },
-                    separatorBuilder: (context, index) => const Divider(indent: 80),
-                  ),
-                ),
-              ],
+          ),
+          
+          // Header avec titre (sans bouton retour)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              title: 'Mentors',
+              height: 120,
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -116,13 +109,13 @@ class MentorsListPage extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             mentor.specialty,
-            style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
+            style: const TextStyle(color: Color(0xFF3EB2FF), fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 2),
           Text(mentor.experience, style: TextStyle(color: Colors.grey[600])),
         ],
       ),
-      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.blue, size: 18),
+      trailing: const Icon(Icons.arrow_forward_ios, color: Color(0xFF3EB2FF), size: 18),
       onTap: () {
         Navigator.push(
           context,
