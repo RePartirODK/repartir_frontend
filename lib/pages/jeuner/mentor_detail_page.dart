@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 // --- MODÈLE DE DONNÉES POUR UN MENTOR ---
 // Utilisé pour passer les informations entre la page de liste et la page de détail.
@@ -70,98 +71,115 @@ class MentorDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color kPrimaryBlue = Color(0xFF2196F3);
+    const Color kPrimaryBlue = Color(0xFF3EB2FF);
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        backgroundColor: Colors.grey[100],
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.grey[800]),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- CARTE D'INFORMATION DU MENTOR ---
-            _buildMentorInfoCard(kPrimaryBlue),
-            const SizedBox(height: 24),
+      body: Stack(
+        children: [
+          // Contenu principal
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // --- CARTE D'INFORMATION DU MENTOR ---
+                  _buildMentorInfoCard(kPrimaryBlue),
+                  const SizedBox(height: 24),
 
-            // --- SECTION "À PROPOS" ---
-            const Text(
-              'À propos du mentor',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              mentor.about,
-              style: TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.5),
-            ),
-            const SizedBox(height: 24),
+                  // --- SECTION "À PROPOS" ---
+                  const Text(
+                    'À propos du mentor',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    mentor.about,
+                    style: TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.5),
+                  ),
+                  const SizedBox(height: 24),
 
-            // --- CHAMP "OBJECTIF" ---
-            const Text(
-              'Objectif',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Décrivez votre objectif principal...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                filled: true,
-                fillColor: Colors.white,
+                  // --- CHAMP "OBJECTIF" ---
+                  const Text(
+                    'Objectif',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Décrivez votre objectif principal...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // --- CHAMP "DESCRIPTION" ---
+                  const Text(
+                    'Description',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Donnez plus de détails sur votre projet ou vos attentes...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    maxLines: 4,
+                  ),
+                  const SizedBox(height: 32),
+                  
+                  // --- BOUTON DE DEMANDE ---
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: ElevatedButton(
+                      onPressed: () => _showConfirmationDialog(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrimaryBlue,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Demander à être mentoré par ce mentor',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 24),
-
-            // --- CHAMP "DESCRIPTION" ---
-            const Text(
-              'Description',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Donnez plus de détails sur votre projet ou vos attentes...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                filled: true,
-                fillColor: Colors.white,
-              ),
-              maxLines: 4,
-            ),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-      // --- BOUTON DE DEMANDE EN BAS DE PAGE ---
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          onPressed: () => _showConfirmationDialog(context),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: kPrimaryBlue,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child: const Text(
-            'Demander à être mentoré par ce mentor',
-            style: TextStyle(fontSize: 16, color: Colors.white),
+          
+          // Header avec bouton retour et titre
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              showBackButton: true,
+              onBackPressed: () => Navigator.pop(context),
+              title: 'Détail Mentor',
+              height: 120,
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart'; // Pour les constantes de couleur
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 class StatistiquesPage extends StatefulWidget {
   const StatistiquesPage({super.key});
@@ -41,27 +42,10 @@ class _StatistiquesPageState extends State<StatistiquesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: _buildBottomNavigation(),
       body: Stack(
         children: [
           // Arrière-plan de la page
           Container(color: Colors.white),
-
-          // En-tête bleu
-          Container(
-            height: 180,
-            decoration: const BoxDecoration(
-              color: kPrimaryBlue,
-            ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
-                  _buildHeaderContent(),
-                ],
-              ),
-            ),
-          ),
 
           // Contenu principal scrollable avec la courbe
           Positioned(
@@ -82,28 +66,6 @@ class _StatistiquesPageState extends State<StatistiquesPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Titre et icône
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Mes statistiques',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.bar_chart,
-                          color: Colors.blue.shade400,
-                          size: 24,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 30),
-
                     // Section Évolution des offres publiées
                     _buildEvolutionSection(),
                     const SizedBox(height: 20),
@@ -114,6 +76,12 @@ class _StatistiquesPageState extends State<StatistiquesPage> {
                 ),
               ),
             ),
+          ),
+          
+          // En-tête bleu avec forme ondulée (au-dessus du contenu) avec bouton retour
+          CustomHeader(
+            showBackButton: true,
+            title: 'Statistiques',
           ),
         ],
       ),

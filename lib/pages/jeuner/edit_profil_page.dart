@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 class EditProfilePage extends StatefulWidget {
   final Map<String, String> userData;
@@ -40,56 +41,43 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                ClipPath(
-                  clipper: ProfilePageClipper(),
-                  child: Container(
-                    height: 200,
-                    color: Colors.blue,
-                  ),
-                ),
-                Positioned(
-                  top: 150, // Adjust this value to position the avatar
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.white,
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Contenu principal
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16.0, 20.0, 16.0, 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Avatar avec bouton caméra
+                  Center(
                     child: CircleAvatar(
-                      radius: 48,
-                      backgroundImage: NetworkImage(
-                          'https://via.placeholder.com/150'), // Placeholder image
-                      child: Align(
-                        alignment: Alignment.bottomRight,
-                        child: CircleAvatar(
-                          backgroundColor: Colors.white,
-                          radius: 15,
-                          child: Icon(Icons.camera_alt,
-                              size: 20.0, color: Colors.blue),
+                      radius: 50,
+                      backgroundColor: Colors.white,
+                      child: CircleAvatar(
+                        radius: 48,
+                        backgroundImage: NetworkImage(
+                            'https://via.placeholder.com/150'), // Placeholder image
+                        child: Align(
+                          alignment: Alignment.bottomRight,
+                          child: CircleAvatar(
+                            backgroundColor: Colors.white,
+                            radius: 15,
+                            child: Icon(Icons.camera_alt,
+                                size: 20.0, color: Colors.blue),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                SafeArea(
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: BackButton(
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 60.0, 16.0, 16.0), // Add top padding
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+                  const SizedBox(height: 20),
+                  
                   _buildTextField(_nameController, "Nom ET Prenom*"),
                   const SizedBox(height: 20),
                   _buildTextField(_aboutController, "A propos", maxLines: 4),
@@ -118,7 +106,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           label: const Text('Enregistrer',
                               style: TextStyle(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
+                            backgroundColor: const Color(0xFF3EB2FF),
                             padding:
                                 const EdgeInsets.symmetric(vertical: 15),
                             shape: RoundedRectangleBorder(
@@ -141,9 +129,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                 ],
               ),
-            )
-          ],
-        ),
+            ),
+          ),
+          
+          // Header avec bouton retour et titre
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              showBackButton: true,
+              onBackPressed: () => Navigator.pop(context),
+              title: 'Modifier Profil',
+              height: 120,
+            ),
+          ),
+        ],
       ),
     );
   }

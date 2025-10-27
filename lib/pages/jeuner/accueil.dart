@@ -7,11 +7,12 @@ import 'package:repartir_frontend/pages/jeuner/centre_list_page.dart';
 import 'package:repartir_frontend/pages/jeuner/offre_list_page.dart';
 import 'package:repartir_frontend/pages/jeuner/mes_mentors_page.dart';
 import 'package:repartir_frontend/pages/jeuner/all_centres_list_page.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 // Définition des couleurs primaires de l'application
-const Color kPrimaryBlue = Color(0xFF2196F3); // Un bleu vif et moderne
+const Color kPrimaryBlue = Color(0xFF3EB2FF); // Un bleu vif et moderne
 const Color kLightGreyBackground = Color(0xFFEEEEEE); // Un gris clair pour les fonds
-const Color kLogoBlue = Color(0xFF00BFFF); // Bleu ciel pour le logo
+const Color kLogoBlue = Color(0xFF3EB2FF); // Bleu pour le logo
 const Color kLogoGreen = Color(0xFF4CAF50); // Vert pour le logo
 
 // Constantes de couleurs pour plus de facilité
@@ -100,27 +101,13 @@ class _HomePageContent extends StatelessWidget {
         // Arrière-plan de la page, par défaut en blanc pour éviter les bandes grises
         Container(color: Colors.white),
 
-        // En-tête bleu
-        Container(
-          height: 180,
-          decoration: const BoxDecoration(
-            color: kPrimaryBlue,
-          ),
-          child: SafeArea(
-            child: Column(
-              children: [
-                const SizedBox(height: 16),
-                _buildHeaderContent(),
-              ],
-            ),
-          ),
-        ),
-
         // Contenu principal scrollable avec la courbe
-        Padding(
-          padding: const EdgeInsets.only(top: 120.0), // Décale le début de la carte blanche
+        Positioned(
+          top: 160,
+          left: 0,
+          right: 0,
+          bottom: 0,
           child: Container(
-            height: double.infinity,
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.only(
@@ -129,7 +116,7 @@ class _HomePageContent extends StatelessWidget {
               ),
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 30, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -143,6 +130,17 @@ class _HomePageContent extends StatelessWidget {
             ),
           ),
         ),
+
+        // Header avec logo et notifications
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: CustomHeader(
+            centerWidget: _buildHeaderContent(),
+            height: 160,
+          ),
+        ),
       ],
     );
   }
@@ -152,13 +150,13 @@ class _HomePageContent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
+        color: const Color(0xFF3EB2FF).withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.blue.withOpacity(0.2)),
+        border: Border.all(color: const Color(0xFF3EB2FF).withOpacity(0.2)),
       ),
       child: Row(
         children: [
-          Icon(Icons.lightbulb_outline, color: Colors.blue, size: 40),
+          const Icon(Icons.lightbulb_outline, color: Color(0xFF3EB2FF), size: 40),
           const SizedBox(width: 16),
           const Expanded(
             child: Text(
@@ -179,9 +177,10 @@ class _HomePageContent extends StatelessWidget {
   // --- Contenu de l'en-tête ---
   Widget _buildHeaderContent() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.fromLTRB(16.0, 25.0, 16.0, 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 60,

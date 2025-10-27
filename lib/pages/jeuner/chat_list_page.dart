@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_detail_page.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 // Modèle simple pour représenter un contact de chat
 class ChatContact {
@@ -57,47 +58,30 @@ class _ChatListPageState extends State<ChatListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Arrière-plan de la page, par défaut en blanc pour éviter les bandes grises
-        Container(color: Colors.white),
-
-        // En-tête bleu
-        Container(
-          height: 160,
-          decoration: const BoxDecoration(
-            color: Color(0xFF2196F3),
-          ),
-        ),
-
-        // Contenu principal scrollable avec la courbe
-        Padding(
-          padding: const EdgeInsets.only(top: 80.0), // Décale le début de la carte blanche
-          child: Container(
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(30),
-                topRight: Radius.circular(30),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Contenu principal
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(60),
+                  topRight: Radius.circular(60),
+                ),
               ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  // Titre "Chats"
-                  const Text(
-                    'Chats',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
                   // Barre de recherche
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -144,12 +128,24 @@ class _ChatListPageState extends State<ChatListPage> {
                       },
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+          
+          // Header avec titre
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              title: 'Chats',
+              height: 120,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
