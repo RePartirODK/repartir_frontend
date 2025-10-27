@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/pages/centres/acceuil.dart';
 import 'package:repartir_frontend/pages/centres/inscription.dart';
+import 'package:repartir_frontend/pages/centres/navcentre.dart';
 import 'package:repartir_frontend/pages/mentors.dart/formationviewbymentor.dart';
 import 'package:repartir_frontend/pages/mentors.dart/formentoring.dart';
 import 'package:repartir_frontend/pages/mentors.dart/navbarmentor.dart';
 import 'package:repartir_frontend/pages/mentors.dart/pageformation.dart';
+import 'package:repartir_frontend/pages/onboarding/onboarding_page.dart';
 import 'package:repartir_frontend/pages/parrains/nav.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,16 +26,49 @@ import 'package:repartir_frontend/pages/parrains/voirdetailformation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  final onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
+  final secureStorage = FlutterSecureStorage();
+  final onboardingComplete =
+      (await secureStorage.read(key: 'onboarding_complete')) == 'true';
+  /**
+   * Recupération de la valeur du token et du role de l'utilisateur
+   */
+  final token = await secureStorage.read(key: 'auth_token');
+  final role = await secureStorage.read(key: 'user_role');
 
-  runApp(MyApp(onboardingComplete: onboardingComplete));
+  late Widget initialPage;
+
+  /**
+   * Logique d'entrée de l'application
+   */
+  if (!onboardingComplete) {
+    initialPage = OnboardingPage();
+  } else if (token == null) {
+    initialPage = AuthenticationPage();
+  } else {
+    switch (role) {
+      case 'JEUNE':
+        break;
+      case 'MENTOR':
+        initialPage = NavHomeMentorPage();
+        break;
+      case 'PARRAIN':
+        initialPage = NavHomePage();
+        break;
+      case 'CENTRE':
+        initialPage = NavHomeCentrePage();
+        break;
+      case 'ENTREPRISE':
+        break;
+      default:
+        initialPage = AuthenticationPage();
+    }
+  }
+  runApp(MyApp(initialPage: initialPage));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key, required this.onboardingComplete});
-
-  final bool onboardingComplete;
+  const MyApp({super.key, required this.initialPage});
+  final Widget initialPage;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +79,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2196F3)),
         useMaterial3: true,
       ),
-      initialRoute: '/',
+      home: initialPage,
       routes: {
         '/': (context) => NavHomeMentorPage(),
         '/donation': (context) => const DonationsPage(),
@@ -53,8 +90,8 @@ class MyApp extends StatelessWidget {
         '/paiementform': (context) => const PaymentPage(),
         '/parrainés': (context) => SponsoredYouthPage(),
         '/inscriptionparrain': (context) => const RegistrationPage(),
-        '/inscriptioncentre': (context)=> InscriptionCentrePage(),
-        '/homecentre':(context)=> EnhanceHome()
+        '/inscriptioncentre': (context) => InscriptionCentrePage(),
+        '/homecentre': (context) => EnhanceHome(),
       },
     );
   }
