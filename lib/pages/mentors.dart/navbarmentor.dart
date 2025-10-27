@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
-import 'package:repartir_frontend/pages/parrains/barnavcustom.dart';
+import 'package:repartir_frontend/pages/centres/appliquants.dart';
+import 'package:repartir_frontend/pages/mentors.dart/accueilmentor.dart';
+import 'package:repartir_frontend/pages/mentors.dart/custom.dart';
+import 'package:repartir_frontend/pages/mentors.dart/formentoring.dart';
+import 'package:repartir_frontend/pages/mentors.dart/lesmentores.dart';
 import 'package:repartir_frontend/pages/parrains/dons.dart';
-import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
 import 'package:repartir_frontend/pages/parrains/profil.dart';
 
 // Couleurs
 const Color primaryBlue = Color(0xFF2196F3);
 const Color primaryGreen = Color(0xFF4CAF50);
 
-class NavHomePage extends StatefulWidget {
-  const NavHomePage({super.key});
+class NavHomeMentorPage extends StatefulWidget {
+  const NavHomeMentorPage({super.key});
 
   @override
-  State<NavHomePage> createState() => _NavHomePageState();
+  State<NavHomeMentorPage> createState() => _NavHomeMentorPageState();
 }
 
-class _NavHomePageState extends State<NavHomePage> {
+class _NavHomeMentorPageState extends State<NavHomeMentorPage> {
   int _selectedIndex = 0;
 
   late final List<Widget> _pages;
@@ -24,9 +26,8 @@ class _NavHomePageState extends State<NavHomePage> {
   @override
   void initState() {
     super.initState();
-    _pages = [ParrainHomePage(
-      onNavigate: _onItemTapped,
-    ),DonationsPage(), FormationPage(), ProfilePage()];
+    _pages = [MentorHomePage(),MentoresPage(),MentoringPage(),DonationsPage(),
+    ProfilePage()];
   }
 
   void _onItemTapped(int index) {
@@ -39,7 +40,7 @@ class _NavHomePageState extends State<NavHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _pages),
-      bottomNavigationBar: CustomBottomNavBar(
+      bottomNavigationBar: CustomBottomNavBarMentor(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
       ),

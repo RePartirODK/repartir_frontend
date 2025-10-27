@@ -48,6 +48,7 @@ class _SponsoredYouthPageState extends State<SponsoredYouthPage> {
   Widget build(BuildContext context) {
      const double headerHeight = 200.0;
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           // 1. En-tête bleu et barre de titre

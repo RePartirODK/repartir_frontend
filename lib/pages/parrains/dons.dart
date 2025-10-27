@@ -47,7 +47,7 @@ class _DonationsPageState extends State<DonationsPage> {
         child: Column(
           children: [
             // ---------------- HEADER ----------------
-            CustomHeader(title: "Donations", showBackButton: true),
+            CustomHeader(title: "Donations"),
             const SizedBox(height: 20),
 
             // ---------------- MESSAGE ----------------
@@ -60,7 +60,7 @@ class _DonationsPageState extends State<DonationsPage> {
                     'Ces jeunes ont besoin de votre aide',
                     style: TextStyle(fontSize: 16, color: Colors.black87),
                   ),
-                  Icon(Icons.favorite, color: primaryGreen, size: 24),
+                  Icon(Icons.favorite, color: primaryGreen, size: 50),
                 ],
               ),
             ),

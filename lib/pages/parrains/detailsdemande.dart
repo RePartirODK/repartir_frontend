@@ -40,95 +40,64 @@ class _DetailPageState extends State<DetailPage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
-        children: <Widget>[
-          // --- 1. Header (Fond bleu 'blob') ---
-          CustomHeader(title: "Détails"),
-          // --- 2. Logo (Positionné en haut à gauche) ---
-          Positioned(
-            top: 40,
-            left: 20,
-            child: CircleAvatar(
-              radius: 25,
-              backgroundColor: Colors.white,
-              child: Image.asset('assets/images/logo_repartir.png', height: 40),
-            ),
-          ),
-
-          // --- 3. Bouton Retour et Titre "Details" ---
-          Positioned(
-            top: 80, // Ajusté pour être sous le logo et ne pas chevaucher
-            left: 0,
-            right: 0,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: <Widget>[
-                  // Bouton Retour
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  const SizedBox(width: 20), // Espace
-                ],
-              ),
-            ),
-          ),
-
-          // --- 4. Contenu Principal Scrollable ---
-          Padding(
-            padding: EdgeInsets.only(
-              top: contentStartOffset,
-            ), // Démarre le contenu sous le header visible
-            child: SingleChildScrollView(
-              padding:
-                  EdgeInsets.zero, // Padding géré par les éléments internes
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  // --- Avatar et Nom du Jeune ---
-                  _buildProfileSection(jeuneName),
-                  const SizedBox(height: 30),
-
-                  // --- Bloc de Détails de la Formation ---
-                  _buildFormationDetailsBlock(
-                    formationType: formationType,
-                    startDate: startDate,
-                    endDate: endDate,
-                    certification: certification,
-                  ),
-                  const SizedBox(height: 30),
-
-                  // --- Bloc d'Inscription et Situation ---
-                  _buildInscriptionBlock(
-                    status: inscriptionStatus,
-                    centre: trainingCenter,
-                    situation: situation,
-                  ),
-                  const SizedBox(height: 40),
-
-                  // --- Bouton d'Action ---
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: _buildGradientButton(
-                      text: 'Procéder au payement',
-                      onPressed: () {
-                        //navigation vers la page de paiement
-                        Navigator.push(context,
-                        MaterialPageRoute(builder: 
-                        (context)=> PaymentPage()));
-                      },
+      body: SingleChildScrollView(
+        child: Column(
+          children: <Widget>[
+            // --- 1. Header (Fond bleu 'blob') ---
+            CustomHeader(title: "Détails",
+            showBackButton: true,),
+            // --- 4. Contenu Principal Scrollable ---
+            Padding(
+              padding: EdgeInsets.only(
+               top: 4.0
+              ), // Démarre le contenu sous le header visible
+              child: SingleChildScrollView(
+                padding:
+                    EdgeInsets.zero, // Padding géré par les éléments internes
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    // --- Avatar et Nom du Jeune ---
+                    _buildProfileSection(jeuneName),
+                    const SizedBox(height: 30),
+        
+                    // --- Bloc de Détails de la Formation ---
+                    _buildFormationDetailsBlock(
+                      formationType: formationType,
+                      startDate: startDate,
+                      endDate: endDate,
+                      certification: certification,
                     ),
-                  ),
-                  const SizedBox(height: 80), // Espace pour la NavBar
-                ],
+                    const SizedBox(height: 30),
+        
+                    // --- Bloc d'Inscription et Situation ---
+                    _buildInscriptionBlock(
+                      status: inscriptionStatus,
+                      centre: trainingCenter,
+                      situation: situation,
+                    ),
+                    const SizedBox(height: 40),
+        
+                    // --- Bouton d'Action ---
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: _buildGradientButton(
+                        text: 'Procéder au payement',
+                        onPressed: () {
+                          //navigation vers la page de paiement
+                          Navigator.push(context,
+                          MaterialPageRoute(builder: 
+                          (context)=> PaymentPage()));
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 80), // Espace pour la NavBar
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
