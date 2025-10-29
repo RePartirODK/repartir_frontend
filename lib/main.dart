@@ -81,7 +81,6 @@ class MyApp extends StatelessWidget {
       ),
       home: initialPage,
       routes: {
-        '/': (context) => NavHomeMentorPage(),
         '/donation': (context) => const DonationsPage(),
         '/details': (context) => const DetailPage(),
         '/formations': (context) => const FormationPage(),

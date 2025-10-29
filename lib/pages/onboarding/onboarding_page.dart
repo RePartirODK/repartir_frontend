@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:repartir_frontend/pages/auth/role_selection_page.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -95,7 +96,9 @@ class _OnboardingPageContentState extends State<OnboardingPageContent> {
         AnimatedPositioned(
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeInOut,
-          bottom: _isCardVisible ? 0 : -MediaQuery.of(context).size.height * 0.6,
+          bottom: _isCardVisible
+              ? 0
+              : -MediaQuery.of(context).size.height * 0.6,
           left: 0,
           right: 0,
           child: Container(
@@ -109,7 +112,10 @@ class _OnboardingPageContentState extends State<OnboardingPageContent> {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 30.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 30.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -126,7 +132,10 @@ class _OnboardingPageContentState extends State<OnboardingPageContent> {
                     Text(
                       widget.description!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 16, color: Colors.black54),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                      ),
                     ),
                   if (widget.isLastPage)
                     const Padding(
@@ -134,16 +143,19 @@ class _OnboardingPageContentState extends State<OnboardingPageContent> {
                       child: Column(
                         children: [
                           InfoRow(
-                              icon: Icons.search,
-                              text: 'Trouvez des formations professionnelles'),
+                            icon: Icons.search,
+                            text: 'Trouvez des formations professionnelles',
+                          ),
                           SizedBox(height: 15),
                           InfoRow(
-                              icon: Icons.people_outline,
-                              text: 'Partagez vos experiences'),
+                            icon: Icons.people_outline,
+                            text: 'Partagez vos experiences',
+                          ),
                           SizedBox(height: 15),
                           InfoRow(
-                              icon: Icons.volunteer_activism_outlined,
-                              text: 'Payez des formations'),
+                            icon: Icons.volunteer_activism_outlined,
+                            text: 'Payez des formations',
+                          ),
                         ],
                       ),
                     ),
@@ -179,27 +191,36 @@ class _OnboardingPageContentState extends State<OnboardingPageContent> {
                       Align(
                         alignment: Alignment.bottomRight,
                         child: Padding(
-                          padding: const EdgeInsets.only(bottom: 10.0, right: 0.0),
+                          padding: const EdgeInsets.only(
+                            bottom: 10.0,
+                            right: 0.0,
+                          ),
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18.0),
                               ),
-                              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 25,
+                                vertical: 12,
+                              ),
                               backgroundColor: Colors.blue,
                               foregroundColor: Colors.white,
                             ),
                             onPressed: () async {
+                              final storage = FlutterSecureStorage();
                               if (widget.isLastPage) {
-                                final prefs =
-                                    await SharedPreferences.getInstance();
-                                await prefs.setBool('onboarding_complete', true);
+                  
+                              
+                                await storage.write(key: 'onboarding_complete',
+                                 value: 'true');
 
                                 if (context.mounted) {
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const RoleSelectionPage(),
+                                      builder: (context) =>
+                                          const RoleSelectionPage(),
                                     ),
                                   );
                                 }
@@ -210,12 +231,14 @@ class _OnboardingPageContentState extends State<OnboardingPageContent> {
                                 );
                               }
                             },
-                            child: Text(widget.isLastPage ? 'Terminer' : 'Suivant'),
+                            child: Text(
+                              widget.isLastPage ? 'Terminer' : 'Suivant',
+                            ),
                           ),
                         ),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
@@ -229,11 +252,7 @@ class _OnboardingPageContentState extends State<OnboardingPageContent> {
 class InfoRow extends StatelessWidget {
   final IconData icon;
   final String text;
-  const InfoRow({
-    super.key,
-    required this.icon,
-    required this.text,
-  });
+  const InfoRow({super.key, required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -243,13 +262,18 @@ class InfoRow extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
+            color: Colors.blue.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: Colors.blue),
         ),
         const SizedBox(width: 20),
-        Expanded(child: Text(text, style: const TextStyle(fontSize: 16, color: Colors.black54))),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 16, color: Colors.black54),
+          ),
+        ),
       ],
     );
   }
