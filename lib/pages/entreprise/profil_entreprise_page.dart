@@ -3,7 +3,9 @@ import 'package:repartir_frontend/pages/jeuner/accueil.dart'; // Pour les consta
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
 import 'package:repartir_frontend/pages/entreprise/modifier_profil_page.dart';
 import 'package:repartir_frontend/pages/entreprise/mes_offres_page.dart';
+import 'package:repartir_frontend/pages/entreprise/nouvelle_offre_page.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 class ProfilEntreprisePage extends StatefulWidget {
   const ProfilEntreprisePage({super.key});
@@ -27,13 +29,19 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: _buildBottomNavigation(),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // En-tête avec image de profil
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.only(top: 60, bottom: 30),
+      body: Stack(
+        children: [
+          // Contenu principal
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                // Espace pour l'en-tête
+                const SizedBox(height: 130),
+                
+                // En-tête avec image de profil
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.only(top: 20, bottom: 30),
               decoration: const BoxDecoration(
                 color: Colors.white,
               ),
@@ -177,9 +185,9 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
                           'Ajouter une offre',
                           Colors.green,
                           () {
-                            // TODO: Naviguer vers la page d'ajout d'offre
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Ajouter une offre')),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const NouvelleOffrePage()),
                             );
                           },
                         ),
@@ -203,8 +211,15 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
             ),
             
             const SizedBox(height: 30),
-          ],
-        ),
+              ],
+            ),
+          ),
+          
+          // En-tête bleu avec forme ondulée (au-dessus du contenu)
+          CustomHeader(
+            title: 'Profil Entreprise',
+          ),
+        ],
       ),
     );
   }

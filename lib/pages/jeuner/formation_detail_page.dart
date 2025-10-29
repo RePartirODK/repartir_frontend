@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 class FormationDetailPage extends StatelessWidget {
   const FormationDetailPage({Key? key}) : super(key: key);
@@ -24,22 +25,13 @@ class FormationDetailPage extends StatelessWidget {
       backgroundColor: Colors.grey[200],
       body: Stack(
         children: [
-          Container(
-            height: 180,
-            color: Colors.blue,
-            child: SafeArea(
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: BackButton(
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 120.0),
+          // Contenu principal
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: Container(
-              height: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: const BorderRadius.only(
@@ -97,6 +89,19 @@ class FormationDetailPage extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
+          ),
+          
+          // Header avec bouton retour et titre
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              showBackButton: true,
+              onBackPressed: () => Navigator.pop(context),
+              title: 'Détail Formation',
+              height: 120,
             ),
           ),
         ],

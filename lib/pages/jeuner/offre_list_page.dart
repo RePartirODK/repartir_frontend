@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/pages/jeuner/offre_detail_page.dart';
+import 'package:repartir_frontend/pages/jeuner/detail_offre_commune_page.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 class OffreListPage extends StatelessWidget {
   const OffreListPage({Key? key}) : super(key: key);
@@ -9,22 +10,30 @@ class OffreListPage extends StatelessWidget {
     // Mock data for job offers
     final offres = [
       {
+        'titre': 'Stage Marketing Digital',
+        'type_contrat': 'Stage',
+        'entreprise': 'DigitalBoost',
+        'lieu': 'Bamako, Mali',
+        'datePublication': '01-01-2024',
+        'description': 'Stage de 6 mois en marketing digital au sein d\'une agence dynamique. Vous participerez à la gestion des campagnes publicitaires et au développement de stratégies marketing innovantes.',
+        'competence': 'Marketing Digital, Réseaux sociaux, Analytics',
+        'date_debut': '2025-01-15 09:00:00.000000',
+        'date_fin': '2025-07-15 18:00:00.000000',
+        'lien_postuler': 'https://www.youtube.com/watch?v=e9J6sI5YBOo&list=RDHGBek8t3x5I&index=5',
         'logo': 'https://via.placeholder.com/150',
-        'company': 'DigitalBoost',
-        'location': 'Bamako, Mali',
-        'title': 'Stage Marketing Digital',
-        'description': 'Stage de 6 mois en marketing digital au sein d\'une agence dynamique. Vous participerez à la gestion des campagnes publicitaires et à...',
-        'date': 'Du 15 Sept 2023 au 15 Mars 2024',
-        'link': 'lien www.formation-dev.com/web',
       },
       {
-        'logo': 'https://via.placeholder.com/150',
-        'company': 'FMP',
-        'location': 'Bamako, Mali',
-        'title': 'Offres Menuiserie',
+        'titre': 'Offres Menuiserie',
+        'type_contrat': 'CDD',
+        'entreprise': 'FMP',
+        'lieu': 'Bamako, Mali',
+        'datePublication': '01-01-2024',
         'description': 'Permettre aux jeunes de voir toutes les offres liées à la menuiserie et de postuler directement via le lien du site de l\'entreprise.',
-        'date': 'Du 15 Sept 2023 au 15 Mars 2024',
-        'link': 'En ligne www.formation-dev.com/web',
+        'competence': 'Menuiserie, Travail du bois, Assemblage',
+        'date_debut': '2025-02-01 09:00:00.000000',
+        'date_fin': '2025-08-01 18:00:00.000000',
+        'lien_postuler': 'https://www.youtube.com/watch?v=e9J6sI5YBOo&list=RDHGBek8t3x5I&index=5',
+        'logo': 'https://via.placeholder.com/150',
       }
     ];
 
@@ -32,54 +41,42 @@ class OffreListPage extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          Container(
-            height: 180,
-            color: Colors.blue,
-            child: SafeArea(
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: BackButton(color: Colors.white),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 120.0),
+          // Contenu principal
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: Container(
-              height: double.infinity,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.only(
+                borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(60),
                   topRight: Radius.circular(60),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 30.0, bottom: 20.0, left: 16.0),
-                    child: Text(
-                      'Offres',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      itemCount: offres.length,
-                      itemBuilder: (context, index) {
-                        return OffreCard(offre: offres[index]);
-                      },
-                    ),
-                  ),
-                ],
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
+                itemCount: offres.length,
+                itemBuilder: (context, index) {
+                  return OffreCard(offre: offres[index]);
+                },
               ),
             ),
-          )
+          ),
+          
+          // Header avec bouton retour et titre
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              showBackButton: true,
+              onBackPressed: () => Navigator.pop(context),
+              title: 'Offres d\'emploi',
+              height: 120,
+            ),
+          ),
         ],
       ),
     );
@@ -111,13 +108,13 @@ class OffreCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(offre['company'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(offre['entreprise'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         const Icon(Icons.location_on, size: 14, color: Colors.grey),
                         const SizedBox(width: 4),
-                        Text(offre['location'], style: const TextStyle(color: Colors.grey)),
+                        Text(offre['lieu'], style: const TextStyle(color: Colors.grey)),
                       ],
                     ),
                   ],
@@ -125,12 +122,12 @@ class OffreCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Text(offre['title'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+            Text(offre['titre'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
             const SizedBox(height: 8),
             Text(offre['description'], style: TextStyle(color: Colors.grey[700])),
             const SizedBox(height: 12),
-            _buildInfoRow(Icons.date_range, offre['date']),
-            _buildInfoRow(Icons.link, offre['link']),
+            _buildInfoRow(Icons.date_range, 'Du ${_formatDate(offre['date_debut'])} au ${_formatDate(offre['date_fin'])}'),
+            _buildInfoRow(Icons.work_outline, offre['type_contrat']),
             const SizedBox(height: 15),
             Align(
               alignment: Alignment.center,
@@ -138,7 +135,9 @@ class OffreCard extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const OffreDetailPage()),
+                    MaterialPageRoute(
+                      builder: (context) => DetailOffreCommunePage(offre: offre),
+                    ),
                   );
                 },
                 child: const Text('Voir détails'),
@@ -159,43 +158,33 @@ class OffreCard extends StatelessWidget {
   }
 
   Widget _buildInfoRow(IconData icon, String text) {
-    final defaultStyle = TextStyle(color: Colors.grey[700]);
-    final linkStyle = const TextStyle(
-        color: Colors.blue, decoration: TextDecoration.underline);
-
-    Widget textWidget;
-
-    if (icon == Icons.link) {
-      int splitIndex = text.indexOf(' ');
-      if (splitIndex != -1) {
-        String prefix = text.substring(0, splitIndex + 1);
-        String link = text.substring(splitIndex + 1);
-        textWidget = RichText(
-          text: TextSpan(
-            style: defaultStyle,
-            children: <TextSpan>[
-              TextSpan(text: prefix),
-              TextSpan(text: link, style: linkStyle),
-            ],
-          ),
-        );
-      } else {
-        // Fallback in case there's no space
-        textWidget = Text(text, style: linkStyle);
-      }
-    } else {
-      textWidget = Text(text, style: defaultStyle);
-    }
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
           Icon(icon, color: Colors.grey, size: 16),
           const SizedBox(width: 8),
-          Expanded(child: textWidget),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  String? _formatDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) return null;
+    
+    try {
+      // Parse la date au format "2025-12-01 21:00:00.000000"
+      final DateTime date = DateTime.parse(dateString);
+      // Formate en français
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+    } catch (e) {
+      return dateString; // Retourne la chaîne originale si le parsing échoue
+    }
   }
 }

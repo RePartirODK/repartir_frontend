@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/centre_detail_page.dart';
 import 'package:repartir_frontend/pages/jeuner/formation_detail_page.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 class CentreListPage extends StatelessWidget {
   const CentreListPage({Key? key}) : super(key: key);
@@ -11,42 +12,28 @@ class CentreListPage extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          Container(
-            height: 160,
-            color: Colors.blue,
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 80.0),
+          // Contenu principal
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: Container(
-              height: double.infinity,
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
+                  topLeft: Radius.circular(60),
+                  topRight: Radius.circular(60),
                 ),
               ),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Formations',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Expanded(
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        itemCount: 2, // Number of centres
-                        itemBuilder: (context, index) {
-                          // Replace with your data model
-                          final centres = [
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  itemCount: 2, // Number of centres
+                  itemBuilder: (context, index) {
+                    // Replace with your data model
+                    final centres = [
                             {
                               'logo': 'https://via.placeholder.com/150',
                               'name': 'ODC_MALI',
@@ -68,17 +55,25 @@ class CentreListPage extends StatelessWidget {
                               'link': 'En ligne www.formation-dev.com/web',
                               'places': '3 places disponibles',
                             },
-                          ];
-                          final centre = centres[index];
-                          return CentreCard(centre: centre);
-                        },
-                      ),
-                    ),
-                  ],
+                    ];
+                    final centre = centres[index];
+                    return CentreCard(centre: centre);
+                  },
                 ),
               ),
             ),
-          )
+          ),
+          
+          // Header avec titre (sans bouton retour)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              title: 'Formations',
+              height: 120,
+            ),
+          ),
         ],
       ),
     );
@@ -148,7 +143,7 @@ class CentreCard extends StatelessWidget {
                   },
                   child: const Text('Voir détails'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: const Color(0xFF3EB2FF),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
