@@ -4,12 +4,15 @@ import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/pages/centres/acceuil.dart';
 import 'package:repartir_frontend/pages/centres/inscription.dart';
 import 'package:repartir_frontend/pages/centres/navcentre.dart';
+import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
+import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/pages/mentors.dart/formationviewbymentor.dart';
 import 'package:repartir_frontend/pages/mentors.dart/formentoring.dart';
 import 'package:repartir_frontend/pages/mentors.dart/navbarmentor.dart';
 import 'package:repartir_frontend/pages/mentors.dart/pageformation.dart';
 import 'package:repartir_frontend/pages/onboarding/onboarding_page.dart';
 import 'package:repartir_frontend/pages/parrains/nav.dart';
+import 'package:repartir_frontend/pages/shared/splash_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // Import pages
@@ -79,19 +82,15 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2196F3)),
         useMaterial3: true,
       ),
-      home: initialPage,
+       home: const SplashScreen(),
+      // Tu peux laisser tes routes si tu veux naviguer par nom
       routes: {
-        '/': (context) => NavHomeMentorPage(),
-        '/donation': (context) => const DonationsPage(),
-        '/details': (context) => const DetailPage(),
-        '/formations': (context) => const FormationPage(),
-        '/profil': (context) => const ProfilePage(),
-        '/formationdetails': (context) => const FormationDetailsPage(),
-        '/paiementform': (context) => const PaymentPage(),
-        '/parrainés': (context) => SponsoredYouthPage(),
-        '/inscriptionparrain': (context) => const RegistrationPage(),
-        '/inscriptioncentre': (context) => InscriptionCentrePage(),
-        '/homecentre': (context) => EnhanceHome(),
+        '/login': (context) => AuthenticationPage(),
+  '/homecentre': (context) => NavHomeCentrePage(),
+  '/homementor': (context) => NavHomeMentorPage(),
+  '/homeparrain': (context) => NavHomePage(),
+  '/homejeune': (context) => AccueilPage(),
+  '/homeentreprise': (context) => const AccueilEntreprisePage(),
       },
     );
   }

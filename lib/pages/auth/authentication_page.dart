@@ -1,9 +1,13 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/auth/role_selection_page.dart';
+import 'package:repartir_frontend/pages/centres/navcentre.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart'; // Import de la page d'accueil entreprise
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/pages/mentors.dart/navbarmentor.dart';
+import 'package:repartir_frontend/pages/parrains/nav.dart';
+import 'package:repartir_frontend/services/auth_service.dart';
 
 class AuthenticationPage extends StatefulWidget {
   const AuthenticationPage({super.key});
@@ -14,6 +18,86 @@ class AuthenticationPage extends StatefulWidget {
 
 class _AuthenticationPageState extends State<AuthenticationPage> {
   bool _obscurePassword = true;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final authService = AuthService();
+  bool isLoading = false;
+
+  /// Méthode qui permet la redirection en fonction du role
+  void handleLogin() async {
+    setState(() => isLoading = true);
+
+    try {
+      //appel de la méthode de login
+      final loginResponse = await authService.login(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+
+      // Redirection selon le rôle
+      if (loginResponse != null) {
+        final roles = loginResponse.roles;
+        final userRole = roles.isNotEmpty ? roles.first : '';
+        switch (userRole) {
+          case 'ROLE_ENTREPRISE':
+            Navigator.pushAndRemoveUntil(
+              // ignore: use_build_context_synchronously
+              context,
+              MaterialPageRoute(builder: (_) => const AccueilEntreprisePage()),
+              (route) => false,
+            );
+            break;
+
+          case 'ROLE_CENTRE':
+            Navigator.pushAndRemoveUntil(
+              // ignore: use_build_context_synchronously
+              context,
+              MaterialPageRoute(builder: (_) => const NavHomeCentrePage()),
+              (route) => false,
+            );
+            break;
+
+          case 'ROLE_JEUNE':
+            Navigator.pushAndRemoveUntil(
+              // ignore: use_build_context_synchronously
+              context,
+              MaterialPageRoute(builder: (_) => const AccueilPage()),
+              (route) => false,
+            );
+            break;
+          case 'ROLE_MENTOR':
+            Navigator.pushAndRemoveUntil(
+              // ignore: use_build_context_synchronously
+              context,
+              MaterialPageRoute(builder: (_) => const
+              NavHomeMentorPage()),
+              (route) => false,
+            );
+            break;
+          case 'ROLE_PARRAIN':
+            Navigator.pushAndRemoveUntil(
+              // ignore: use_build_context_synchronously
+              context,
+              MaterialPageRoute(builder: (_) => const NavHomePage()),
+              (route) => false,
+            );
+            break;
+          default:
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Rôle utilisateur inconnu')),
+            );
+        }
+      }
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,12 +107,10 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
         children: [
           // Arrière-plan
           Container(color: Colors.white),
-          
+
           // En-tête bleu avec forme ondulée
-          const CustomHeader(
-            height: 200,
-          ),
-          
+          const CustomHeader(height: 200),
+
           // Contenu principal
           SafeArea(
             child: Center(
@@ -38,111 +120,134 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(height: 80),
-                    Image.asset(
-                      'assets/images/logo_repartir.png',
-                      height: 120,
-                    ),
+                    Image.asset('assets/images/logo_repartir.png', height: 120),
                     const SizedBox(height: 30),
-                Container(
-                  padding: const EdgeInsets.all(25),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      RichText(
-                        textAlign: TextAlign.center,
-                        text: const TextSpan(
-                          style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87),
-                          children: [
-                            TextSpan(text: 'Connexion à votre '),
-                            TextSpan(text: '\ncompte', style: TextStyle(color: Colors.blue)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'Entrez vos identifiants pour accéder à votre espace',
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 30),
-                      _buildInputField(
-                        label: 'Votre adresse email',
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildPasswordField(),
-                      const SizedBox(height: 10),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            // TODO: Implement forgot password logic
-                          },
-                          child: const Text(
-                            'Mot de passe oublié?',
-                            style: TextStyle(color: Colors.blue, fontSize: 13),
+                    Container(
+                      padding: const EdgeInsets.all(25),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withValues(alpha: 0.2),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
                           ),
-                        ),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () {
-                            // Pour l'instant, nous redirigeons directement vers AccueilEntreprisePage.
-                            // Plus tard, cette logique sera conditionnelle au rôle de l'utilisateur.
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(builder: (context) => const AccueilEntreprisePage()),
-                              (Route<dynamic> route) => false,
-                            );
-                          },
-                          child: const Text('Se connecter', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      RichText(
-                        text: TextSpan(
-                          style: const TextStyle(fontSize: 14, color: Colors.black54),
-                          children: [
-                            const TextSpan(text: 'Vous n\'avez pas de compte? '),
-                            TextSpan(
-                              text: 'S\'inscrire',
-                              style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const RoleSelectionPage()),
-                                  );
-                                },
+                      child: Column(
+                        children: [
+                          RichText(
+                            textAlign: TextAlign.center,
+                            text: const TextSpan(
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                              children: [
+                                TextSpan(text: 'Connexion à votre '),
+                                TextSpan(
+                                  text: '\ncompte',
+                                  style: TextStyle(color: Colors.blue),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Entrez vos identifiants pour accéder à votre espace',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 30),
+                          _buildInputField(
+                            label: 'Votre adresse email',
+                            icon: Icons.email_outlined,
+                            keyboardType: TextInputType.emailAddress,
+                            controller: _emailController,
+                          ),
+                          const SizedBox(height: 20),
+                          _buildPasswordField(),
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {
+                                // TODO: Implement forgot password logic
+                              },
+                              child: const Text(
+                                'Mot de passe oublié?',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 15,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: isLoading ? null : handleLogin,
+                              child: isLoading
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
+                                  : const Text(
+                                      'Se connecter',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                              
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          RichText(
+                            text: TextSpan(
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                              children: [
+                                const TextSpan(
+                                  text: 'Vous n\'avez pas de compte? ',
+                                ),
+                                TextSpan(
+                                  text: 'S\'inscrire',
+                                  style: const TextStyle(
+                                    color: Colors.blue,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const RoleSelectionPage(),
+                                        ),
+                                      );
+                                    },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
                   ],
                 ),
               ),
@@ -153,9 +258,16 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
     );
   }
 
-  Widget _buildInputField({required String label, required IconData icon, TextInputType? keyboardType, bool obscureText = false}) {
+  Widget _buildInputField({
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+    bool obscureText = false,
+    required TextEditingController controller,
+  }) {
     return TextField(
       obscureText: obscureText,
+      controller: controller,
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
@@ -174,7 +286,10 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.green.shade600, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 15,
+          horizontal: 20,
+        ),
       ),
     );
   }
@@ -182,12 +297,15 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
   Widget _buildPasswordField() {
     return TextField(
       obscureText: _obscurePassword,
+      controller: _passwordController,
       decoration: InputDecoration(
         labelText: 'Votre mot de passe',
         prefixIcon: Icon(Icons.lock_outlined, color: Colors.grey.shade600),
         suffixIcon: IconButton(
           icon: Icon(
-            _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            _obscurePassword
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined,
             color: Colors.grey.shade600,
           ),
           onPressed: () {
@@ -210,7 +328,10 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.green.shade600, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 15,
+          horizontal: 20,
+        ),
       ),
     );
   }
