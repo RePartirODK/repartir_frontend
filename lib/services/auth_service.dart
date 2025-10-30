@@ -19,8 +19,9 @@ class AuthService {
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
-      body: {"email": email, "motDePasse": motDePasse},
-    );
+      body: jsonEncode(
+      {"email": email, "motDePasse": motDePasse},
+    ));
 
     //on capte ce que le back nous retourne
     if (response.statusCode == 200) {
@@ -49,6 +50,8 @@ class AuthService {
       throw Exception('Erreur inattendue: ${response.statusCode}');
     }
   }
+
+
   Future<void> logout() async {
     await storage.clearTokens();
   }

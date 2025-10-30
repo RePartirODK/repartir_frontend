@@ -211,13 +211,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                              child: const Text(
-                                'Se connecter',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              
                             ),
                           ),
                           const SizedBox(height: 20),
