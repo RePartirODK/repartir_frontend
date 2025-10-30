@@ -1,9 +1,12 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/auth/role_selection_page.dart';
+import 'package:repartir_frontend/pages/centres/navcentre.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart'; // Import de la page d'accueil entreprise
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/pages/mentors.dart/navbarmentor.dart';
+import 'package:repartir_frontend/pages/parrains/nav.dart';
 import 'package:repartir_frontend/services/auth_service.dart';
 
 class AuthenticationPage extends StatefulWidget {
@@ -20,44 +23,81 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
   final authService = AuthService();
   bool isLoading = false;
 
-
   /// Méthode qui permet la redirection en fonction du role
   void handleLogin() async {
-  setState(() => isLoading = true);
+    setState(() => isLoading = true);
 
-  try {
-    final loginResponse = await authService.login(
-      _emailController.text.trim(),
-      _passwordController.text.trim(),
-    );
+    try {
+      //appel de la méthode de login
+      final loginResponse = await authService.login(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
 
-    // Redirection selon le rôle (exemple)
-    if (loginResponse != null) {
-      final roles = loginResponse.roles;
-      if (roles.contains('ROLE_ENTREPRISE')) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const AccueilEntreprisePage()),
-          (route) => false,
-        );
-      } else {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const Accueil()),
-          (route) => false,
-        );
+      // Redirection selon le rôle
+      if (loginResponse != null) {
+        final roles = loginResponse.roles;
+        final userRole = roles.isNotEmpty ? roles.first : '';
+        switch (userRole) {
+          case 'ROLE_ENTREPRISE':
+            Navigator.pushAndRemoveUntil(
+              // ignore: use_build_context_synchronously
+              context,
+              MaterialPageRoute(builder: (_) => const AccueilEntreprisePage()),
+              (route) => false,
+            );
+            break;
+
+          case 'ROLE_CENTRE':
+            Navigator.pushAndRemoveUntil(
+              // ignore: use_build_context_synchronously
+              context,
+              MaterialPageRoute(builder: (_) => const NavHomeCentrePage()),
+              (route) => false,
+            );
+            break;
+
+          case 'ROLE_JEUNE':
+            Navigator.pushAndRemoveUntil(
+              // ignore: use_build_context_synchronously
+              context,
+              MaterialPageRoute(builder: (_) => const AccueilPage()),
+              (route) => false,
+            );
+            break;
+          case 'ROLE_MENTOR':
+            Navigator.pushAndRemoveUntil(
+              // ignore: use_build_context_synchronously
+              context,
+              MaterialPageRoute(builder: (_) => const
+              NavHomeMentorPage()),
+              (route) => false,
+            );
+            break;
+          case 'ROLE_PARRAIN':
+            Navigator.pushAndRemoveUntil(
+              // ignore: use_build_context_synchronously
+              context,
+              MaterialPageRoute(builder: (_) => const NavHomePage()),
+              (route) => false,
+            );
+            break;
+          default:
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Rôle utilisateur inconnu')),
+            );
+        }
       }
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      setState(() => isLoading = false);
     }
-  } catch (e) {
-    // ignore: use_build_context_synchronously
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(e.toString())),
-    );
-  } finally {
-    setState(() => isLoading = false);
   }
-}
-
 
   @override
   Widget build(BuildContext context) {

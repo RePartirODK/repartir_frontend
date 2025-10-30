@@ -35,6 +35,14 @@ class AuthService {
         loginResponse.accessToken,
         loginResponse.refreshToken,
       );
+       final String firstRole = loginResponse.roles.isNotEmpty
+            ? loginResponse.roles.first
+            : '';
+
+        await storage.saveUserInfo(role: firstRole, 
+        email: loginResponse.email);
+
+        return loginResponse;
     } else if (response.statusCode == 403) {
       throw Exception('Email ou mot de passe incorrect');
     } else {
