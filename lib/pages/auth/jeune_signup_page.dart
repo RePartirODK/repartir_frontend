@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/models/jeunerequest.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
+import 'package:repartir_frontend/services/jeune_service.dart';
 
 class JeuneSignupPage extends StatefulWidget {
   const JeuneSignupPage({super.key});
@@ -14,13 +16,109 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
   int _currentPage = 0;
   String? _gender = 'homme';
   final Set<String> _selectedDomains = {};
-
+  final TextEditingController nomController = TextEditingController();
+  final TextEditingController prenomController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController telephoneController = TextEditingController();
+  final TextEditingController motDePasseController = TextEditingController();
+  final TextEditingController ageController = TextEditingController();
+  final TextEditingController aProposController = TextEditingController();
+  final TextEditingController niveauController = TextEditingController();
+  final JeuneService jeuneService = JeuneService();
+  final _formKey = GlobalKey<FormState>();
   final List<String> _domains = [
-    'Menuiserie', 'Coiffure', 'Mécanique automobile', 'Agriculture',
-    'Électricité bâtiment', 'élevage', 'Couture / stylisme', 'Cuisine',
-    'Numérique', 'restaurations'
+    'Menuiserie',
+    'Coiffure',
+    'Mécanique automobile',
+    'Agriculture',
+    'Électricité bâtiment',
+    'élevage',
+    'Couture / stylisme',
+    'Cuisine',
+    'Numérique',
+    'restaurations',
   ];
-  
+
+  Future<void> submitInscription() async {
+    //verifier que tous les champs sont valide
+    if (_formKey.currentState?.validate() != true) {
+      // message d'erreur ou retour
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Veuillez remplir correctement tous les champs obligatoires.",
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    // Afficher le loader
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      if (_gender == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Veuillez sélectionner votre genre."),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+
+      // Créer l'objet JeuneRequest
+      print(_gender);
+      final jeuneRequest = JeuneRequest(
+        nom: nomController.text,
+        prenom: prenomController.text,
+        email: emailController.text,
+        telephone: telephoneController.text,
+        motDePasse: motDePasseController.text,
+        genre: _gender!.toUpperCase(),
+        age: int.tryParse(ageController.text) ?? 0,
+        aPropos: aProposController.text,
+        niveau: niveauController.text.isNotEmpty ? niveauController.text : null,
+      );
+
+      // Appel au backend
+      final utilisateur = await jeuneService.registerJeune(jeuneRequest);
+
+      // Fermer le loader
+      // ignore: use_build_context_synchronously
+      Navigator.of(context).pop();
+
+      // Redirection vers AuthenticationPage
+      Navigator.pushAndRemoveUntil(
+        // ignore: use_build_context_synchronously
+        context,
+        MaterialPageRoute(builder: (context) => AccueilPage()),
+        (Route<dynamic> route) => false,
+      );
+
+      // Message de succès
+      ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Inscription réussie !")));
+    } catch (e) {
+      // Fermer le loader
+      // ignore: use_build_context_synchronously
+      Navigator.of(context).pop();
+
+      // Afficher l'erreur
+      ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
+        context,
+      ).showSnackBar(SnackBar(content: Text("Erreur : ${e.toString()}")));
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -29,6 +127,20 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
         _currentPage = _pageController.page?.round() ?? 0;
       });
     });
+  }
+
+  @override
+  void dispose() {
+    // On les libère
+    nomController.dispose();
+    prenomController.dispose();
+    emailController.dispose();
+    telephoneController.dispose();
+    motDePasseController.dispose();
+    ageController.dispose();
+    aProposController.dispose();
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -52,13 +164,13 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
           },
         ),
       ),
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          _buildStep1(),
-          _buildStep2(),
-        ],
+      body: Form(
+        key: _formKey,
+        child: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [_buildStep1(), _buildStep2()],
+        ),
       ),
     );
   }
@@ -66,32 +178,161 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
   Widget _buildStep1() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 30.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader("Créez votre profil", "Étape 1 sur 2 (●'◡'●)"),
-          _buildInputField(label: 'Nom', icon: Icons.person_outline),
-          const SizedBox(height: 20),
-          _buildInputField(label: 'Prénom', icon: Icons.person_outline),
-          const SizedBox(height: 20),
-          _buildInputField(label: 'Email', icon: Icons.email_outlined, keyboardType: TextInputType.emailAddress),
-          const SizedBox(height: 20),
-          _buildInputField(label: 'Téléphone', icon: Icons.phone_outlined, keyboardType: TextInputType.phone),
-          const SizedBox(height: 20),
-          _buildInputField(label: 'Mot de passe', icon: Icons.lock_outline, obscureText: true),
-          const SizedBox(height: 30),
-          const Text('Genre', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black54)),
-          const SizedBox(height: 10),
-          _buildGenderSelector(),
-          const SizedBox(height: 40),
-          _buildNavigationButton("Suivant", () {
-            _pageController.nextPage(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOut,
-            );
-          }),
-        ],
-      ),
+     
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader("Créez votre profil", "Étape 1 sur 2 (●'◡'●)"),
+            _buildInputField(
+              label: 'Nom',
+              icon: Icons.person_outline,
+              controller: nomController,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Veuillez saisir un nom';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 20),
+            _buildInputField(
+              label: 'Prénom',
+              icon: Icons.person_outline,
+              controller: prenomController,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Veuillez saisir un prenom';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 20),
+            _buildInputField(
+              label: 'Email',
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              controller: emailController,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Veuillez saisir un email';
+                }
+                if (!RegExp(
+                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                ).hasMatch(value)) {
+                  return 'Email invalide';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 20),
+            _buildInputField(
+              label: 'Téléphone',
+              icon: Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+              controller: telephoneController,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Veuillez saisir un téléphone';
+                }
+                if (!RegExp(r'^\d+$').hasMatch(value)) {
+                  return 'Téléphone invalide';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 20),
+
+            _buildInputField(
+              label: 'Âge',
+              icon: Icons.cake_outlined,
+              keyboardType: TextInputType.number,
+              controller: ageController,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Veuillez saisir votre âge';
+                }
+                final age = int.tryParse(value);
+                if (age == null || age < 10 || age > 100) return 'Âge invalide';
+                return null;
+              },
+            ),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: aProposController,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Veuillez saisir un bio';
+                }
+                return null;
+              },
+              maxLines: 3,
+              decoration: InputDecoration(
+                labelText: 'À propos de vous',
+                alignLabelWithHint: true,
+                prefixIcon: Icon(Icons.info_outline, color: Colors.grey),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
+            _buildInputField(
+              label: 'Mot de passe',
+              icon: Icons.lock_outline,
+              obscureText: true,
+              controller: motDePasseController,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Veuillez saisir un mot de passe';
+                }
+                if (value.length < 6) {
+                  return 'Le mot de passe doit contenir au moins 6 caractères';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 30),
+            // Champ Niveau
+            _buildInputField(
+              label: 'Niveau d’études (optionnel)',
+              icon: Icons.school_outlined,
+              controller: niveauController,
+            ),
+
+            const Text(
+              'Genre',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 10),
+            _buildGenderSelector(),
+            const SizedBox(height: 40),
+            _buildNavigationButton("Suivant", () {
+              if (_formKey.currentState?.validate() == true) {
+                _pageController.nextPage(
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      "Veuillez remplir correctement tous les champs obligatoires.",
+                    ),
+                    backgroundColor: Colors.redAccent,
+                  ),
+                );
+              }
+            }),
+          ],
+        ),
+      
     );
   }
 
@@ -120,17 +361,27 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
           ),
           const SizedBox(height: 40),
           _buildNavigationButton("S'inscrire", () {
-             Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const AuthenticationPage()),
-              (Route<dynamic> route) => false,
+            
+
+             if (_formKey.currentState?.validate() != true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  "Veuillez remplir correctement tous les champs obligatoires de l'étape 1.",
+                ),
+                backgroundColor: Colors.redAccent,
+              ),
             );
+            return;
+          }
+            submitInscription();
+          
           }),
         ],
       ),
     );
   }
-  
+
   Widget _buildHeader(String title, String subtitle) {
     return Container(
       width: double.infinity,
@@ -145,10 +396,10 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.25),
+            color: Colors.blue.withValues(alpha: 0.25),
             blurRadius: 12,
             offset: const Offset(0, 6),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -156,22 +407,38 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 5),
           Text(
             subtitle,
-            style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.9)),
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white.withValues(alpha: 0.9),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInputField({required String label, required IconData icon, bool obscureText = false, TextInputType? keyboardType}) {
-    return TextField(
+  Widget _buildInputField({
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    required TextEditingController controller,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
       obscureText: obscureText,
       keyboardType: keyboardType,
+      controller: controller,
+      validator: validator,
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: Colors.grey),
         labelText: label,
@@ -192,7 +459,7 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
       ),
     );
   }
-  
+
   Widget _buildGenderSelector() {
     return Container(
       decoration: BoxDecoration(
@@ -232,7 +499,7 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
       ),
     );
   }
-  
+
   Widget _buildDomainCard(String domain, bool isSelected) {
     return GestureDetector(
       onTap: () {
@@ -249,14 +516,16 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
         decoration: BoxDecoration(
           color: isSelected ? Colors.blue : Colors.white,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: isSelected ? Colors.blue : Colors.grey.shade200),
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey.shade200,
+          ),
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: Colors.blue.withOpacity(0.3),
+                color: Colors.blue.withValues(alpha: 0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
-              )
+              ),
           ],
         ),
         child: Center(
@@ -273,21 +542,26 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
       ),
     );
   }
-  
+
   Widget _buildNavigationButton(String text, VoidCallback onPressed) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           backgroundColor: Colors.blue,
           foregroundColor: Colors.white,
           elevation: 5,
-          shadowColor: Colors.blue.withOpacity(0.4)
+          shadowColor: Colors.blue.withValues(alpha: 0.4),
         ),
         onPressed: onPressed,
-        child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
