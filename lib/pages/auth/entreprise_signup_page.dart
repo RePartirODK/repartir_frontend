@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/models/entreprise_request.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
-import 'package:repartir_frontend/pages/auth/authentication_page.dart'; // Added import for AuthenticationPage
+import 'package:repartir_frontend/pages/auth/authentication_page.dart';
+import 'package:repartir_frontend/services/entreprise_service.dart'; // Added import for AuthenticationPage
 
 class EntrepriseSignupPage extends StatefulWidget {
   const EntrepriseSignupPage({super.key});
@@ -14,13 +16,16 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
   int _currentPage = 0;
   final Set<String> _selectedDomains = {};
   TextEditingController adresseController = TextEditingController();
-    TextEditingController nomController = TextEditingController();
-    TextEditingController emailController= TextEditingController();
-    TextEditingController motDePasseController= TextEditingController();
-    TextEditingController telephoneController= TextEditingController();
-    TextEditingController confirmeMotDePasseController= TextEditingController();
-    TextEditingController agrementController= TextEditingController();
-    final _formKey = GlobalKey<FormState>();
+  TextEditingController nomController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController motDePasseController = TextEditingController();
+  TextEditingController telephoneController = TextEditingController();
+  TextEditingController confirmeMotDePasseController = TextEditingController();
+  TextEditingController agrementController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final entrepriseService = EntrepriseService();
+   final GlobalKey<FormFieldState<String>> _confirmFieldKey =
+      GlobalKey<FormFieldState<String>>();
   final List<String> _domains = [
     'Technologie',
     'Marketing',
@@ -45,6 +50,75 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
   }
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    adresseController.dispose();
+    nomController.dispose();
+    emailController.dispose();
+    motDePasseController.dispose();
+    telephoneController.dispose();
+    confirmeMotDePasseController.dispose();
+    agrementController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitInscription() async {
+    // verifier que le formulaire est valide
+    if (_formKey.currentState?.validate() != true) {
+      // message d'erreur ou retour
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Veuillez remplir correctement tous les champs obligatoires.",
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    // creation d'un map avec les donnees du formulaire
+    EntrepriseRequest entrepriseRequest = EntrepriseRequest(
+      nom: nomController.text.trim(),
+      email: emailController.text.trim(),
+      motDePasse: motDePasseController.text.trim(),
+      telephone: telephoneController.text.trim(),
+      adresse: adresseController.text.trim(),
+      agrement: agrementController.text.trim(),
+      // domaines: _selectedDomains.toList(),
+    );
+    debugPrint(entrepriseRequest.toJson().toString());
+    //on affiche un loader
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      //appel de l'api
+      await entrepriseService.register(entrepriseRequest);
+      // ignore: use_build_context_synchronously
+      Navigator.of(context).pop(); // enlever le loader
+
+      //affichage de la modal de succes
+      _showSuccessDialog();
+    } catch (e) {
+      // Fermer le loader
+      // ignore: use_build_context_synchronously
+      Navigator.of(context).pop();
+
+      // Afficher l'erreur
+      ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
+        context,
+      ).showSnackBar(SnackBar(content: Text("Erreur est survenue")));
+      debugPrint(
+        "Erreur lors de l'inscription de l'entreprise: ${e.toString()}",
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -65,16 +139,18 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
           },
         ),
       ),
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [_buildStep1(), _buildStep2()],
+      body: Form(
+        key: _formKey,
+        child: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [_buildStep1(), _buildStep2()],
+        ),
       ),
     );
   }
 
   Widget _buildStep1() {
-    
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 30.0),
       child: Column(
@@ -143,14 +219,28 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
             icon: Icons.lock_reset_outlined,
             obscureText: true,
             controller: confirmeMotDePasseController,
+            
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Veuillez confirmer le mot de passe';
               }
+               if (value != motDePasseController.text) {
+      return 'Les mots de passe ne correspondent pas';
+    }
               // Here you would typically compare with the original password
               return null;
             },
+            onEditingComplete: () {
+            setState(() {
+      
+    });
+
+    
+    FocusScope.of(context).unfocus();
+               
+            },
           ),
+          
           const SizedBox(height: 20),
           _buildInputField(
             label: 'Numéro d\'agrément',
@@ -168,7 +258,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
           _buildInputField(
             label: 'Localisation',
             icon: Icons.location_on_outlined,
-            controller : adresseController,
+            controller: adresseController,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Veuillez entrer la localisation';
@@ -178,10 +268,21 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
           ),
           const SizedBox(height: 40),
           _buildNavigationButton("Suivant", () {
-            _pageController.nextPage(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeInOut,
-            );
+             if (_formKey.currentState?.validate() == true) {
+                _pageController.nextPage(
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      "Veuillez remplir correctement tous les champs obligatoires.",
+                    ),
+                    backgroundColor: Colors.redAccent,
+                  ),
+                );
+              }
           }),
         ],
       ),
@@ -213,7 +314,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
           ),
           const SizedBox(height: 40),
           _buildNavigationButton("S'inscrire", () {
-            _showSuccessDialog();
+            _submitInscription();
           }),
         ],
       ),
@@ -324,12 +425,17 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
     bool obscureText = false,
     String? Function(String?)? validator,
     required TextEditingController controller,
+    void Function()? onEditingComplete,
+    GlobalKey<FormFieldState<String>>? fieldKey,
   }) {
     return TextFormField(
+      key: fieldKey,
       obscureText: obscureText,
       keyboardType: keyboardType,
       validator: validator,
       controller: controller,
+      onEditingComplete: onEditingComplete,
+      autovalidateMode: AutovalidateMode.onUserInteraction, 
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.grey.shade600),
@@ -373,7 +479,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: Colors.blue.withOpacity(0.3),
+                color: Colors.blue.withValues(alpha: 0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -406,7 +512,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
           backgroundColor: Colors.blue,
           foregroundColor: Colors.white,
           elevation: 5,
-          shadowColor: Colors.blue.withOpacity(0.4),
+          shadowColor: Colors.blue.withValues(alpha: 0.4),
         ),
         onPressed: onPressed,
         child: Text(

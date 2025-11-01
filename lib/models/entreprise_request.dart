@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class EntrepriseRequest {
   final String nom;
   final String email;
@@ -7,7 +5,6 @@ class EntrepriseRequest {
   final String? urlPhoto;
   final String motDePasse;
   final String role = "ENTREPRISE";
-  final bool estActive;
 
   final String adresse;
   final String agrement;
@@ -17,9 +14,8 @@ class EntrepriseRequest {
     required this.nom,
     required this.email,
     required this.telephone,
-    required this.urlPhoto,
+    this.urlPhoto,
     required this.motDePasse,
-    required this.estActive,
     required this.adresse,
     required this.agrement,
   });
@@ -33,6 +29,7 @@ class EntrepriseRequest {
       "email": email,
       "adresse": adresse,
       "agrement": agrement,
+      "role": role,
     };
     if (urlPhoto !=null) data['urlPhoto'] = urlPhoto;
     return data;

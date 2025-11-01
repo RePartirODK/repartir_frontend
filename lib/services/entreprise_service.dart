@@ -6,7 +6,7 @@ import 'package:repartir_frontend/models/utilisateur.dart';
 
 class EntrepriseService {
   static const String baseUrl = "http://localhost:8183/api/utilisateurs";
-  Future<Utilisateur?> fetchCentres(EntrepriseRequest entreprise) async {
+  Future<Utilisateur?> register(EntrepriseRequest entreprise) async {
     // Implementation to fetch centres
     final url = Uri.parse('$baseUrl/register');
     final response = await http.post(
