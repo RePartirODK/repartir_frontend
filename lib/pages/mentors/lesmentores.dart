@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/pages/mentors.dart/formationviewbymentor.dart';
-import 'package:repartir_frontend/pages/mentors.dart/pageformation.dart';
+import 'package:repartir_frontend/pages/mentors/formationviewbymentor.dart';
+import 'package:repartir_frontend/pages/mentors/pageformation.dart';
 import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
 
 Color primaryBlue = Color(0xFF3EB2FF);

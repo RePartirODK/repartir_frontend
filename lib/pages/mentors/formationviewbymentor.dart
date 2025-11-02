@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/pages/mentors.dart/custom.dart';
+import 'package:repartir_frontend/pages/mentors/custom.dart';
 // Importation des widgets personnalisés et des couleurs
 
 // Modèle de données statique pour l'apprenant (facile à remplacer par une API)

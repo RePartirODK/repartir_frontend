@@ -1,44 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/models/jeunerequest.dart';
+import 'package:repartir_frontend/models/parrain_request.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
-import 'package:repartir_frontend/pages/auth/authentication_page.dart';
+import 'package:repartir_frontend/pages/parrains/nav.dart';
 import 'package:repartir_frontend/services/jeune_service.dart';
+import 'package:repartir_frontend/services/parrain_service.dart';
 
-class JeuneSignupPage extends StatefulWidget {
-  const JeuneSignupPage({super.key});
+class ParrainSignupPage extends StatefulWidget {
+  const ParrainSignupPage({super.key});
 
   @override
-  _JeuneSignupPageState createState() => _JeuneSignupPageState();
+  // ignore: library_private_types_in_public_api
+  _ParrainSignupPageState createState() => _ParrainSignupPageState();
 }
 
-class _JeuneSignupPageState extends State<JeuneSignupPage> {
+class _ParrainSignupPageState extends State<ParrainSignupPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  String? _gender = 'homme';
-  final Set<String> _selectedDomains = {};
   final TextEditingController nomController = TextEditingController();
   final TextEditingController prenomController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController telephoneController = TextEditingController();
   final TextEditingController motDePasseController = TextEditingController();
-  final TextEditingController ageController = TextEditingController();
-  final TextEditingController aProposController = TextEditingController();
-  final TextEditingController niveauController = TextEditingController();
-  final JeuneService jeuneService = JeuneService();
+  
+  final TextEditingController professionController = TextEditingController();
+  final ParrainService parrainService = ParrainService();
   final _formKey = GlobalKey<FormState>();
-  final List<String> _domains = [
-    'Menuiserie',
-    'Coiffure',
-    'Mécanique automobile',
-    'Agriculture',
-    'Électricité bâtiment',
-    'élevage',
-    'Couture / stylisme',
-    'Cuisine',
-    'Numérique',
-    'restaurations',
-  ];
-
+ 
   Future<void> submitInscription() async {
     //verifier que tous les champs sont valide
     if (_formKey.currentState?.validate() != true) {
@@ -62,32 +50,21 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
     );
 
     try {
-      if (_gender == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Veuillez sélectionner votre genre."),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-        return;
-      }
+     
 
       // Créer l'objet JeuneRequest
-      print(_gender);
-      final jeuneRequest = JeuneRequest(
+      
+      final parrainRequest = ParrainRequest(
         nom: nomController.text,
         prenom: prenomController.text,
         email: emailController.text,
         telephone: telephoneController.text,
         motDePasse: motDePasseController.text,
-        genre: _gender!.toUpperCase(),
-        age: int.tryParse(ageController.text) ?? 0,
-        aPropos: aProposController.text,
-        niveau: niveauController.text.isNotEmpty ? niveauController.text : null,
+        profession: professionController.text,
       );
 
       // Appel au backend
-      final utilisateur = await jeuneService.registerJeune(jeuneRequest);
+      await parrainService.registerParrain(parrainRequest);
 
       // Fermer le loader
       // ignore: use_build_context_synchronously
@@ -97,7 +74,7 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
       Navigator.pushAndRemoveUntil(
         // ignore: use_build_context_synchronously
         context,
-        MaterialPageRoute(builder: (context) => AccueilPage()),
+        MaterialPageRoute(builder: (context) => NavHomePage()),
         (Route<dynamic> route) => false,
       );
 
@@ -137,8 +114,7 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
     emailController.dispose();
     telephoneController.dispose();
     motDePasseController.dispose();
-    ageController.dispose();
-    aProposController.dispose();
+    professionController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -169,7 +145,7 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
         child: PageView(
           controller: _pageController,
           physics: const NeverScrollableScrollPhysics(),
-          children: [_buildStep1(), _buildStep2()],
+          children: [_buildStep1()],
         ),
       ),
     );
@@ -182,7 +158,7 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader("Créez votre profil", "Étape 1 sur 2 (●'◡'●)"),
+            _buildHeader("Créez votre profil"),
             _buildInputField(
               label: 'Nom',
               icon: Icons.person_outline,
@@ -241,46 +217,7 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
               },
             ),
             const SizedBox(height: 20),
-
-            _buildInputField(
-              label: 'Âge',
-              icon: Icons.cake_outlined,
-              keyboardType: TextInputType.number,
-              controller: ageController,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Veuillez saisir votre âge';
-                }
-                final age = int.tryParse(value);
-                if (age == null || age < 10 || age > 100) return 'Âge invalide';
-                return null;
-              },
-            ),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: aProposController,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Veuillez saisir un bio';
-                }
-                return null;
-              },
-              maxLines: 3,
-              decoration: InputDecoration(
-                labelText: 'À propos de vous',
-                alignLabelWithHint: true,
-                prefixIcon: Icon(Icons.info_outline, color: Colors.grey),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            
-            
-            const SizedBox(height: 30),
+        
             _buildInputField(
               label: 'Mot de passe',
               icon: Icons.lock_outline,
@@ -299,38 +236,24 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
             const SizedBox(height: 30),
             // Champ Niveau
             _buildInputField(
-              label: 'Niveau d’études (optionnel)',
+              label: 'Profession',
               icon: Icons.school_outlined,
-              controller: niveauController,
-            ),
-
-            const Text(
-              'Genre',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black54,
-              ),
+              controller: professionController,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Veuillez remplir le champs';
+                }
+              
+                return null;
+              },
             ),
             const SizedBox(height: 10),
-            _buildGenderSelector(),
-            const SizedBox(height: 40),
-            _buildNavigationButton("Suivant", () {
-              if (_formKey.currentState?.validate() == true) {
-                _pageController.nextPage(
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Veuillez remplir correctement tous les champs obligatoires.",
-                    ),
-                    backgroundColor: Colors.redAccent,
-                  ),
-                );
-              }
+            _buildNavigationButton("S'inscrire", () {
+
+
+              submitInscription();
+            
+            
             }),
           ],
         ),
@@ -338,53 +261,8 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
     );
   }
 
-  Widget _buildStep2() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 30.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader("Vos centres d'intérêt", "Étape 2 sur 2 (●'◡'●)"),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 15,
-              childAspectRatio: 1.2,
-            ),
-            itemCount: _domains.length,
-            itemBuilder: (context, index) {
-              final domain = _domains[index];
-              final isSelected = _selectedDomains.contains(domain);
-              return _buildDomainCard(domain, isSelected);
-            },
-          ),
-          const SizedBox(height: 40),
-          _buildNavigationButton("S'inscrire", () {
-            
-
-             if (_formKey.currentState?.validate() != true) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  "Veuillez remplir correctement tous les champs obligatoires de l'étape 1.",
-                ),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
-            return;
-          }
-            submitInscription();
-          
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(String title, String subtitle) {
+ 
+  Widget _buildHeader(String title) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 25),
@@ -416,13 +294,7 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
             ),
           ),
           const SizedBox(height: 5),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white.withValues(alpha: 0.9),
-            ),
-          ),
+          
         ],
       ),
     );
@@ -441,6 +313,7 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
       keyboardType: keyboardType,
       controller: controller,
       validator: validator,
+      autovalidateMode: AutovalidateMode.onUnfocus,
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: Colors.grey),
         labelText: label,
@@ -457,89 +330,6 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.blue),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGenderSelector() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          _buildGenderOption("Homme", 'homme'),
-          _buildGenderOption("Femme", 'femme'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGenderOption(String title, String value) {
-    final isSelected = _gender == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _gender = value),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.blue : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black54,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDomainCard(String domain, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (isSelected) {
-            _selectedDomains.remove(domain);
-          } else {
-            _selectedDomains.add(domain);
-          }
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: isSelected ? Colors.blue : Colors.grey.shade200,
-          ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: Colors.blue.withValues(alpha: 0.3),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            domain,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
         ),
       ),
     );

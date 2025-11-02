@@ -5,7 +5,7 @@ import 'package:repartir_frontend/pages/auth/role_selection_page.dart';
 import 'package:repartir_frontend/pages/centres/navcentre.dart';
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
-import 'package:repartir_frontend/pages/mentors.dart/navbarmentor.dart';
+import 'package:repartir_frontend/pages/mentors/navbarmentor.dart';
 import 'package:repartir_frontend/pages/parrains/nav.dart';
 import 'package:repartir_frontend/pages/onboarding/onboarding_page.dart';
 

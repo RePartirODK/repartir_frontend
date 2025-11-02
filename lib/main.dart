@@ -1,31 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
-import 'package:repartir_frontend/pages/centres/acceuil.dart';
-import 'package:repartir_frontend/pages/centres/inscription.dart';
 import 'package:repartir_frontend/pages/centres/navcentre.dart';
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
-import 'package:repartir_frontend/pages/mentors.dart/formationviewbymentor.dart';
-import 'package:repartir_frontend/pages/mentors.dart/formentoring.dart';
-import 'package:repartir_frontend/pages/mentors.dart/navbarmentor.dart';
-import 'package:repartir_frontend/pages/mentors.dart/pageformation.dart';
+import 'package:repartir_frontend/pages/mentors/navbarmentor.dart';
 import 'package:repartir_frontend/pages/onboarding/onboarding_page.dart';
 import 'package:repartir_frontend/pages/parrains/nav.dart';
 import 'package:repartir_frontend/pages/shared/splash_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 
 // Import pages
-
-import 'package:repartir_frontend/pages/parrains/accueilparrain.dart';
-import 'package:repartir_frontend/pages/parrains/detailsdemande.dart';
-import 'package:repartir_frontend/pages/parrains/dons.dart';
-import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
-import 'package:repartir_frontend/pages/parrains/inscription.dart';
-import 'package:repartir_frontend/pages/parrains/jeunesparraines.dart';
-import 'package:repartir_frontend/pages/parrains/pagepaiement.dart';
-import 'package:repartir_frontend/pages/parrains/profil.dart';
-import 'package:repartir_frontend/pages/parrains/voirdetailformation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

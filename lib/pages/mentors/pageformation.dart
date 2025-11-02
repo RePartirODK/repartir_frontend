@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 // NOTE: Assurez-vous que le chemin d'importation vers vos composants est correct
 // import 'custom_widgets.dart'; 
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/pages/mentors.dart/formationdetails.dart'; // Exemple de chemin Header
+import 'package:repartir_frontend/pages/mentors/formationdetails.dart'; // Exemple de chemin Header
 
 // Définition de la couleur (assurez-vous que primaryBlue est accessible)
 const Color primaryBlue = Color(0xFF3EB2FF); 

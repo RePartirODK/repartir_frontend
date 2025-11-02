@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/pages/mentors.dart/editerprofil.dart';
+import 'package:repartir_frontend/pages/mentors/editerprofil.dart';
 
 // --- COULEURS ET CONSTANTES GLOBALES ---
 const Color primaryBlue = Color(0xFF3EB2FF); // Couleur principale bleue
