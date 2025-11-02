@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/pages/mentors.dart/formentoringdetails.dart';
+import 'package:repartir_frontend/pages/mentors/formentoringdetails.dart';
 
 // --- Constantes de Style ---
 const Color primaryBlue = Color(0xFF3EB2FF); // Bleu foncé
