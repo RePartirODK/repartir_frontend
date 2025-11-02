@@ -278,6 +278,8 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
                 ),
               ),
             ),
+            
+            
             const SizedBox(height: 30),
             _buildInputField(
               label: 'Mot de passe',
