@@ -50,6 +50,7 @@ Future<void> main() async {
   } else {
     switch (role) {
       case 'JEUNE':
+        initialPage = AccueilPage();
         break;
       case 'MENTOR':
         initialPage = NavHomeMentorPage();
@@ -61,6 +62,7 @@ Future<void> main() async {
         initialPage = NavHomeCentrePage();
         break;
       case 'ENTREPRISE':
+        initialPage = const AccueilEntreprisePage();
         break;
       default:
         initialPage = AuthenticationPage();

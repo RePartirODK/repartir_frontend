@@ -1,0 +1,70 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:repartir_frontend/models/offre_emploi.dart';
+import 'package:repartir_frontend/services/api_config.dart';
+import 'package:repartir_frontend/services/secure_storage_service.dart';
+
+class OffreService {
+  final SecureStorageService _storage = SecureStorageService();
+
+  Future<String?> _getAuthHeaders() async {
+    final token = await _storage.getAccessToken();
+    if (token == null) return null;
+    return 'Bearer $token';
+  }
+
+  // Obtenir une offre par ID
+  Future<OffreEmploi?> getOffreById(int offreId) async {
+    final authHeader = await _getAuthHeaders();
+    if (authHeader == null) throw Exception('Non authentifié');
+
+    final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.offresParId}/$offreId');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Authorization': authHeader},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return OffreEmploi.fromJson(data);
+      } else if (response.statusCode == 404) {
+        throw Exception('Offre non trouvée');
+      } else if (response.statusCode == 401) {
+        throw Exception('Non authentifié');
+      } else {
+        throw Exception('Erreur lors de la récupération de l\'offre');
+      }
+    } catch (e) {
+      throw Exception('Erreur: $e');
+    }
+  }
+
+  // Lister toutes les offres
+  Future<List<OffreEmploi>> listerOffres() async {
+    final authHeader = await _getAuthHeaders();
+    if (authHeader == null) throw Exception('Non authentifié');
+
+    final url = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.offresLister}');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Authorization': authHeader},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => OffreEmploi.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('Non authentifié');
+      } else {
+        throw Exception('Erreur lors de la récupération des offres');
+      }
+    } catch (e) {
+      throw Exception('Erreur: $e');
+    }
+  }
+}
+

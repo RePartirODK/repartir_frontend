@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../components/custom_header.dart';
+import 'package:repartir_frontend/services/offre_service.dart';
+import 'package:repartir_frontend/models/offre_emploi.dart';
 
 class DetailOffreCommunePage extends StatefulWidget {
-  final Map<String, dynamic> offre;
+  final Map<String, dynamic>? offre;
+  final int? offreId;
 
   const DetailOffreCommunePage({
     super.key,
-    required this.offre,
+    this.offre,
+    this.offreId,
   });
 
   @override
@@ -15,21 +19,78 @@ class DetailOffreCommunePage extends StatefulWidget {
 }
 
 class _DetailOffreCommunePageState extends State<DetailOffreCommunePage> {
+  final OffreService _offreService = OffreService();
+  OffreEmploi? _offre;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.offreId != null) {
+      _loadOffre();
+    } else {
+      _isLoading = false;
+    }
+  }
+
+  Future<void> _loadOffre() async {
+    if (widget.offreId == null) return;
+    
+    try {
+      final offre = await _offreService.getOffreById(widget.offreId!);
+      setState(() {
+        _offre = offre;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $_errorMessage')),
+        );
+      }
+    }
+  }
+
+  Map<String, dynamic> get _offreData {
+    if (_offre != null) {
+      return {
+        'titre': _offre!.titre,
+        'type_contrat': _offre!.typeContrat ?? '',
+        'entreprise': _offre!.nomEntreprise ?? '',
+        'lieu': '',
+        'datePublication': _offre!.dateDebut?.toString() ?? '',
+        'description': _offre!.description,
+        'competence': _offre!.competence ?? '',
+        'date_debut': _offre!.dateDebut?.toIso8601String() ?? '',
+        'date_fin': _offre!.dateFin?.toIso8601String() ?? '',
+        'lien_postuler': _offre!.lienPostuler ?? '',
+        'logo': 'https://via.placeholder.com/150',
+      };
+    }
+    
+    // Fallback sur widget.offre si fourni
+    return widget.offre ?? {
+      'titre': 'Offre non disponible',
+      'type_contrat': '',
+      'entreprise': '',
+      'lieu': '',
+      'datePublication': '',
+      'description': '',
+      'competence': '',
+      'date_debut': '',
+      'date_fin': '',
+      'lien_postuler': '',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Données par défaut si aucune offre n'est fournie
-    final offreData = widget.offre.isNotEmpty ? widget.offre : {
-      'titre': 'Stage Marketing Digital',
-      'type_contrat': 'Stage',
-      'entreprise': 'DigitalBoost',
-      'lieu': 'Bamako, Mali',
-      'datePublication': '01-01-2024',
-      'description': 'Stage de 6 mois en marketing digital au sein d\'une agence dynamique. Vous participerez à la gestion des campagnes publicitaires et au développement de stratégies marketing innovantes.',
-      'competence': 'Marketing Digital, Réseaux sociaux, Analytics',
-      'date_debut': '2025-01-15 09:00:00.000000',
-      'date_fin': '2025-07-15 18:00:00.000000',
-      'lien_postuler': 'https://www.youtube.com/watch?v=e9J6sI5YBOo&list=RDHGBek8t3x5I&index=5',
-    };
+    final offreData = _offreData;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -41,7 +102,25 @@ class _DetailOffreCommunePageState extends State<DetailOffreCommunePage> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: SingleChildScrollView(
+            child: _isLoading && widget.offreId != null
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                            const SizedBox(height: 16),
+                            Text(_errorMessage ?? 'Erreur inconnue'),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _loadOffre,
+                              child: const Text('Réessayer'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : SingleChildScrollView(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

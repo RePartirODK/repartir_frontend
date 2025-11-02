@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/services/formation_service.dart';
+import 'package:repartir_frontend/models/notification.dart';
 
 // Constantes de couleurs pour un style cohérent
 const Color kPrimaryBlue = Color(0xFF007BFF);
@@ -14,8 +16,52 @@ class MesFormationsPage extends StatefulWidget {
 }
 
 class _MesFormationsPageState extends State<MesFormationsPage> {
+  final FormationService _formationService = FormationService();
+  List<InscriptionResponse> _inscriptions = [];
+  bool _isLoading = true;
+  String? _errorMessage;
   // Booléen pour gérer l'état du toggle : true = En cours, false = Terminées
   bool _showEnCours = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInscriptions();
+  }
+
+  Future<void> _loadInscriptions() async {
+    try {
+      final inscriptions = await _formationService.getMesInscriptions();
+      setState(() {
+        _inscriptions = inscriptions;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $_errorMessage')),
+        );
+      }
+    }
+  }
+
+  List<InscriptionResponse> get _inscriptionsEnCours {
+    return _inscriptions.where((inscription) {
+      final statut = inscription.statut?.toUpperCase() ?? '';
+      return statut == 'EN_ATTENTE' || statut == 'ACCEPTEE' || statut == 'EN_COURS' || statut == 'VALIDE';
+    }).toList();
+  }
+
+  List<InscriptionResponse> get _inscriptionsTerminees {
+    return _inscriptions.where((inscription) {
+      final statut = inscription.statut?.toUpperCase() ?? '';
+      return statut == 'TERMINEE';
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +108,25 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
             const SizedBox(height: 20),
             // --- Contenu conditionnel ---
             Expanded(
-              child: _showEnCours ? _buildFormationsEnCours() : _buildFormationsTerminees(),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                              const SizedBox(height: 16),
+                              Text(_errorMessage ?? 'Erreur inconnue'),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadInscriptions,
+                                child: const Text('Réessayer'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _showEnCours ? _buildFormationsEnCours() : _buildFormationsTerminees(),
             ),
           ],
         ),
@@ -138,37 +202,65 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
 
   /// Construit la liste des formations "En cours"
   Widget _buildFormationsEnCours() {
-    return ListView(
-      children: [
-        _buildCoursEnCoursCard(
-          imagePath: 'assets/images/design_ux_ui.png', // Chemin à remplacer
-          title: 'Initiation au design UX/UI',
-          progress: 0.65, // 65%
-        ),
-        const SizedBox(height: 16),
-        _buildCoursEnCoursCard(
-          imagePath: 'assets/images/communication.png', // Chemin à remplacer
-          title: 'Communication professionnelle',
-          progress: 0.30, // 30%
-        ),
-      ],
+    final inscriptions = _inscriptionsEnCours;
+    
+    if (inscriptions.isEmpty) {
+      return const Center(child: Text('Aucune formation en cours'));
+    }
+
+    return ListView.builder(
+      itemCount: inscriptions.length,
+      itemBuilder: (context, index) {
+        final inscription = inscriptions[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16.0),
+          child: _buildCoursEnCoursCard(
+            inscription: inscription,
+          ),
+        );
+      },
     );
   }
 
   /// Construit la liste des formations "Terminées"
   Widget _buildFormationsTerminees() {
-    return ListView(
-      children: [
-        _buildCoursTermineCard(
-          imagePath: 'assets/images/design_ux_ui_termine.png', // Chemin à remplacer
-          title: 'Initiation au design UX/UI',
-        ),
-      ],
+    final inscriptions = _inscriptionsTerminees;
+    
+    if (inscriptions.isEmpty) {
+      return const Center(child: Text('Aucune formation terminée'));
+    }
+
+    return ListView.builder(
+      itemCount: inscriptions.length,
+      itemBuilder: (context, index) {
+        final inscription = inscriptions[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16.0),
+          child: _buildCoursTermineCard(
+            inscription: inscription,
+          ),
+        );
+      },
     );
   }
 
   /// Widget pour une carte de formation en cours
-  Widget _buildCoursEnCoursCard({required String imagePath, required String title, required double progress}) {
+  Widget _buildCoursEnCoursCard({required InscriptionResponse inscription}) {
+    final title = inscription.formation?.titre ?? inscription.titreFormation;
+    final logoUrl = inscription.formation?.centre?.logo;
+    
+    // Calculer le pourcentage de progression (simplifié - peut être amélioré avec les dates)
+    double progress = 0.5; // Par défaut 50%
+    if (inscription.formation?.date_debut != null && inscription.formation?.date_fin != null) {
+      final now = DateTime.now();
+      final debut = inscription.formation!.date_debut!;
+      final fin = inscription.formation!.date_fin!;
+      final total = fin.difference(debut).inDays;
+      final passed = now.difference(debut).inDays;
+      if (total > 0) {
+        progress = (passed / total).clamp(0.0, 1.0);
+      }
+    }
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -185,19 +277,30 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
       ),
       child: Row(
         children: [
-          // Image de la formation (placeholder)
+          // Image de la formation
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              imagePath,
-              width: 60,
-              height: 60,
-              fit: BoxFit.cover,
-              // Gérer l'erreur si l'image n'est pas trouvée
-              errorBuilder: (context, error, stackTrace) {
-                return Container(width: 60, height: 60, color: Colors.grey.shade300);
-              },
-            ),
+            child: logoUrl != null
+                ? Image.network(
+                    logoUrl,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 60,
+                        height: 60,
+                        color: Colors.grey.shade300,
+                        child: const Icon(Icons.school),
+                      );
+                    },
+                  )
+                : Container(
+                    width: 60,
+                    height: 60,
+                    color: Colors.grey.shade300,
+                    child: const Icon(Icons.school),
+                  ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -245,7 +348,9 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
   }
 
   /// Widget pour une carte de formation terminée
-  Widget _buildCoursTermineCard({required String imagePath, required String title}) {
+  Widget _buildCoursTermineCard({required InscriptionResponse inscription}) {
+    final title = inscription.formation?.titre ?? inscription.titreFormation;
+    final logoUrl = inscription.formation?.centre?.logo;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -262,18 +367,30 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
       ),
       child: Row(
         children: [
-          // Image de la formation (placeholder)
+          // Image de la formation
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              imagePath,
-              width: 60,
-              height: 60,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(width: 60, height: 60, color: Colors.grey.shade300);
-              },
-            ),
+            child: logoUrl != null
+                ? Image.network(
+                    logoUrl,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 60,
+                        height: 60,
+                        color: Colors.grey.shade300,
+                        child: const Icon(Icons.school),
+                      );
+                    },
+                  )
+                : Container(
+                    width: 60,
+                    height: 60,
+                    color: Colors.grey.shade300,
+                    child: const Icon(Icons.school),
+                  ),
           ),
           const SizedBox(width: 16),
           Expanded(

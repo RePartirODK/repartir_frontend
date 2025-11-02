@@ -1,42 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/detail_offre_commune_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/offre_service.dart';
+import 'package:repartir_frontend/models/offre_emploi.dart';
 
-class OffreListPage extends StatelessWidget {
+class OffreListPage extends StatefulWidget {
   const OffreListPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    // Mock data for job offers
-    final offres = [
-      {
-        'titre': 'Stage Marketing Digital',
-        'type_contrat': 'Stage',
-        'entreprise': 'DigitalBoost',
-        'lieu': 'Bamako, Mali',
-        'datePublication': '01-01-2024',
-        'description': 'Stage de 6 mois en marketing digital au sein d\'une agence dynamique. Vous participerez à la gestion des campagnes publicitaires et au développement de stratégies marketing innovantes.',
-        'competence': 'Marketing Digital, Réseaux sociaux, Analytics',
-        'date_debut': '2025-01-15 09:00:00.000000',
-        'date_fin': '2025-07-15 18:00:00.000000',
-        'lien_postuler': 'https://www.youtube.com/watch?v=e9J6sI5YBOo&list=RDHGBek8t3x5I&index=5',
-        'logo': 'https://via.placeholder.com/150',
-      },
-      {
-        'titre': 'Offres Menuiserie',
-        'type_contrat': 'CDD',
-        'entreprise': 'FMP',
-        'lieu': 'Bamako, Mali',
-        'datePublication': '01-01-2024',
-        'description': 'Permettre aux jeunes de voir toutes les offres liées à la menuiserie et de postuler directement via le lien du site de l\'entreprise.',
-        'competence': 'Menuiserie, Travail du bois, Assemblage',
-        'date_debut': '2025-02-01 09:00:00.000000',
-        'date_fin': '2025-08-01 18:00:00.000000',
-        'lien_postuler': 'https://www.youtube.com/watch?v=e9J6sI5YBOo&list=RDHGBek8t3x5I&index=5',
-        'logo': 'https://via.placeholder.com/150',
-      }
-    ];
+  State<OffreListPage> createState() => _OffreListPageState();
+}
 
+class _OffreListPageState extends State<OffreListPage> {
+  final OffreService _offreService = OffreService();
+  List<OffreEmploi> _offres = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOffres();
+  }
+
+  Future<void> _loadOffres() async {
+    try {
+      final offres = await _offreService.listerOffres();
+      setState(() {
+        _offres = offres;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $_errorMessage')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -55,13 +63,33 @@ class OffreListPage extends StatelessWidget {
                   topRight: Radius.circular(60),
                 ),
               ),
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
-                itemCount: offres.length,
-                itemBuilder: (context, index) {
-                  return OffreCard(offre: offres[index]);
-                },
-              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                              const SizedBox(height: 16),
+                              Text(_errorMessage ?? 'Erreur inconnue'),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadOffres,
+                                child: const Text('Réessayer'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _offres.isEmpty
+                          ? const Center(child: Text('Aucune offre disponible'))
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
+                              itemCount: _offres.length,
+                              itemBuilder: (context, index) {
+                                return OffreCard(offre: _offres[index]);
+                              },
+                            ),
             ),
           ),
           
@@ -84,7 +112,7 @@ class OffreListPage extends StatelessWidget {
 }
 
 class OffreCard extends StatelessWidget {
-  final Map<String, dynamic> offre;
+  final OffreEmploi offre;
   const OffreCard({Key? key, required this.offre}) : super(key: key);
 
   @override
@@ -98,45 +126,45 @@ class OffreCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundImage: NetworkImage(offre['logo']),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(offre['entreprise'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 14, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(offre['lieu'], style: const TextStyle(color: Colors.grey)),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(offre['titre'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+            if (offre.nomEntreprise != null)
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.blue.shade50,
+                    child: const Icon(Icons.business, color: Colors.blue),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(offre.nomEntreprise!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 4),
+                    ],
+                  ),
+                ],
+              ),
+            if (offre.nomEntreprise != null) const SizedBox(height: 12),
+            Text(offre.titre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
             const SizedBox(height: 8),
-            Text(offre['description'], style: TextStyle(color: Colors.grey[700])),
+            Text(offre.description, style: TextStyle(color: Colors.grey[700])),
             const SizedBox(height: 12),
-            _buildInfoRow(Icons.date_range, 'Du ${_formatDate(offre['date_debut'])} au ${_formatDate(offre['date_fin'])}'),
-            _buildInfoRow(Icons.work_outline, offre['type_contrat']),
+            if (offre.dateDebut != null && offre.dateFin != null)
+              _buildInfoRow(Icons.date_range, 'Du ${_formatDate(offre.dateDebut!)} au ${_formatDate(offre.dateFin!)}'),
+            if (offre.typeContrat != null)
+              _buildInfoRow(Icons.work_outline, offre.typeContrat!),
             const SizedBox(height: 15),
             Align(
               alignment: Alignment.center,
               child: ElevatedButton(
                 onPressed: () {
+                  // Naviguer vers la page de détail avec l'ID de l'offre
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => DetailOffreCommunePage(offre: offre),
+                      builder: (context) => DetailOffreCommunePage(
+                        offreId: offre.id,
+                      ),
                     ),
                   );
                 },
@@ -175,16 +203,7 @@ class OffreCard extends StatelessWidget {
     );
   }
 
-  String? _formatDate(String? dateString) {
-    if (dateString == null || dateString.isEmpty) return null;
-    
-    try {
-      // Parse la date au format "2025-12-01 21:00:00.000000"
-      final DateTime date = DateTime.parse(dateString);
-      // Formate en français
-      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-    } catch (e) {
-      return dateString; // Retourne la chaîne originale si le parsing échoue
-    }
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 }
