@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/auth/jeune_signup_page.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/pages/auth/entreprise_signup_page.dart';
+import 'package:repartir_frontend/pages/auth/parrain_signup_page.dart';
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
 
 class RoleSelectionPage extends StatelessWidget {
@@ -58,7 +59,14 @@ class RoleSelectionPage extends StatelessWidget {
                           icon: Icons.volunteer_activism,
                           title: 'Parrain',
                           subtitle: 'J\'accompagne des jeunes',
-                          onTap: () {}, // TODO: Implement navigation
+                          onTap: () {
+                             Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ParrainSignupPage()),
+                            );
+                          }, 
                         ),
                       ),
                        SizedBox(
