@@ -1,11 +1,11 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/pages/auth/centre_signup_page.dart';
 import 'package:repartir_frontend/pages/auth/jeune_signup_page.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/pages/auth/entreprise_signup_page.dart';
 import 'package:repartir_frontend/pages/auth/mentor_signup_page.dart';
 import 'package:repartir_frontend/pages/auth/parrain_signup_page.dart';
-import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
 
 class RoleSelectionPage extends StatelessWidget {
   const RoleSelectionPage({super.key});
@@ -92,7 +92,14 @@ class RoleSelectionPage extends StatelessWidget {
                           icon: Icons.business_outlined,
                           title: 'Centre',
                           subtitle: 'Je propose des formations',
-                          onTap: () {}, // TODO: Implement navigation
+                          onTap: () {
+                             Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const CentreSignupPage()),
+                            );
+                          }, 
                         ),
                       ),
                       SizedBox(
