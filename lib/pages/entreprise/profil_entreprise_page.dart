@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/pages/jeuner/accueil.dart'; // Pour les constantes de couleur
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
 import 'package:repartir_frontend/pages/entreprise/modifier_profil_page.dart';
 import 'package:repartir_frontend/pages/entreprise/mes_offres_page.dart';
@@ -137,7 +136,7 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: Colors.grey.withValues(alpha:0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),

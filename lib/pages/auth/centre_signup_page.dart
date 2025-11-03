@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/models/entreprise_request.dart';
+import 'package:repartir_frontend/models/centre_request.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
-import 'package:repartir_frontend/services/entreprise_service.dart'; // Added import for AuthenticationPage
+import 'package:repartir_frontend/services/centre_service.dart';
 
-class EntrepriseSignupPage extends StatefulWidget {
-  const EntrepriseSignupPage({super.key});
+class CentreSignupPage extends StatefulWidget {
+  const CentreSignupPage({super.key});
 
   @override
-  State<EntrepriseSignupPage> createState() => _EntrepriseSignupPageState();
+  State<CentreSignupPage> createState() => _CentreSignupPageState();
 }
 
-class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
+class _CentreSignupPageState extends State<CentreSignupPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  final Set<String> _selectedDomains = {};
   TextEditingController adresseController = TextEditingController();
   TextEditingController nomController = TextEditingController();
   TextEditingController emailController = TextEditingController();
@@ -22,21 +21,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
   TextEditingController confirmeMotDePasseController = TextEditingController();
   TextEditingController agrementController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final entrepriseService = EntrepriseService();
-   final GlobalKey<FormFieldState<String>> _confirmFieldKey =
-      GlobalKey<FormFieldState<String>>();
-  final List<String> _domains = [
-    'Technologie',
-    'Marketing',
-    'Finance',
-    'Vente',
-    'Ressources Humaines',
-    'Production',
-    'Logistique',
-    'Service Client',
-    'Design',
-    'Recherche & Développement',
-  ];
+  final centreService = CentreService();
 
   @override
   void initState() {
@@ -77,7 +62,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
     }
 
     // creation d'un map avec les donnees du formulaire
-    EntrepriseRequest entrepriseRequest = EntrepriseRequest(
+    CentreRequest centreRequest = CentreRequest(
       nom: nomController.text.trim(),
       email: emailController.text.trim(),
       motDePasse: motDePasseController.text.trim(),
@@ -86,7 +71,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
       agrement: agrementController.text.trim(),
       // domaines: _selectedDomains.toList(),
     );
-    debugPrint(entrepriseRequest.toJson().toString());
+    debugPrint(centreRequest.toJson().toString());
     //on affiche un loader
     showDialog(
       context: context,
@@ -95,7 +80,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
     );
     try {
       //appel de l'api
-      await entrepriseService.register(entrepriseRequest);
+      await centreService.register(centreRequest);
       // ignore: use_build_context_synchronously
       Navigator.of(context).pop(); // enlever le loader
 
@@ -143,7 +128,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
         child: PageView(
           controller: _pageController,
           physics: const NeverScrollableScrollPhysics(),
-          children: [_buildStep1(), _buildStep2()],
+          children: [_buildStep1()],
         ),
       ),
     );
@@ -155,14 +140,14 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader("Créez votre profil d'entreprise", "Étape 1 sur 2"),
+          _buildHeader("Créez votre profil d'entreprise", ''),
           _buildInputField(
-            label: 'Nom de l\'entreprise',
+            label: 'Nom du centre',
             icon: Icons.business_outlined,
             controller: nomController,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Veuillez entrer le nom de l\'entreprise';
+                return 'Veuillez entrer le nom du centre';
               }
               return null;
             },
@@ -218,28 +203,24 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
             icon: Icons.lock_reset_outlined,
             obscureText: true,
             controller: confirmeMotDePasseController,
-            
+
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Veuillez confirmer le mot de passe';
               }
-               if (value != motDePasseController.text) {
-      return 'Les mots de passe ne correspondent pas';
-    }
+              if (value != motDePasseController.text) {
+                return 'Les mots de passe ne correspondent pas';
+              }
               // Here you would typically compare with the original password
               return null;
             },
             onEditingComplete: () {
-            setState(() {
-      
-    });
+              setState(() {});
 
-    
-    FocusScope.of(context).unfocus();
-               
+              FocusScope.of(context).unfocus();
             },
           ),
-          
+
           const SizedBox(height: 20),
           _buildInputField(
             label: 'Numéro d\'agrément',
@@ -263,52 +244,6 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
                 return 'Veuillez entrer la localisation';
               }
               return null;
-            },
-          ),
-          const SizedBox(height: 40),
-          _buildNavigationButton("Suivant", () {
-             if (_formKey.currentState?.validate() == true) {
-                _pageController.nextPage(
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Veuillez remplir correctement tous les champs obligatoires.",
-                    ),
-                    backgroundColor: Colors.redAccent,
-                  ),
-                );
-              }
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStep2() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 30.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader("Vos domaines d'activité", "Étape 2 sur 2"),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 15,
-              childAspectRatio: 1.2,
-            ),
-            itemCount: _domains.length,
-            itemBuilder: (context, index) {
-              final domain = _domains[index];
-              final isSelected = _selectedDomains.contains(domain);
-              return _buildDomainCard(domain, isSelected);
             },
           ),
           const SizedBox(height: 40),
@@ -434,7 +369,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
       validator: validator,
       controller: controller,
       onEditingComplete: onEditingComplete,
-      autovalidateMode: AutovalidateMode.onUserInteraction, 
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.grey.shade600),
@@ -451,49 +386,6 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.blue),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDomainCard(String domain, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (isSelected) {
-            _selectedDomains.remove(domain);
-          } else {
-            _selectedDomains.add(domain);
-          }
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: isSelected ? Colors.blue : Colors.grey.shade200,
-          ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: Colors.blue.withValues(alpha: 0.3),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            domain,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
         ),
       ),
     );
