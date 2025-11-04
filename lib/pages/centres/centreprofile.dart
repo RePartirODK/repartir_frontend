@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 // Définition des constantes
 const Color kPrimaryColor = Color(0xFF3EB2FF);
@@ -12,7 +13,7 @@ class TrainingCenter {
   final String address;
   final String phone;
   final String email;
-  final String imageUrl; 
+  final String imageUrl;
 
   TrainingCenter({
     required this.name,
@@ -29,7 +30,7 @@ final TrainingCenter centerProfile = TrainingCenter(
   address: 'Missabougou, rive droite',
   phone: '+22374759999',
   email: 'cfpmissabougou@gmail.com',
-  imageUrl: 'assets/center_banner.jpg', 
+  imageUrl: 'assets/center_banner.jpg',
 );
 
 // **************************************************
@@ -45,7 +46,8 @@ class ProfileCentrePage extends StatefulWidget {
 
 class _ProfileCentrePageState extends State<ProfileCentrePage> {
   // L'index 3 correspond à "Profil" dans la BottomNavigationBar
-  int _selectedIndex = 3; 
+  int _selectedIndex = 3;
+  final storage = SecureStorageService();
 
   // Fonction de mise à jour pour la BottomNavigationBar
   void _onItemTapped(int index) {
@@ -84,11 +86,9 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                
-
                   // 2.2. Photo de profil et Nom du Centre
                   _buildCenterInfo(centerProfile),
-                  
+
                   const SizedBox(height: 30),
 
                   // 2.3. Section Contact
@@ -98,7 +98,7 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
 
                   // 2.4. Section Paramètres du Compte (avec Déconnexion)
                   _buildAccountSettings(),
-                  
+
                   const SizedBox(height: 30),
                 ],
               ),
@@ -108,7 +108,6 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
       ),
     );
   }
-
 
   Widget _buildCenterInfo(TrainingCenter center) {
     return Column(
@@ -121,23 +120,29 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
             color: Colors.grey[200],
             borderRadius: BorderRadius.circular(10),
             image: DecorationImage(
-              image: AssetImage(center.imageUrl), 
+              image: AssetImage(center.imageUrl),
               fit: BoxFit.cover,
               onError: (exception, stackTrace) => Container(
                 color: Colors.grey[300],
-                child: const Center(child: Icon(Icons.business, size: 60, color: Colors.black54)),
+                child: const Center(
+                  child: Icon(Icons.business, size: 60, color: Colors.black54),
+                ),
               ),
             ),
           ),
-          child: center.imageUrl.startsWith('assets') ? null : const Center(child: Icon(Icons.business, size: 60, color: Colors.black54)),
+          child: center.imageUrl.startsWith('assets')
+              ? null
+              : const Center(
+                  child: Icon(Icons.business, size: 60, color: Colors.black54),
+                ),
         ),
         const SizedBox(height: 15),
         Align(
           alignment: AlignmentGeometry.centerRight,
-          child: IconButton(       
-              icon: const Icon(Icons.edit, color: kPrimaryColor, size: 28),
-              onPressed: _handleEditProfile, // Fonction d'édition
-            ),
+          child: IconButton(
+            icon: const Icon(Icons.edit, color: kPrimaryColor, size: 28),
+            onPressed: _handleEditProfile, // Fonction d'édition
+          ),
         ),
         // Nom du Centre
         Text(
@@ -146,7 +151,7 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            height: 1.2, 
+            height: 1.2,
           ),
         ),
       ],
@@ -162,11 +167,11 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: kPrimaryColor, 
+            color: kPrimaryColor,
           ),
         ),
         const SizedBox(height: 10),
-        
+
         // Liste des informations de contact
         _buildContactItem(Icons.location_on, center.address),
         _buildContactItem(Icons.phone, center.phone),
@@ -179,7 +184,7 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
       child: Card(
-        elevation: 1, 
+        elevation: 1,
         color: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         margin: EdgeInsets.zero,
@@ -190,10 +195,7 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
               Icon(icon, color: kPrimaryColor, size: 24),
               const SizedBox(width: 15),
               Expanded(
-                child: Text(
-                  value,
-                  style: const TextStyle(fontSize: 16),
-                ),
+                child: Text(value, style: const TextStyle(fontSize: 16)),
               ),
             ],
           ),
@@ -211,32 +213,47 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: kPrimaryColor, 
+            color: kPrimaryColor,
           ),
         ),
         const SizedBox(height: 10),
 
         // 1. Changer le mot de passe
-        _buildSettingItem('Change le mot de passe', Icons.arrow_forward_ios, 
-          onTap: () { print('Naviguer vers changer mot de passe'); },
+        _buildSettingItem(
+          'Change le mot de passe',
+          Icons.arrow_forward_ios,
+          onTap: () {
+            print('Naviguer vers changer mot de passe');
+          },
         ),
-        
+
         // 2. Déconnexion
-        _buildSettingItem('Déconnexion', Icons.arrow_forward_ios, 
-          textColor: Colors.black87, 
+        _buildSettingItem(
+          'Déconnexion',
+          Icons.arrow_forward_ios,
+          textColor: Colors.black87,
           onTap: _handleLogout,
         ),
-        
+
         // 3. Supprimer mon compte
-        _buildSettingItem('Supprimer mon compte', Icons.arrow_forward_ios, 
-          textColor: kDangerColor, 
-          onTap: () { print('Afficher dialogue de confirmation de suppression'); },
+        _buildSettingItem(
+          'Supprimer mon compte',
+          Icons.arrow_forward_ios,
+          textColor: kDangerColor,
+          onTap: () {
+            print('Afficher dialogue de confirmation de suppression');
+          },
         ),
       ],
     );
   }
 
-  Widget _buildSettingItem(String text, IconData icon, {Color textColor = Colors.black87, required VoidCallback onTap}) {
+  Widget _buildSettingItem(
+    String text,
+    IconData icon, {
+    Color textColor = Colors.black87,
+    required VoidCallback onTap,
+  }) {
     return Card(
       elevation: 1,
       margin: const EdgeInsets.only(bottom: 10.0),
@@ -248,10 +265,7 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                text,
-                style: TextStyle(fontSize: 16, color: textColor),
-              ),
+              Text(text, style: TextStyle(fontSize: 16, color: textColor)),
               Icon(icon, color: textColor, size: 16),
             ],
           ),
@@ -260,4 +274,3 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
     );
   }
 }
-

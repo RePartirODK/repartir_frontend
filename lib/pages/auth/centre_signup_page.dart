@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/models/centre_request.dart';
+import 'package:repartir_frontend/models/request/centre_request.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/services/centre_service.dart';
 

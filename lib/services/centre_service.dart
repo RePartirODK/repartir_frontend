@@ -1,14 +1,18 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:repartir_frontend/models/centre_request.dart';
-import 'package:repartir_frontend/models/jeunerequest.dart';
+import 'package:repartir_frontend/models/request/centre_request.dart';
+import 'package:repartir_frontend/models/request/request_formation.dart';
+import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/models/utilisateur.dart';
+import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 class CentreService {
   static const String baseUrl = "http://localhost:8183/api/utilisateurs";
-
-  //register jeune
+  static const String baseUrl1 = 'http://localhost:8183/api/centre';
+  final storage = SecureStorageService();
+  //register centre de formation
   Future<Utilisateur?> register(CentreRequest centre) async {
     final url = Uri.parse('$baseUrl/register');
     final response = await http.post(
@@ -29,5 +33,72 @@ class CentreService {
       );
     }
   }
-  
+
+  Future<ResponseCentre?> getCurrentCentre(String email) async {
+    final encodedEmail = Uri.encodeComponent(email);
+    final url = Uri.parse('$baseUrl1/email/$encodedEmail');
+
+    //backend call
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${await storage.getAccessToken()}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      //mapping vers ResponseCentre
+      final responseCentre = ResponseCentre.fromJson(data);
+      return responseCentre;
+    } else if (response.statusCode == 404) {
+      throw Exception("utilisateur non trouvé");
+    } else {
+      throw Exception("une erreur est survenue");
+    }
+  }
+
+  //recupérer les formations du centre
+  Future<ResponseCentre?> getAllFormations(String email) async{
+    String encodedEmail = Uri.encodeComponent(email);
+     const String baseUrl = 'http://localhost:8183/api/formations';
+    final url = Uri.parse('$baseUrl/centre/$encodedEmail');
+     final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${await storage.getAccessToken()}',
+      },
+      body: jsonEncode(request.toJson()),
+    );
+    
+
+    
+  }
+
+  //ajouter une formation
+  Future<RequestFormation?> createFormation(
+    RequestFormation request,
+    int centreId,
+  ) async {
+    const String baseUrl = 'http://localhost:8183/api/formations';
+    final url = Uri.parse('$baseUrl/centre/$centreId');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${await storage.getAccessToken()}',
+      },
+      body: jsonEncode(request.toJson()),
+    );
+    if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return data;
+    } else if (response.statusCode == 404) {
+      throw Exception("utilisateur non trouvé");
+    } else {
+      throw Exception("une erreur est survenue");
+    }
+  }
 }

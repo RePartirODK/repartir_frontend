@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:repartir_frontend/models/mentors_request.dart';
+import 'package:repartir_frontend/models/request/mentors_request.dart';
 import 'package:repartir_frontend/models/utilisateur.dart';
 
 class MentorService {

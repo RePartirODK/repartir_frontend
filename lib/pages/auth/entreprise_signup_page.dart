@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/models/entreprise_request.dart';
+import 'package:repartir_frontend/models/request/entreprise_request.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/services/entreprise_service.dart'; // Added import for AuthenticationPage
 

@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/pages/centres/formation.dart';
+import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 // Définition de la couleur principale
 const Color kPrimaryColor = Color(0xFF3EB2FF);
 const Color kSecondaryColor = Color(0xFF4CAF50);
 const double kHeaderHeight = 200.0;
 
-class EnhanceHome extends StatelessWidget {
+class EnhanceHome extends StatefulWidget {
   const EnhanceHome({super.key});
+
+  @override
+  State<EnhanceHome> createState() => _EnhanceHomeState();
+}
+
+class _EnhanceHomeState extends State<EnhanceHome> {
+  final stockage = SecureStorageService();
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   VoidCallback? get onPressed => null;
 
@@ -92,7 +105,9 @@ class EnhanceHome extends StatelessWidget {
             title: "Nombre de formations",
             value: "10",
             icon: Icons.school_outlined,
-            cardColor: kSecondaryColor.withValues(alpha: 0.34), // Vert très doux
+            cardColor: kSecondaryColor.withValues(
+              alpha: 0.34,
+            ), // Vert très doux
             valueColor: Colors.black,
           ),
         ],
@@ -135,7 +150,7 @@ class EnhanceHome extends StatelessWidget {
                   padding: const EdgeInsets.only(left: 40.0),
                   child: Text(
                     value,
-                    
+
                     style: TextStyle(
                       fontSize: 40,
                       fontWeight: FontWeight.w900,
