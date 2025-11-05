@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_centre.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/centres/formation.dart';
+import 'package:repartir_frontend/services/centre_service.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 // Définition de la couleur principale
@@ -17,13 +20,49 @@ class EnhanceHome extends StatefulWidget {
 
 class _EnhanceHomeState extends State<EnhanceHome> {
   final stockage = SecureStorageService();
+  final centreService = CentreService();
+
+  List<ResponseFormation> _formations = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _loadFormations();
+  }
+
+  Future<void> _loadFormations() async {
+    try {
+      //recupération des données du centre connecté
+      ResponseCentre? centre = await centreService.getCurrentCentre();
+      if (centre == null) {
+        throw Exception("Impossible de récupérer les informations du centre.");
+      }
+
+      //on met son id dans le local storage
+      await stockage.saveId(centre.id);
+      debugPrint(centre.id.toString());
+      // Appel du backend
+      final formations = await centreService.getAllFormations(centre.id);
+
+      // Mise à jour de l’état
+      setState(() {
+        _formations = formations;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des formations: ${e.toString()}');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   VoidCallback? get onPressed => null;
+  int get nombreTotalFormations => _formations.length;
+
+  int get nombreFormationsEnCours =>
+      _formations.where((f) => f.statut.toLowerCase() == 'en_cours').length;
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +131,7 @@ class _EnhanceHomeState extends State<EnhanceHome> {
           _buildStatCard(
             context,
             title: "Formation en cours",
-            value: "5",
+            value: nombreFormationsEnCours.toString(),
             icon: Icons.school_outlined,
             cardColor: kPrimaryColor.withValues(alpha: 0.34),
             valueColor: Colors.black,
@@ -103,7 +142,7 @@ class _EnhanceHomeState extends State<EnhanceHome> {
           _buildStatCard(
             context,
             title: "Nombre de formations",
-            value: "10",
+            value: nombreTotalFormations.toString(),
             icon: Icons.school_outlined,
             cardColor: kSecondaryColor.withValues(
               alpha: 0.34,
@@ -192,7 +231,7 @@ class _EnhanceHomeState extends State<EnhanceHome> {
               text: "Demande",
               onPressed: () {
                 //navigation vers la page demande
-                print("click");
+                //print("click");
               },
             ),
           ),

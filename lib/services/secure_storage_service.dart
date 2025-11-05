@@ -16,6 +16,10 @@ class SecureStorageService {
     await storage.write(key: 'user_email', value: email);
   }
 
+  Future<void> saveId(int id) async {
+    await storage.write(key: 'user_id', value: id.toString());
+  }
+
   Future<String?> getAccessToken() async {
     return await storage.read(key: 'access_token');
   }
@@ -24,17 +28,23 @@ class SecureStorageService {
     return await storage.read(key: 'refresh_token');
   }
 
-Future<String?> getUserRole() async {
+  Future<String?> getUserRole() async {
     return await storage.read(key: 'user_role');
   }
 
   Future<String?> getUserEmail() async {
     return await storage.read(key: 'user_email');
   }
+
+  Future<String?> getUserId() async {
+    return await storage.read(key: 'user_id');
+  }
+
   Future<void> clearTokens() async {
     await storage.delete(key: 'access_token');
     await storage.delete(key: 'refresh_token');
     await storage.delete(key: 'user_role');
     await storage.delete(key: 'user_email');
+    await storage.delete(key: 'user_id');
   }
 }

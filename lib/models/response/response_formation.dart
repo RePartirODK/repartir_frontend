@@ -50,6 +50,5 @@ class ResponseFormation {
       int.tryParse(json['idCentre']?.toString() ?? '0') ?? 0
     );
   }
-
  
 }
