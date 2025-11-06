@@ -51,7 +51,7 @@ Future<void> main() async {
         initialPage = AuthenticationPage();
     }
   }
-  runApp(MyApp(initialPage: initialPage));
+  runApp(const ProviderScope(child: MyApp(initialPage: initialPage)));
 }
 
 class MyApp extends StatelessWidget {

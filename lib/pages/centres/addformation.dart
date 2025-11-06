@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/models/request/request_formation.dart';
 import 'package:intl/intl.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
+import 'package:repartir_frontend/provider/formation_provider.dart';
 import 'package:repartir_frontend/services/centre_service.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 
@@ -10,7 +13,8 @@ const Color kPrimaryColor = Color(0xFF3EB2FF);
 
 // Cette page est un formulaire, donc pas de BottomNavigationBar
 
-class AddFormationPage extends StatefulWidget {
+class AddFormationPage extends ConsumerStatefulWidget {
+ 
   const AddFormationPage({super.key});
 
   @override
@@ -18,7 +22,8 @@ class AddFormationPage extends StatefulWidget {
   _AddFormationPageState createState() => _AddFormationPageState();
 }
 
-class _AddFormationPageState extends State<AddFormationPage> {
+class _AddFormationPageState extends ConsumerState<AddFormationPage> {
+ 
   // Contrôleurs pour les champs de texte
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -135,13 +140,17 @@ class _AddFormationPageState extends State<AddFormationPage> {
       );
 
       int centreId = int.tryParse(await storage.getUserId() ?? '0') ?? 0;
-      await centreService.createFormation(formation, centreId);
+      ResponseFormation? nouvelleFormation = await centreService
+      .createFormation(formation, centreId);
 
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Formation ajoutée avec succès !")),
       );
-
-      // ✅ Réinitialisation des champs après ajout
+      //mettre à jour les formations dans le provider
+      ref.read(formationProvider.notifier)
+      .addFormation(nouvelleFormation!);
+      // Réinitialisation des champs après ajout
       _titleController.clear();
       _descriptionController.clear();
       _durationController.clear();
@@ -154,6 +163,7 @@ class _AddFormationPageState extends State<AddFormationPage> {
       setState(() => _selectedFormat = null);
     } catch (e) {
       ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
         context,
       ).showSnackBar(SnackBar(content: Text("Erreur: ${e.toString()}")));
     } finally {

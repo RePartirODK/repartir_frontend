@@ -84,7 +84,7 @@ debugPrint('Token utilisé pour /me : $token');
   }
 
   //ajouter une formation
-  Future<RequestFormation?> createFormation(
+  Future<ResponseFormation?> createFormation(
     RequestFormation request,
     int centreId,
   ) async {
@@ -100,13 +100,12 @@ debugPrint('Token utilisé pour /me : $token');
     );
     if (response.statusCode == 201) {
       final data = jsonDecode(response.body);
-      return RequestFormation.fromJson(data);
+      return ResponseFormation.fromJson(data);
     } else if (response.statusCode == 404) {
       throw Exception("utilisateur non trouvé");
     } else {
       throw Exception("une erreur est survenue");
     }
   }
-
 
 }

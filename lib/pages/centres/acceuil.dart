@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/centres/formation.dart';
+import 'package:repartir_frontend/provider/formation_provider.dart';
 import 'package:repartir_frontend/services/centre_service.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 
@@ -11,18 +13,23 @@ const Color kPrimaryColor = Color(0xFF3EB2FF);
 const Color kSecondaryColor = Color(0xFF4CAF50);
 const double kHeaderHeight = 200.0;
 
-class EnhanceHome extends StatefulWidget {
+class EnhanceHome extends ConsumerStatefulWidget {
   const EnhanceHome({super.key});
 
   @override
-  State<EnhanceHome> createState() => _EnhanceHomeState();
+  ConsumerState<EnhanceHome> createState() => _EnhanceHomeState();
 }
 
-class _EnhanceHomeState extends State<EnhanceHome> {
+
+class _EnhanceHomeState extends ConsumerState<EnhanceHome> {
   final stockage = SecureStorageService();
   final centreService = CentreService();
 
-  List<ResponseFormation> _formations = [];
+  VoidCallback? get onPressed => null;
+  int getNombreTotalFormations(List<ResponseFormation> formations) => formations.length;
+
+int getNombreFormationsEnCours(List<ResponseFormation> formations) =>
+    formations.where((f) => f.statut.toLowerCase() == 'en_cours').length;
   bool _isLoading = true;
 
   @override
@@ -42,12 +49,14 @@ class _EnhanceHomeState extends State<EnhanceHome> {
       //on met son id dans le local storage
       await stockage.saveId(centre.id);
       debugPrint(centre.id.toString());
-      // Appel du backend
-      final formations = await centreService.getAllFormations(centre.id);
+     
+     // Utilisation du provider pour charger les formations
+    await ref.read(formationProvider.notifier).loadFormations(centre.id);
+
 
       // Mise à jour de l’état
       setState(() {
-        _formations = formations;
+
         _isLoading = false;
       });
     } catch (e) {
@@ -58,14 +67,12 @@ class _EnhanceHomeState extends State<EnhanceHome> {
     }
   }
 
-  VoidCallback? get onPressed => null;
-  int get nombreTotalFormations => _formations.length;
-
-  int get nombreFormationsEnCours =>
-      _formations.where((f) => f.statut.toLowerCase() == 'en_cours').length;
-
   @override
   Widget build(BuildContext context) {
+    //il va être en écoute des changements du provider
+    final formations = ref.watch(formationProvider);
+    
+
     return Scaffold(
       backgroundColor: Colors
           .grey[50], // Fond très légèrement gris pour faire ressortir les cards
@@ -87,7 +94,7 @@ class _EnhanceHomeState extends State<EnhanceHome> {
             ),
 
             // Cartes de statistiques améliorées
-            _buildStatCards(context),
+            _buildStatCards(context, formations),
 
             const SizedBox(height: 40),
 
@@ -122,7 +129,8 @@ class _EnhanceHomeState extends State<EnhanceHome> {
     );
   }
 
-  Widget _buildStatCards(BuildContext context) {
+  Widget _buildStatCards(BuildContext context,
+  List<ResponseFormation> formations) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
@@ -131,7 +139,7 @@ class _EnhanceHomeState extends State<EnhanceHome> {
           _buildStatCard(
             context,
             title: "Formation en cours",
-            value: nombreFormationsEnCours.toString(),
+            value: getNombreFormationsEnCours(formations).toString(),
             icon: Icons.school_outlined,
             cardColor: kPrimaryColor.withValues(alpha: 0.34),
             valueColor: Colors.black,
@@ -142,7 +150,7 @@ class _EnhanceHomeState extends State<EnhanceHome> {
           _buildStatCard(
             context,
             title: "Nombre de formations",
-            value: nombreTotalFormations.toString(),
+            value: getNombreTotalFormations(formations).toString(),
             icon: Icons.school_outlined,
             cardColor: kSecondaryColor.withValues(
               alpha: 0.34,
