@@ -36,8 +36,8 @@ class ResponseFormation {
       int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       titre: json['titre'] ?? '',
       description: json['description'] ?? '',
-      dateDebut: DateTime.parse(json['dateDebut']),
-      dateFin: DateTime.parse(json['dateFin']),
+      dateDebut: DateTime.parse(json['date_debut']),
+      dateFin: DateTime.parse(json['date_fin']),
       statut: json['statut'] ?? '',
       cout: (json['cout'] as num).toDouble(),
       nbrePlace: json['nbrePlace']is int ? json['nbrePlace'] as int :

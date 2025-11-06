@@ -32,6 +32,7 @@ class _AddFormationPageState extends State<AddFormationPage> {
 
   final dateFormat = DateFormat('dd/MM/yyyy');
   final centreService = CentreService();
+  bool _isSubmitting = false;
   //form key pour la validation du formulaire
   final _formKey = GlobalKey<FormState>();
   final storage = SecureStorageService();
@@ -40,27 +41,29 @@ class _AddFormationPageState extends State<AddFormationPage> {
   String? _selectedFormat;
   final List<String> _formats = ['Presentiel', 'En ligne', 'Hybride'];
   String _formatFromString(String value) {
-        switch (value.toLowerCase()) {
-          case 'présentiel':
-          case 'presentiel':
-            return 'PRESENTIEL';
-          case 'en ligne':
-            return 'ENLIGNE';
-          case 'hybride':
-            return 'HYBRIDE';
-          default:
-            throw Exception('Format inconnu: $value');
-        }
-      }
+    switch (value.toLowerCase()) {
+      case 'présentiel':
+      case 'presentiel':
+        return 'PRESENTIEL';
+      case 'en ligne':
+        return 'ENLIGNE';
+      case 'hybride':
+        return 'HYBRIDE';
+      default:
+        throw Exception('Format inconnu: $value');
+    }
+  }
+
   // Pour la sélection de date
   Future<void> _selectDate(
     BuildContext context,
-    TextEditingController controller,
-  ) async {
+    TextEditingController controller, {
+    DateTime? minDate,
+  }) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
+      initialDate: minDate ?? DateTime.now(),
+      firstDate: minDate ?? DateTime.now(),
       lastDate: DateTime(2101),
       builder: (context, child) {
         return Theme(
@@ -90,38 +93,71 @@ class _AddFormationPageState extends State<AddFormationPage> {
 
   // --- Méthode pour soumettre le formulaire ---
   Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      // Formulaire valide, on peut ajouter la formation
-      debugPrint("Formation ajoutée: ${_titleController.text}");
-      
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Veuillez corriger les erreurs")),
+      );
+      return;
+    }
 
-      //on creér une formation
-      RequestFormation formation = RequestFormation(
+    try {
+      setState(() => _isSubmitting = true);
+
+      // Vérification logique des dates
+      final DateTime dateDebut = dateFormat.parse(_startDateController.text);
+      final DateTime dateFin = dateFormat.parse(_endDateController.text);
+
+      if (dateFin.isBefore(dateDebut)) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "La date de fin ne peut pas être antérieure à la date de début.",
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Création de l’objet formation
+      final formation = RequestFormation(
         titre: _titleController.text,
         description: _descriptionController.text,
-        dateDebut: dateFormat.parse(_startDateController.text),
-        dateFin: dateFormat.parse(_endDateController.text),
-        statut: 'EN_ATTENTE', // ou selon ton workflow
+        dateDebut: dateDebut,
+        dateFin: dateFin,
+        statut: 'EN_ATTENTE',
         cout: double.tryParse(_costController.text),
         nbrePlace: int.tryParse(_placesController.text),
         format: _formatFromString(_selectedFormat!),
         duree: _durationController.text,
         urlFormation: _urlController.text.isEmpty ? null : _urlController.text,
-        urlCertificat: _urlController.text.isEmpty
-            ? null
-            : _urlController.text, // si tu veux la même URL
+        urlCertificat: _urlController.text.isEmpty ? null : _urlController.text,
       );
-      //on recupère l'id du centre actuellement connecté
+
       int centreId = int.tryParse(await storage.getUserId() ?? '0') ?? 0;
       await centreService.createFormation(formation, centreId);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Formation ajoutée avec succès !")),
       );
-    } else {
-      // Formulaire invalide
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Veuillez corriger les erreurs")),
-      );
+
+      // ✅ Réinitialisation des champs après ajout
+      _titleController.clear();
+      _descriptionController.clear();
+      _durationController.clear();
+      _costController.clear();
+      _startDateController.clear();
+      _endDateController.clear();
+      _placesController.clear();
+      _domainController.clear();
+      _urlController.clear();
+      setState(() => _selectedFormat = null);
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Erreur: ${e.toString()}")));
+    } finally {
+      setState(() => _isSubmitting = false);
     }
   }
 
@@ -196,12 +232,11 @@ class _AddFormationPageState extends State<AddFormationPage> {
                             keyboardType: TextInputType.number,
                             icon: Icons.timelapse,
                             validator: (value) {
-  if (value == null || value.isEmpty) {
-    return 'Veuillez entrer la durée';
-  }
-  return null;
-},
-
+                              if (value == null || value.isEmpty) {
+                                return 'Veuillez entrer la durée';
+                              }
+                              return null;
+                            },
                           ),
                         ),
                         const SizedBox(width: 20),
@@ -255,8 +290,25 @@ class _AddFormationPageState extends State<AddFormationPage> {
                             hintText: '',
                             controller: _endDateController,
                             readOnly: true,
-                            onTap: () =>
-                                _selectDate(context, _endDateController),
+                            onTap: () {
+                              if (_startDateController.text.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Veuillez d’abord choisir la date de début",
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                              _selectDate(
+                                context,
+                                _endDateController,
+                                minDate: dateFormat.parse(
+                                  _startDateController.text,
+                                ),
+                              );
+                            },
                             icon: Icons.calendar_today,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -316,12 +368,12 @@ class _AddFormationPageState extends State<AddFormationPage> {
                         });
                       },
                       icon: Icons.menu_book,
-                       validator: (value) {
-    if (value == null || value.isEmpty) {
-      return 'Veuillez sélectionner un format';
-    }
-    return null;
-  },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Veuillez sélectionner un format';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 20),
 
@@ -377,20 +429,18 @@ class _AddFormationPageState extends State<AddFormationPage> {
                               ),
                               elevation: 5, // Ajout d'une ombre
                             ),
-                            onPressed: () {
-                              _submitForm();
-                              debugPrint(
-                                'Ajouter formation: ${_titleController.text}',
-                              );
-                            },
-                            child: const Text(
-                              'Ajouter formation',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            onPressed: _isSubmitting ? null : _submitForm,
+                            child: _isSubmitting
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : const Text(
+                                    'Ajouter formation',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],
