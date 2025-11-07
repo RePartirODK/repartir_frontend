@@ -108,4 +108,6 @@ debugPrint('Token utilisé pour /me : $token');
     }
   }
 
+  Future updateCentre(ResponseCentre updatedCentre) async {}
+
 }

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/centres/addformation.dart';
 import 'package:repartir_frontend/pages/centres/appliquantsformationtermine.dart';
 import 'package:repartir_frontend/pages/centres/appliquantsnoncertifie.dart';
+import 'package:repartir_frontend/provider/formation_provider.dart';
+import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 // Définition des constantes et modèles de données (réutilisés)
 const Color kPrimaryColor = Color(0xFF3EB2FF);
@@ -53,7 +57,7 @@ final List<Formation> dummyFormations = [
 // 1. WIDGET STATEFUL POUR GÉRER L'ÉTAT DE LA PAGE
 // **************************************************
 
-class FormationsPageCentre extends StatefulWidget {
+class FormationsPageCentre extends ConsumerStatefulWidget {
   const FormationsPageCentre({super.key});
 
   @override
@@ -61,31 +65,28 @@ class FormationsPageCentre extends StatefulWidget {
   _FormationsPageCentreState createState() => _FormationsPageCentreState();
 }
 
-class _FormationsPageCentreState extends State<FormationsPageCentre> {
-  // État actuel de l'index de navigation (Formations est l'index 2)
- 
+class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
+  final stockage = SecureStorageService();
 
   @override
   Widget build(BuildContext context) {
+    final formations = ref.watch(formationProvider);
     return Scaffold(
       backgroundColor: Colors.grey[50],
+
       // Utilisation de l'état _selectedIndex pour la barre de navigation
-    
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             // Header Incurvé
-            CustomHeader(
-              title: "Formation",
-            ),
-
+            CustomHeader(title: "Formation"),
 
             // Section "Vos formations" et Bouton Ajouter
             _buildHeaderAndAddButton(),
 
             // Les Cartes de Formations
-            _buildFormationList(),
+            _buildFormationList(formations),
 
             const SizedBox(height: 30),
           ],
@@ -94,7 +95,6 @@ class _FormationsPageCentreState extends State<FormationsPageCentre> {
     );
   }
 
- 
   Widget _buildHeaderAndAddButton() {
     // ... (Reste inchangé)
     return Padding(
@@ -111,15 +111,20 @@ class _FormationsPageCentreState extends State<FormationsPageCentre> {
             ),
           ),
           FloatingActionButton(
-            onPressed: () {
-              // Action: Naviguer vers la page d'ajout de formation
-
-              Navigator.push(
+            onPressed: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const AddFormationPage(),
                 ),
               );
+
+              // Recharge les formations au retour
+              final centreId = int.tryParse(await stockage
+                  .getUserId() ?? '0') ?? 0; // id du centre connecté
+              await ref
+                  .read(formationProvider.notifier)
+                  .loadFormations(centreId);
             },
             mini: true,
             backgroundColor: kPrimaryColor,
@@ -131,12 +136,12 @@ class _FormationsPageCentreState extends State<FormationsPageCentre> {
     );
   }
 
-  Widget _buildFormationList() {
+  Widget _buildFormationList(final List<ResponseFormation> formations) {
     // ... (Reste inchangé)
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
-        children: dummyFormations.map((formation) {
+        children: formations.map((formation) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 20.0),
             child: _buildFormationCard(formation),
@@ -146,56 +151,73 @@ class _FormationsPageCentreState extends State<FormationsPageCentre> {
     );
   }
 
-  Widget _buildFormationCard(Formation formation) {
+  Widget _buildFormationCard(ResponseFormation formation) {
     // ... (Reste inchangé)
     Color badgeColor;
     Color textColor;
     List<Widget> actionButtons = [];
 
-    switch (formation.status) {
-      case "En cours":
+    switch (formation.statut) {
+      case "EN_COURS":
         badgeColor = kPrimaryColor;
         textColor = Colors.white;
         actionButtons = [
-          _buildActionButton('Voir les appliquants', onPressed: () {
-            /**
+          _buildActionButton(
+            'Voir les appliquants',
+            onPressed: () {
+              /**
              * Navigation vers la page d'affichage des appliquants
              */
-            Navigator.push(context, MaterialPageRoute(builder: 
-            (context)=> const ApplicantsFormationNonTerminePage()
-            ));
-          }),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const ApplicantsFormationNonTerminePage(),
+                ),
+              );
+            },
+          ),
           _buildActionButton('Désactiver', onPressed: () {}, isOutline: true),
         ];
         break;
-      case "En attente":
+      case "EN_ATTENTE":
         badgeColor = enAttente.withAlpha(10);
         textColor = enAttente;
         actionButtons = [
-          _buildActionButton('Voir les appliquants', onPressed: () {
-            /**
+          _buildActionButton(
+            'Voir les appliquants',
+            onPressed: () {
+              /**
              * Navigation vers la page d'affichage des appliquants
              */
-            Navigator.push(context, MaterialPageRoute(builder: 
-            (context)=> const ApplicantsFormationNonTerminePage()
-            ));
-          }),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const ApplicantsFormationNonTerminePage(),
+                ),
+              );
+            },
+          ),
           _buildActionButton('Editer', onPressed: () {}, isOutline: true),
         ];
         break;
-      case "Terminé":
+      case "TERMINE":
         badgeColor = termine.withAlpha(10);
         textColor = termine;
         actionButtons = [
-          _buildActionButton('Voir les appliquants', onPressed: () {
-
+          _buildActionButton(
+            'Voir les appliquants',
+            onPressed: () {
               //navigation vers la page des appliquants des cours terminés
-              Navigator.push(context, 
-              MaterialPageRoute(builder: 
-              (context) => const ApplicantsFormationTerminePage()
-              ));
-
-          }),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ApplicantsFormationTerminePage(),
+                ),
+              );
+            },
+          ),
         ];
         break;
       default:
@@ -218,15 +240,15 @@ class _FormationsPageCentreState extends State<FormationsPageCentre> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             // Badge du statut
-            _buildStatusBadge(formation.status, badgeColor, textColor),
+            _buildStatusBadge(formation.statut, badgeColor, textColor),
             const SizedBox(height: 10),
 
             Row(
               children: [
-                if (formation.status == "En cours")
+                if (formation.statut == "EN_COURS")
                   const Padding(padding: EdgeInsets.only(right: 8.0)),
                 Text(
-                  formation.title,
+                  formation.titre,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -260,14 +282,11 @@ class _FormationsPageCentreState extends State<FormationsPageCentre> {
         borderRadius: BorderRadius.circular(5.0),
       ),
       child: Text(
-        status
-            .toString()
-            .split('.')
-            .last
-            .replaceFirstMapped(
-              RegExp(r'\w'),
-              (m) => m.group(0)!.toUpperCase(),
-            ),
+        status.toLowerCase().replaceAll('_', ' ').replaceFirstMapped(
+  RegExp(r'\w'),
+  (m) => m.group(0)!.toUpperCase(),
+)
+,
         style: TextStyle(
           color: textColor,
           fontSize: 12,
@@ -317,8 +336,4 @@ class _FormationsPageCentreState extends State<FormationsPageCentre> {
             ),
     );
   }
-
-
-
 }
-

@@ -1,115 +1,154 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_centre.dart';
+import 'package:repartir_frontend/provider/centre_provider.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
+import 'package:repartir_frontend/services/utilisateur_service.dart';
 
 // Définition des constantes
 const Color kPrimaryColor = Color(0xFF3EB2FF);
 const double kHeaderHeight = 200.0;
 const Color kDangerColor = Color(0xFFE53935); // Rouge pour supprimer le compte
 
-// Modèle de données simple pour le Centre de Formation
-class TrainingCenter {
-  final String name;
-  final String address;
-  final String phone;
-  final String email;
-  final String imageUrl;
-
-  TrainingCenter({
-    required this.name,
-    required this.address,
-    required this.phone,
-    required this.email,
-    required this.imageUrl,
-  });
-}
-
-// Données statiques simulées
-final TrainingCenter centerProfile = TrainingCenter(
-  name: 'Centre de Formation Professionnelle de Missabougou',
-  address: 'Missabougou, rive droite',
-  phone: '+22374759999',
-  email: 'cfpmissabougou@gmail.com',
-  imageUrl: 'assets/center_banner.jpg',
-);
-
 // **************************************************
 // 1. WIDGET STATEFUL DE LA PAGE PROFIL
 // **************************************************
 
-class ProfileCentrePage extends StatefulWidget {
+class ProfileCentrePage extends ConsumerStatefulWidget {
   const ProfileCentrePage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _ProfileCentrePageState createState() => _ProfileCentrePageState();
 }
 
-class _ProfileCentrePageState extends State<ProfileCentrePage> {
-  // L'index 3 correspond à "Profil" dans la BottomNavigationBar
-  int _selectedIndex = 3;
+class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
   final storage = SecureStorageService();
-
-  // Fonction de mise à jour pour la BottomNavigationBar
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      print("Navigating to index: $_selectedIndex");
-    });
-  }
+  final utilisateurService = UtilisateurService();
 
   // Fonction de déconnexion simulée
-  void _handleLogout() {
-    print("Déconnexion de l'utilisateur...");
+  void _handleLogout(String email) async {
+    debugPrint("Déconnexion de l'utilisateur...");
     // Logique de déconnexion réelle
+    await utilisateurService.logout({'email': email});
+    //redirection vers la page de login
+    // ignore: use_build_context_synchronously
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   // Fonction d'édition simulée
   void _handleEditProfile() {
-    print("Naviguer vers le formulaire d'édition de profil...");
+    debugPrint("Naviguer vers le formulaire d'édition de profil...");
     // Logique de navigation vers la page d'édition
+  }
+
+  void _showDeleteConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // empêche la fermeture en cliquant en dehors
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            "Supprimer le compte",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.",
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                "Annuler",
+                style: TextStyle(color: Colors.grey),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // ferme le dialogue
+              },
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: kDangerColor),
+              child: const Text("Supprimer"),
+              onPressed: () {
+                Navigator.of(context).pop(); // ferme le dialogue
+                _deleteAccount(); // ta fonction réelle de suppression
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteAccount() async {
+    try {
+      debugPrint("Suppression du compte…");
+      // Recupérer l'email du centre depuis le stockage sécurisé
+      String? email = await storage.getUserEmail();
+
+      // Appeler le service de suppression de compte
+      await utilisateurService.suppressionCompte({'email': email!});
+
+      // Puis éventuellement redirige ou déconnecte l'utilisateur
+      _handleLogout(email);
+    } catch (e) {
+      debugPrint("Erreur lors de la suppression : $e");
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Impossible de supprimer le compte")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final centre = ref.watch(centreNotifierProvider);
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          // 1. Header Incurvé
-          CustomHeader(title: "Profile"),
-
-          // 2. Contenu scrollable
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  // 2.2. Photo de profil et Nom du Centre
-                  _buildCenterInfo(centerProfile),
-
-                  const SizedBox(height: 30),
-
-                  // 2.3. Section Contact
-                  _buildContactSection(centerProfile),
-
-                  const SizedBox(height: 30),
-
-                  // 2.4. Section Paramètres du Compte (avec Déconnexion)
-                  _buildAccountSettings(),
-
-                  const SizedBox(height: 30),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+      body: centre == null
+          ? const Center(child: CircularProgressIndicator())
+          : _buildProfilContent(context, centre),
     );
   }
 
-  Widget _buildCenterInfo(TrainingCenter center) {
+  Widget _buildProfilContent(BuildContext context, ResponseCentre centre) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        // 1. Header Incurvé
+        CustomHeader(title: "Profile"),
+
+        // 2. Contenu scrollable
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                // 2.2. Photo de profil et Nom du Centre
+                _buildCenterInfo(centre),
+
+                const SizedBox(height: 30),
+
+                // 2.3. Section Contact
+                _buildContactSection(centre),
+
+                const SizedBox(height: 30),
+
+                // 2.4. Section Paramètres du Compte (avec Déconnexion)
+                _buildAccountSettings(),
+
+                const SizedBox(height: 30),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCenterInfo(ResponseCentre centre) {
     return Column(
       children: [
         // Photo de profil / Bannière
@@ -120,7 +159,11 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
             color: Colors.grey[200],
             borderRadius: BorderRadius.circular(10),
             image: DecorationImage(
-              image: AssetImage(center.imageUrl),
+              image: AssetImage(
+                centre.urlPhoto!.isNotEmpty
+                    ? centre.urlPhoto!
+                    : 'assets/center_banner.jpg',
+              ),
               fit: BoxFit.cover,
               onError: (exception, stackTrace) => Container(
                 color: Colors.grey[300],
@@ -130,7 +173,7 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
               ),
             ),
           ),
-          child: center.imageUrl.startsWith('assets')
+          child: centre.urlPhoto!.startsWith('assets')
               ? null
               : const Center(
                   child: Icon(Icons.business, size: 60, color: Colors.black54),
@@ -146,7 +189,7 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
         ),
         // Nom du Centre
         Text(
-          center.name,
+          centre.nom,
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 24,
@@ -158,7 +201,7 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
     );
   }
 
-  Widget _buildContactSection(TrainingCenter center) {
+  Widget _buildContactSection(ResponseCentre centre) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -173,9 +216,9 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
         const SizedBox(height: 10),
 
         // Liste des informations de contact
-        _buildContactItem(Icons.location_on, center.address),
-        _buildContactItem(Icons.phone, center.phone),
-        _buildContactItem(Icons.email, center.email),
+        _buildContactItem(Icons.location_on, centre.adresse),
+        _buildContactItem(Icons.phone, centre.telephone),
+        _buildContactItem(Icons.email, centre.email),
       ],
     );
   }
@@ -232,7 +275,11 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
           'Déconnexion',
           Icons.arrow_forward_ios,
           textColor: Colors.black87,
-          onTap: _handleLogout,
+          onTap: () {
+            //on recupère l'email du centre depuis le stockage sécurisé
+            String email = storage.getUserEmail() as String;
+            _handleLogout(email);
+          },
         ),
 
         // 3. Supprimer mon compte
@@ -241,7 +288,7 @@ class _ProfileCentrePageState extends State<ProfileCentrePage> {
           Icons.arrow_forward_ios,
           textColor: kDangerColor,
           onTap: () {
-            print('Afficher dialogue de confirmation de suppression');
+            _showDeleteConfirmationDialog();
           },
         ),
       ],

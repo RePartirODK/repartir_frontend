@@ -4,6 +4,7 @@ import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/centres/formation.dart';
+import 'package:repartir_frontend/provider/centre_provider.dart';
 import 'package:repartir_frontend/provider/formation_provider.dart';
 import 'package:repartir_frontend/services/centre_service.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
@@ -41,10 +42,10 @@ int getNombreFormationsEnCours(List<ResponseFormation> formations) =>
   Future<void> _loadFormations() async {
     try {
       //recupération des données du centre connecté
-      ResponseCentre? centre = await centreService.getCurrentCentre();
-      if (centre == null) {
-        throw Exception("Impossible de récupérer les informations du centre.");
-      }
+       await ref.read(centreNotifierProvider.notifier).loadCurrentCentre();
+      final centre = ref.read(centreNotifierProvider);
+
+      if (centre == null) throw Exception("Centre non trouvé");
 
       //on met son id dans le local storage
       await stockage.saveId(centre.id);
