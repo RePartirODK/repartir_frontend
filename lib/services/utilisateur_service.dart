@@ -12,7 +12,8 @@ class UtilisateurService {
     //appel du endpoint
     final response = await http.delete(
       url,
-      headers: {"Content-Type": "application/json"},
+      headers: {"Content-Type": "application/json",
+      "Authorization": "Bearer ${await storage.getAccessToken()}",},
       body: jsonEncode(request),
     );
 
@@ -35,13 +36,16 @@ class UtilisateurService {
     final url = Uri.parse('http://localhost:8183/api/logout');
     final response = await http.delete(
       url,
-      headers: {"Content-Type": "application/json"},
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ${await storage.getAccessToken()}",
+      },
       body: jsonEncode(request),
     );
     if (response.statusCode == 200) {
       //on supprimer les tokens du stockage sécurisé
       storage.clearTokens();
-      return jsonDecode(response.body);
+      
     } else {
       throw Exception('Une erreur est survenue lors de la déconnexion');
     }

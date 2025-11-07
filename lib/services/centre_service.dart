@@ -43,7 +43,7 @@ debugPrint('Token utilisé pour /me : $token');
       url,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token}',
+        'Authorization': 'Bearer $token',
       },
     );
 

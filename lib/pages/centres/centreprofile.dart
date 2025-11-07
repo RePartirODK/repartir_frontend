@@ -28,13 +28,22 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
   final utilisateurService = UtilisateurService();
 
   // Fonction de déconnexion simulée
-  void _handleLogout(String email) async {
-    debugPrint("Déconnexion de l'utilisateur...");
+  Future<void> _handleLogout(String email) async {
+    try {
+      debugPrint("Déconnexion de l'utilisateur...");
     // Logique de déconnexion réelle
     await utilisateurService.logout({'email': email});
     //redirection vers la page de login
     // ignore: use_build_context_synchronously
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    } catch (e) {
+      debugPrint("Erreur lors de la deconnexion : $e");
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Impossible de se deconnecter le compte $e")),
+      );
+    }
+    
   }
 
   // Fonction d'édition simulée
@@ -275,10 +284,11 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
           'Déconnexion',
           Icons.arrow_forward_ios,
           textColor: Colors.black87,
-          onTap: () {
+          onTap: () async {
             //on recupère l'email du centre depuis le stockage sécurisé
-            String email = storage.getUserEmail() as String;
-            _handleLogout(email);
+            String? email = await storage.getUserEmail() ;
+            debugPrint("Email du centre pour déconnexion : $email");
+            _handleLogout(email!);
           },
         ),
 
