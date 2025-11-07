@@ -1,19 +1,78 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_centre.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/centres/formation.dart';
+import 'package:repartir_frontend/provider/formation_provider.dart';
+import 'package:repartir_frontend/services/centre_service.dart';
+import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 // Définition de la couleur principale
 const Color kPrimaryColor = Color(0xFF3EB2FF);
 const Color kSecondaryColor = Color(0xFF4CAF50);
 const double kHeaderHeight = 200.0;
 
-class EnhanceHome extends StatelessWidget {
+class EnhanceHome extends ConsumerStatefulWidget {
   const EnhanceHome({super.key});
 
+  @override
+  ConsumerState<EnhanceHome> createState() => _EnhanceHomeState();
+}
+
+
+class _EnhanceHomeState extends ConsumerState<EnhanceHome> {
+  final stockage = SecureStorageService();
+  final centreService = CentreService();
+
   VoidCallback? get onPressed => null;
+  int getNombreTotalFormations(List<ResponseFormation> formations) => formations.length;
+
+int getNombreFormationsEnCours(List<ResponseFormation> formations) =>
+    formations.where((f) => f.statut.toLowerCase() == 'en_cours').length;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFormations();
+  }
+
+  Future<void> _loadFormations() async {
+    try {
+      //recupération des données du centre connecté
+      ResponseCentre? centre = await centreService.getCurrentCentre();
+      if (centre == null) {
+        throw Exception("Impossible de récupérer les informations du centre.");
+      }
+
+      //on met son id dans le local storage
+      await stockage.saveId(centre.id);
+      debugPrint(centre.id.toString());
+     
+     // Utilisation du provider pour charger les formations
+    await ref.read(formationProvider.notifier).loadFormations(centre.id);
+
+
+      // Mise à jour de l’état
+      setState(() {
+
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des formations: ${e.toString()}');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    //il va être en écoute des changements du provider
+    final formations = ref.watch(formationProvider);
+    
+
     return Scaffold(
       backgroundColor: Colors
           .grey[50], // Fond très légèrement gris pour faire ressortir les cards
@@ -35,7 +94,7 @@ class EnhanceHome extends StatelessWidget {
             ),
 
             // Cartes de statistiques améliorées
-            _buildStatCards(context),
+            _buildStatCards(context, formations),
 
             const SizedBox(height: 40),
 
@@ -70,7 +129,8 @@ class EnhanceHome extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCards(BuildContext context) {
+  Widget _buildStatCards(BuildContext context,
+  List<ResponseFormation> formations) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
@@ -79,7 +139,7 @@ class EnhanceHome extends StatelessWidget {
           _buildStatCard(
             context,
             title: "Formation en cours",
-            value: "5",
+            value: getNombreFormationsEnCours(formations).toString(),
             icon: Icons.school_outlined,
             cardColor: kPrimaryColor.withValues(alpha: 0.34),
             valueColor: Colors.black,
@@ -90,9 +150,11 @@ class EnhanceHome extends StatelessWidget {
           _buildStatCard(
             context,
             title: "Nombre de formations",
-            value: "10",
+            value: getNombreTotalFormations(formations).toString(),
             icon: Icons.school_outlined,
-            cardColor: kSecondaryColor.withValues(alpha: 0.34), // Vert très doux
+            cardColor: kSecondaryColor.withValues(
+              alpha: 0.34,
+            ), // Vert très doux
             valueColor: Colors.black,
           ),
         ],
@@ -135,7 +197,7 @@ class EnhanceHome extends StatelessWidget {
                   padding: const EdgeInsets.only(left: 40.0),
                   child: Text(
                     value,
-                    
+
                     style: TextStyle(
                       fontSize: 40,
                       fontWeight: FontWeight.w900,
@@ -177,7 +239,7 @@ class EnhanceHome extends StatelessWidget {
               text: "Demande",
               onPressed: () {
                 //navigation vers la page demande
-                print("click");
+                //print("click");
               },
             ),
           ),

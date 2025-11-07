@@ -6,7 +6,7 @@ class Utilisateur {
   final String? urlPhoto;
   final String role;
   final String email;
-  final bool etat;
+  final String etat;
   final bool estActive;
   //date de creation du compte
   final DateTime dateCreation;
@@ -14,7 +14,7 @@ class Utilisateur {
   final List<String> notifications;
 
   //constructeur de la classe
-   Utilisateur({
+  Utilisateur({
     required this.id,
     required this.nom,
     required this.motDePasse,
@@ -32,35 +32,44 @@ class Utilisateur {
   factory Utilisateur.fromJson(Map<String, dynamic> json) {
     final userDomaineJson = (json['userDomaineList'] ?? []) as List;
     final userDomaineList = userDomaineJson
-        .map((d) => d is Map ? (d['domaine']?['libelle']?.toString() ?? '') : d?.toString() ?? '')
+        .map(
+          (d) => d is Map
+              ? (d['domaine']?['libelle']?.toString() ?? '')
+              : d?.toString() ?? '',
+        )
         .where((s) => s.isNotEmpty)
         .toList();
 
     final notificationsJson = (json['notifications'] ?? []) as List;
     final notificationsList = notificationsJson
-        .map((n) => n is Map ? (n['message']?.toString() ?? '') : n?.toString() ?? '')
+        .map(
+          (n) =>
+              n is Map ? (n['message']?.toString() ?? '') : n?.toString() ?? '',
+        )
         .where((s) => s.isNotEmpty)
         .toList();
 
     return Utilisateur(
-      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       nom: json['nom']?.toString() ?? '',
       motDePasse: json['motDePasse']?.toString() ?? '',
       telephone: json['telephone']?.toString() ?? '',
       urlPhoto: json['urlPhoto']?.toString(), // reste nullable
       role: json['role']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
-      etat: json['etat'] == null ? false: 
-      json['etat'] is bool ? 
-      json['etat'] as bool : 
-      json['etat'].toString() == 'true'
-      ,
-      estActive: json['estActive'] == null ? false : 
-      (json['estActive'] is bool 
-      ? json['estActive'] as bool : json['estActive'].toString() == 'true'),
-      dateCreation: DateTime.tryParse(json['dateCreation']?.toString() ?? '') ?? DateTime.now(),
+      etat: json['etat']?.toString() ?? '',
+      estActive: json['estActive'] == null
+          ? false
+          : (json['estActive'] is bool
+                ? json['estActive'] as bool
+                : json['estActive'].toString() == 'true'),
+      dateCreation:
+          DateTime.tryParse(json['dateCreation']?.toString() ?? '') ??
+          DateTime.now(),
       userDomaineList: userDomaineList,
       notifications: notificationsList,
     );
   }
-  }
+}

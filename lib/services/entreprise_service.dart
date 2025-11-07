@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:repartir_frontend/models/entreprise_request.dart';
+import 'package:repartir_frontend/models/request/entreprise_request.dart';
 import 'package:repartir_frontend/models/utilisateur.dart';
 
 class EntrepriseService {

@@ -8,6 +8,7 @@ import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/pages/mentors/navbarmentor.dart';
 import 'package:repartir_frontend/pages/parrains/nav.dart';
 import 'package:repartir_frontend/services/auth_service.dart';
+import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 class AuthenticationPage extends StatefulWidget {
   const AuthenticationPage({super.key});
@@ -33,7 +34,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
-
+      debugPrint(await SecureStorageService().getAccessToken());
       // Redirection selon le rôle
       if (loginResponse != null) {
         final roles = loginResponse.roles;
@@ -69,8 +70,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
             Navigator.pushAndRemoveUntil(
               // ignore: use_build_context_synchronously
               context,
-              MaterialPageRoute(builder: (_) => const
-              NavHomeMentorPage()),
+              MaterialPageRoute(builder: (_) => const NavHomeMentorPage()),
               (route) => false,
             );
             break;
@@ -211,7 +211,6 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                              
                             ),
                           ),
                           const SizedBox(height: 20),

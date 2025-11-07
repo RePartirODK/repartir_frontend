@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:repartir_frontend/models/parrain_request.dart';
+import 'package:repartir_frontend/models/request/parrain_request.dart';
 import 'package:repartir_frontend/models/utilisateur.dart';
 
 class ParrainService {

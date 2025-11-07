@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/models/jeunerequest.dart';
+import 'package:repartir_frontend/models/request/jeunerequest.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/services/jeune_service.dart';
