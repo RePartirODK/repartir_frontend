@@ -37,7 +37,7 @@ class CentreService {
   Future<ResponseCentre?> getCurrentCentre() async {
     final url = Uri.parse('$baseUrl1/me');
     final token = await storage.getAccessToken();
-debugPrint('Token utilisé pour /me : $token');
+    debugPrint('Token utilisé pour /me : $token');
     //backend call
     final response = await http.get(
       url,
@@ -73,12 +73,12 @@ debugPrint('Token utilisé pour /me : $token');
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
-      return data.map((element) => ResponseFormation
-      .fromJson(element))
-      .toList();
-    }else {
+      return data
+          .map((element) => ResponseFormation.fromJson(element))
+          .toList();
+    } else {
       debugPrint('Status code: ${response.statusCode}');
-  debugPrint('Response body: ${response.body}');
+      debugPrint('Response body: ${response.body}');
       throw Exception('Erreur lors du chargement des formations');
     }
   }
@@ -108,6 +108,23 @@ debugPrint('Token utilisé pour /me : $token');
     }
   }
 
-  Future updateCentre(ResponseCentre updatedCentre) async {}
-
+  Future updateCentre(CentreRequest updatedCentre) async {
+    final url = Uri.parse('$baseUrl1 /v1');
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${await storage.getAccessToken()}',
+      },
+      body: jsonEncode(updatedCentre.toJson()),
+    );
+    if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return ResponseCentre.fromJson(data);
+    } else if (response.statusCode == 404) {
+      throw Exception("utilisateur non trouvé");
+    } else {
+      throw Exception("une erreur est survenue");
+    }
+  }
 }

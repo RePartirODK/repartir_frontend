@@ -1,3 +1,5 @@
+import 'package:repartir_frontend/models/request/centre_request.dart';
+
 class ResponseCentre {
   final int id;
   final String nom;
@@ -35,6 +37,24 @@ class ResponseCentre {
       estActive: json['estActive'] == null ? false : 
       (json['estActive'] is bool 
       ? json['estActive'] as bool : json['estActive'].toString() == 'true'),
+    );
+  }
+
+  CentreRequest copyWith({
+    String? nom,
+    String? telephone,
+    String? email,
+    String? adresse,
+    String? agrement,
+    String? urlPhoto,
+  }) {
+    return CentreRequest(
+      nom: nom ?? this.nom,
+      telephone: telephone ?? this.telephone,
+      email: email ?? this.email,
+      adresse: adresse ?? this.adresse,
+      agrement: agrement ?? this.agrement,
+      urlPhoto: urlPhoto ?? this.urlPhoto,
     );
   }
 }

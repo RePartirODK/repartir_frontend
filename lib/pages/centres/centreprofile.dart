@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/models/response/response_centre.dart';
+import 'package:repartir_frontend/pages/centres/editerprofil.dart';
 import 'package:repartir_frontend/provider/centre_provider.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 import 'package:repartir_frontend/services/utilisateur_service.dart';
@@ -50,6 +51,9 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
   void _handleEditProfile() {
     debugPrint("Naviguer vers le formulaire d'édition de profil...");
     // Logique de navigation vers la page d'édition
+    Navigator.pushReplacement(context, 
+      MaterialPageRoute(builder: (context) => const EditProfilCentrePage()),
+    );
   }
 
   void _showDeleteConfirmationDialog() {
@@ -161,34 +165,32 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
     return Column(
       children: [
         // Photo de profil / Bannière
-        Container(
+      ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: FadeInImage.assetNetwork(
           height: 150,
           width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(10),
-            image: DecorationImage(
-              image: AssetImage(
-                centre.urlPhoto!.isNotEmpty
-                    ? centre.urlPhoto!
-                    : 'assets/center_banner.jpg',
+          fit: BoxFit.cover,
+          placeholder: 'assets/center_banner.jpg', // image locale pendant le chargement
+          image: centre.urlPhoto != null && centre.urlPhoto!.isNotEmpty
+              ? centre.urlPhoto!
+              : '', // si pas d'URL, on laissera le placeholder
+          imageErrorBuilder: (context, error, stackTrace) {
+            // Si erreur réseau ou URL invalide
+            return Container(
+              height: 150,
+              width: double.infinity,
+              color: Colors.grey[300],
+              child: const Center(
+                child: Icon(Icons.business, size: 60, color: Colors.black54),
               ),
-              fit: BoxFit.cover,
-              onError: (exception, stackTrace) => Container(
-                color: Colors.grey[300],
-                child: const Center(
-                  child: Icon(Icons.business, size: 60, color: Colors.black54),
-                ),
-              ),
-            ),
-          ),
-          child: centre.urlPhoto!.startsWith('assets')
-              ? null
-              : const Center(
-                  child: Icon(Icons.business, size: 60, color: Colors.black54),
-                ),
+            );
+          },
         ),
+      ),
         const SizedBox(height: 15),
+        
+        //Bouton Edition
         Align(
           alignment: AlignmentGeometry.centerRight,
           child: IconButton(
@@ -196,6 +198,7 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
             onPressed: _handleEditProfile, // Fonction d'édition
           ),
         ),
+
         // Nom du Centre
         Text(
           centre.nom,

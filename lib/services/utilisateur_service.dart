@@ -50,4 +50,37 @@ class UtilisateurService {
       throw Exception('Une erreur est survenue lors de la déconnexion');
     }
   }
+
+  Future<String?> uploadPhotoProfil(String email, String filePath) async {
+  final url = Uri.parse('$baseUrl/photoprofil');
+
+  try {
+    // On prépare la requête multipart (fichier + email)
+    final request = http.MultipartRequest('POST', url)
+      ..headers['Authorization'] = 'Bearer ${await storage.getAccessToken()}'
+      ..fields['email'] = email
+      ..files.add(await http.MultipartFile.fromPath('file', filePath));
+
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
+      final respStr = await response.stream.bytesToString();
+      final data = jsonDecode(respStr);
+
+      // On vérifie que le backend renvoie bien une clé "urlPhoto"
+      if (data['urlPhoto'] != null) {
+        return data['urlPhoto'];
+      } else {
+        throw Exception(data['error'] ?? 'Erreur inconnue côté serveur');
+      }
+    } else if (response.statusCode == 404) {
+      throw Exception("Utilisateur non trouvé");
+    } else {
+      throw Exception("Erreur lors du téléversement (${response.statusCode})");
+    }
+  } catch (e) {
+    throw Exception("Échec de l’upload : $e");
+  }
+}
+
 }
