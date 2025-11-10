@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/models/mentors_request.dart';
+import 'package:repartir_frontend/models/request/mentors_request.dart';
+import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/pages/mentors/navbarmentor.dart';
 import 'package:repartir_frontend/services/mentor_service.dart';
 
@@ -74,7 +75,7 @@ class _MentorSignupPageState extends State<MentorSignupPage> {
       Navigator.pushAndRemoveUntil(
         // ignore: use_build_context_synchronously
         context,
-        MaterialPageRoute(builder: (context) => NavHomeMentorPage()),
+        MaterialPageRoute(builder: (context) => AuthenticationPage()),
         (Route<dynamic> route) => false,
       );
 

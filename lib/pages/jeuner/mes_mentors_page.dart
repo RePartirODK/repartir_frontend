@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/models/chat_contact.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_detail_page.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_list_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';

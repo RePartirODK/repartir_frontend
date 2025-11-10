@@ -11,16 +11,16 @@ class ChatMessage {
 }
 
 // Page de détail d'une conversation
-class ChatDetailPage extends StatefulWidget {
+class MentorChatDetailPage extends StatefulWidget {
   final ChatContact contact;
 
-  const ChatDetailPage({super.key, required this.contact});
+  const MentorChatDetailPage({super.key, required this.contact});
 
   @override
-  State<ChatDetailPage> createState() => _ChatDetailPageState();
+  State<MentorChatDetailPage> createState() => _MentorChatDetailPageState();
 }
 
-class _ChatDetailPageState extends State<ChatDetailPage> {
+class _MentorChatDetailPageState extends State<MentorChatDetailPage> {
   final TextEditingController _controller = TextEditingController();
   // Données factices pour la conversation
   final List<ChatMessage> _messages = [

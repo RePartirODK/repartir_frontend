@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/pages/centres/navcentre.dart';
@@ -29,7 +30,8 @@ Future<void> main() async {
   late Widget initialPage;
 
   /**
-   * Logique d'entrée de l'application
+   * Logique d'entrée de l'application en fonction de l'état de l'onboarding 
+   * et de l'authentification
    */
   if (!onboardingComplete) {
     initialPage = OnboardingPage();
@@ -38,6 +40,7 @@ Future<void> main() async {
   } else {
     switch (role) {
       case 'JEUNE':
+        initialPage = AccueilPage();
         break;
       case 'MENTOR':
         initialPage = NavHomeMentorPage();
@@ -49,12 +52,13 @@ Future<void> main() async {
         initialPage = NavHomeCentrePage();
         break;
       case 'ENTREPRISE':
+        initialPage = AccueilEntreprisePage();
         break;
       default:
         initialPage = AuthenticationPage();
     }
   }
-  runApp(MyApp(initialPage: initialPage));
+  runApp(ProviderScope(child: MyApp(initialPage: initialPage)));
 }
 
 class MyApp extends StatelessWidget {

@@ -4,6 +4,7 @@ import 'package:repartir_frontend/pages/mentors/accueilmentor.dart';
 import 'package:repartir_frontend/pages/mentors/custom.dart';
 import 'package:repartir_frontend/pages/mentors/formentoring.dart';
 import 'package:repartir_frontend/pages/mentors/lesmentores.dart';
+import 'package:repartir_frontend/pages/mentors/message.dart';
 import 'package:repartir_frontend/pages/parrains/dons.dart';
 import 'package:repartir_frontend/pages/parrains/profil.dart';
 
@@ -26,7 +27,7 @@ class _NavHomeMentorPageState extends State<NavHomeMentorPage> {
   @override
   void initState() {
     super.initState();
-    _pages = [MentorHomePage(),MentoresPage(),MentoringPage(),DonationsPage(),
+    _pages = [MentorHomePage(), MentoresPage(), MentoringPage(), MentorChatListPage(),
     ProfilePage()];
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/models/jeunerequest.dart';
-import 'package:repartir_frontend/models/parrain_request.dart';
+import 'package:repartir_frontend/models/request/jeunerequest.dart';
+import 'package:repartir_frontend/models/request/parrain_request.dart';
+import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/pages/parrains/nav.dart';
 import 'package:repartir_frontend/services/jeune_service.dart';
@@ -74,7 +75,7 @@ class _ParrainSignupPageState extends State<ParrainSignupPage> {
       Navigator.pushAndRemoveUntil(
         // ignore: use_build_context_synchronously
         context,
-        MaterialPageRoute(builder: (context) => NavHomePage()),
+        MaterialPageRoute(builder: (context) => AuthenticationPage()),
         (Route<dynamic> route) => false,
       );
 
