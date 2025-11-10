@@ -2,14 +2,99 @@ import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_detail_page.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_list_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/mentorings_service.dart';
+import 'package:repartir_frontend/services/profile_service.dart';
+import 'package:repartir_frontend/services/api_service.dart';
 
-class MesMentorsPage extends StatelessWidget {
+class MesMentorsPage extends StatefulWidget {
   const MesMentorsPage({Key? key}) : super(key: key);
 
   @override
+  State<MesMentorsPage> createState() => _MesMentorsPageState();
+}
+
+class _MesMentorsPageState extends State<MesMentorsPage> {
+  final MentoringsService _mentorings = MentoringsService();
+  final ProfileService _profile = ProfileService();
+  final ApiService _api = ApiService();
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _mentorsList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final isConnected = await _api.hasToken();
+      if (!isConnected) {
+        throw Exception('Vous devez être connecté pour voir vos mentors.');
+      }
+      
+      // Récupérer l'ID du jeune connecté
+      final me = await _profile.getMe();
+      final jeuneId = me['id'] as int;
+      
+      print('📋 ID du jeune: $jeuneId');
+      
+      // Récupérer les mentorings du jeune
+      final mentorings = await _mentorings.getJeuneMentorings(jeuneId);
+      print('📋 Mentorings récupérés: ${mentorings.length}');
+      
+      // Filtrer UNIQUEMENT les mentorings VALIDES (acceptés)
+      final mentoringsValides = mentorings.where((mentoring) {
+        final statut = mentoring['statut'] ?? mentoring['etat'] ?? 'EN_ATTENTE';
+        print('📋 Mentoring ${mentoring['id']}: statut=$statut');
+        return statut == 'VALIDE';
+      }).toList();
+      
+      print('✅ Mentorings VALIDES: ${mentoringsValides.length}');
+      
+      // Extraire les informations des mentors depuis les mentorings VALIDES uniquement
+      _mentorsList = mentoringsValides.map((mentoring) {
+        // Le ResponseMentoring contient directement nomMentor, prenomMentor, etc.
+        final nomMentor = mentoring['nomMentor'] ?? '';
+        final prenomMentor = mentoring['prenomMentor'] ?? '';
+        final fullName = '$prenomMentor $nomMentor'.trim();
+        final mentorId = mentoring['idMentor'];
+        final specialite = mentoring['specialiteMentor'] ?? '';
+        final experience = mentoring['anneesExperienceMentor'] ?? 0;
+        final urlPhoto = mentoring['urlPhotoMentor'] ?? '';
+        
+        print('📋 Mentor: $fullName (ID: $mentorId, Spé: $specialite, Exp: $experience ans)');
+        
+        return {
+          'id': mentorId,
+          'name': fullName.isNotEmpty ? fullName : 'Mentor',
+          'speciality': specialite,
+          'avatar': urlPhoto,
+          'experience': experience,
+          'etat': mentoring['statut'] ?? 'VALIDE',
+        };
+      }).toList();
+      
+      print('📋 Mentors actifs affichés: ${_mentorsList.length}');
+    } catch (e) {
+      print('❌ Erreur: $e');
+      _error = '$e';
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Mock data for mentors
-    final mentors = [
+    // Mock data for mentors (fallback)
+    final mentorsFallback = [
       {
         'name': 'Booba Diallo',
         'speciality': 'Développeur Flutter',
@@ -40,48 +125,106 @@ class MesMentorsPage extends StatelessWidget {
                   topRight: Radius.circular(60),
                 ),
               ),
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
-                itemCount: mentors.length,
-                itemBuilder: (context, index) {
-                  final mentor = mentors[index];
-                  return Card(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          elevation: 4,
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              radius: 30,
-                              backgroundImage: NetworkImage(mentor['avatar']!),
-                            ),
-                            title: Text(mentor['name']!, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(mentor['speciality']!),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF3EB2FF)),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ChatDetailPage(
-                                      contact: ChatContact(
-                                        name: mentor['name']!,
-                                        imageUrl: mentor['avatar']!,
-                                        lastMessage: '', // Last message is not available here
-                                      ),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(child: Text(_error!))
+                      : RefreshIndicator(
+                          onRefresh: _fetch,
+                          child: _mentorsList.isEmpty
+                              ? Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20.0),
+                                    child: Text(
+                                      'Aucun mentor en contact',
+                                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
                                     ),
                                   ),
-                                );
-                              },
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                          ),
-                  );
-                },
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
+                                  itemCount: _mentorsList.length,
+                                  itemBuilder: (context, index) {
+                                    final mentor = _mentorsList[index];
+                                    final name = mentor['name'] ?? 'Mentor';
+                                    final speciality = mentor['speciality'] ?? '';
+                                    final experience = mentor['experience'] ?? 0;
+                                    final avatar = mentor['avatar'] ?? '';
+                                    final experienceText = experience > 0 ? '$experience ans d\'expérience' : '';
+                                    
+                                    return Card(
+                                      margin: const EdgeInsets.only(bottom: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(15),
+                                      ),
+                                      elevation: 4,
+                                      child: ListTile(
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        leading: CircleAvatar(
+                                          radius: 30,
+                                          backgroundColor: Colors.blue[100],
+                                          backgroundImage: avatar.isNotEmpty && !avatar.contains('placeholder')
+                                              ? NetworkImage(avatar)
+                                              : null,
+                                          onBackgroundImageError: avatar.isNotEmpty && !avatar.contains('placeholder')
+                                              ? (_, __) {}
+                                              : null,
+                                          child: avatar.isEmpty || avatar.contains('placeholder')
+                                              ? const Icon(Icons.person, size: 30, color: Colors.blue)
+                                              : null,
+                                        ),
+                                        title: Text(
+                                          name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        subtitle: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            if (speciality.isNotEmpty)
+                                              Text(
+                                                speciality,
+                                                style: TextStyle(color: Colors.grey[700]),
+                                              ),
+                                            if (experienceText.isNotEmpty) ...[
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                experienceText,
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                        isThreeLine: experienceText.isNotEmpty,
+                                        trailing: IconButton(
+                                          icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF3EB2FF)),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => ChatDetailPage(
+                                                  contact: ChatContact(
+                                                    name: mentor['name']!,
+                                                    imageUrl: mentor['avatar']!,
+                                                    lastMessage: '',
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
               ),
             ),
-          ),
           
           // Header avec bouton retour et titre
           Positioned(

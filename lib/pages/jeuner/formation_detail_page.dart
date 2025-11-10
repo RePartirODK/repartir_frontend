@@ -1,24 +1,119 @@
+
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/formations_service.dart';
+import 'package:repartir_frontend/services/inscriptions_service.dart';
+import 'package:repartir_frontend/services/centres_service.dart';
+import 'package:repartir_frontend/services/parrainages_service.dart';
+import 'package:repartir_frontend/services/profile_service.dart';
+import 'package:repartir_frontend/services/api_service.dart';
 
-class FormationDetailPage extends StatelessWidget {
-  const FormationDetailPage({Key? key}) : super(key: key);
+class FormationDetailPage extends StatefulWidget {
+  const FormationDetailPage({Key? key, this.formationId}) : super(key: key);
+  final int? formationId;
+
+  @override
+  State<FormationDetailPage> createState() => _FormationDetailPageState();
+}
+
+class _FormationDetailPageState extends State<FormationDetailPage> {
+  final FormationsService _formations = FormationsService();
+  final InscriptionsService _inscriptions = InscriptionsService();
+  final ParrainagesService _parrainages = ParrainagesService();
+  final ProfileService _profile = ProfileService();
+  final ApiService _api = ApiService();
+  bool _loading = false;
+  String? _error;
+  Map<String, dynamic>? _formation;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.formationId != null) {
+      _fetch();
+    }
+  }
+
+  Future<void> _fetch() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      // Vérifier si l'utilisateur est connecté
+      final isConnected = await _api.hasToken();
+      if (!isConnected) {
+        throw Exception('Vous devez être connecté pour voir les détails de la formation. Veuillez vous connecter.');
+      }
+      
+      _formation = await _formations.details(widget.formationId!);
+      
+      // Si la formation a un idCentre, récupérer les détails du centre
+      if (_formation != null && _formation!['idCentre'] != null) {
+        try {
+          final centreId = _formation!['idCentre'];
+          final centreDetails = await CentresService().getById(centreId);
+          
+          // Ajouter les détails du centre à la formation
+          _formation!['centre'] = centreDetails;
+          print('Centre récupéré avec succès: ${centreDetails['nom']}');
+        } catch (e) {
+          print('Erreur lors de la récupération du centre: $e');
+        }
+      }
+    } catch (e) {
+      // Éviter d'afficher le token JWT dans l'erreur
+      String errorMsg = '$e';
+      if (errorMsg.contains('JWT') || errorMsg.contains('eyJ')) {
+        errorMsg = 'Erreur d\'authentification. Veuillez vous reconnecter.';
+      }
+      _error = errorMsg;
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Mock data for formation details
+    // Mapper les données réelles de la formation
+    final f = _formation ?? {};
+    final centreInfo = f['centre'] ?? f['centreFormation'] ?? {};
+    final centreUtil = centreInfo['utilisateur'] ?? {};
+    final dateDebut = f['date_debut']?.toString() ?? '';
+    final dateFin = f['date_fin']?.toString() ?? '';
+    
+    // Récupérer le nom du centre (essayer plusieurs chemins)
+    String centerName = '';
+    if (centreUtil['nom'] != null && centreUtil['nom'].toString().trim().isNotEmpty) {
+      centerName = centreUtil['nom'].toString().trim();
+    } else if (centreInfo['nom'] != null && centreInfo['nom'].toString().trim().isNotEmpty) {
+      centerName = centreInfo['nom'].toString().trim();
+    }
+    
+    // Récupérer l'email du centre (essayer plusieurs chemins)
+    String centerEmail = '';
+    if (centreUtil['email'] != null && centreUtil['email'].toString().trim().isNotEmpty) {
+      centerEmail = centreUtil['email'].toString().trim();
+    } else if (centreInfo['email'] != null && centreInfo['email'].toString().trim().isNotEmpty) {
+      centerEmail = centreInfo['email'].toString().trim();
+    }
+    
     final formationDetails = {
-      'title': 'Développement Web Frontend',
-      'center_name': 'ODC_MALI',
-      'location': 'Bamako, Mali',
+      'title': (f['titre'] ?? '—').toString(),
+      'center_name': centerName.isNotEmpty ? centerName : '—',
+      'center_email': centerEmail.isNotEmpty ? centerEmail : '—',
       'description_title': 'Description',
-      'description_body':
-          'Cette formation intensive vous permettra de maîtriser les technologies frontend les plus demandées sur le marché. Au programme:\n- React et son écosystème\n- TypeScript pour le développement web\n- Tests unitaires et d\'intégration\n- Performance et optimisation\n- Accessibilité web\nNos formateurs expérimentés vous guideront à travers des exercices pratiques et des projets concrets pour assurer une montée en compétence rapide et efficace.',
+      'description_body': (f['description'] ?? '—').toString(),
       'dates_title': 'Dates',
-      'dates_body': 'Du 15 septembre 2023 au 15 décembre 2023',
-      'places': '12',
-      'sourcing': 'Oui',
-      'type': 'Présentiel',
+      'dates_body': (dateDebut.isNotEmpty || dateFin.isNotEmpty)
+          ? 'Du $dateDebut au $dateFin'
+          : '—',
+      'places': (f['nbrePlace'] ?? '—').toString(),
+      'sourcing': '—',
+      'type': (f['format'] ?? '—').toString(),
+      'cout': f['cout'],
+      'duree': f['duree'],
+      'urlFormation': f['urlFormation'],
     };
 
     return Scaffold(
@@ -50,15 +145,7 @@ class FormationDetailPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildHeader(formationDetails),
-                      const SizedBox(height: 20),
-                      Text(
-                        formationDetails['title']!,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 24,
-                            color: Colors.blue),
-                      ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 30),
                       _buildSection(formationDetails['description_title']!,
                           formationDetails['description_body']!),
                       const SizedBox(height: 20),
@@ -70,7 +157,9 @@ class FormationDetailPage extends StatelessWidget {
                       const SizedBox(height: 30),
                       Center(
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: _loading || widget.formationId == null
+                              ? null
+                              : () {
                             _showInscriptionChoiceDialog(context);
                           },
                           child: const Text("S'inscrire"),
@@ -139,8 +228,9 @@ class FormationDetailPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
-                  onPressed: () {
-                    // TODO: Handle payment logic
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await _inscrire(payerDirectement: true);
                   },
                   child: const Text('Payer ma formation'),
                   style: ElevatedButton.styleFrom(
@@ -211,9 +301,9 @@ class FormationDetailPage extends StatelessWidget {
                 ElevatedButton(
                   child: const Text('Oui, je confirme'),
                   onPressed: accepted
-                      ? () {
-                          Navigator.of(context).pop(); // Close conditions dialog
-                          _showSuccessDialog(context);
+                      ? () async {
+                          Navigator.of(context).pop();
+                          await _inscrire(payerDirectement: false, demanderParrainage: true);
                         }
                       : null, // Button is disabled if conditions are not accepted
                   style: ElevatedButton.styleFrom(
@@ -229,7 +319,7 @@ class FormationDetailPage extends StatelessWidget {
     );
   }
 
-  void _showSuccessDialog(BuildContext context) {
+  void _showSuccessDialog(BuildContext context, bool avecParrainage) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -247,22 +337,26 @@ class FormationDetailPage extends StatelessWidget {
                 child: Icon(Icons.check, color: Colors.white, size: 40),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Demande envoyée',
-                style: TextStyle(
+              Text(
+                avecParrainage ? 'Demande envoyée' : 'Inscription réussie',
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                   color: Colors.blue,
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Votre demande de parrainage a bien été prise en compte.',
+              Text(
+                avecParrainage
+                    ? 'Votre demande de parrainage a bien été prise en compte.'
+                    : 'Vous êtes maintenant inscrit à cette formation.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Nous vous contacterons très bientôt pour la suite du processus.',
+              Text(
+                avecParrainage
+                    ? 'Nous vous contacterons très bientôt pour la suite du processus.'
+                    : 'Vous recevrez une confirmation par email.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -283,37 +377,120 @@ class FormationDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(Map<String, String> details) {
+  Widget _buildHeader(Map<String, dynamic> details) {
+    // Récupérer la photo, nom et email du centre depuis les données de la formation
+    final f = _formation ?? {};
+    
+    // DEBUG: Afficher toutes les clés disponibles
+    print('=== DEBUG FORMATION ===');
+    print('Formation keys: ${f.keys.toList()}');
+    
+    // Le centre est maintenant directement dans f['centre'] (ajouté par _fetch)
+    final centreInfo = f['centre'] ?? {};
+    print('Centre keys: ${centreInfo.keys.toList()}');
+    
+    // Vérifier si le centre a un utilisateur
+    final centreUtil = centreInfo['utilisateur'] ?? {};
+    print('CentreUtil keys: ${centreUtil.keys.toList()}');
+    print('=== END DEBUG ===');
+    
+    // Récupérer le logo (essayer plusieurs chemins)
+    String logoUrl = '';
+    if (centreUtil['urlPhoto'] != null && centreUtil['urlPhoto'].toString().trim().isNotEmpty) {
+      logoUrl = centreUtil['urlPhoto'].toString().trim();
+    } else if (centreInfo['logoUrl'] != null && centreInfo['logoUrl'].toString().trim().isNotEmpty) {
+      logoUrl = centreInfo['logoUrl'].toString().trim();
+    } else if (centreInfo['urlPhoto'] != null && centreInfo['urlPhoto'].toString().trim().isNotEmpty) {
+      logoUrl = centreInfo['urlPhoto'].toString().trim();
+    }
+    
+    // Récupérer le nom du centre
+    String centreName = '';
+    if (centreInfo['nom'] != null && centreInfo['nom'].toString().trim().isNotEmpty) {
+      centreName = centreInfo['nom'].toString().trim();
+      print('✅ Nom trouvé: $centreName');
+    } else if (centreUtil['nom'] != null && centreUtil['nom'].toString().trim().isNotEmpty) {
+      centreName = centreUtil['nom'].toString().trim();
+      print('✅ Nom trouvé dans centreUtil: $centreName');
+    } else {
+      print('❌ NOM PAS TROUVÉ');
+      print('centreInfo[nom]: ${centreInfo['nom']}');
+      print('centreUtil[nom]: ${centreUtil['nom']}');
+    }
+    
+    // Récupérer l'email du centre
+    String centreEmail = '';
+    if (centreInfo['email'] != null && centreInfo['email'].toString().trim().isNotEmpty) {
+      centreEmail = centreInfo['email'].toString().trim();
+      print('✅ Email trouvé: $centreEmail');
+    } else if (centreUtil['email'] != null && centreUtil['email'].toString().trim().isNotEmpty) {
+      centreEmail = centreUtil['email'].toString().trim();
+      print('✅ Email trouvé dans centreUtil: $centreEmail');
+    } else {
+      print('❌ EMAIL PAS TROUVÉ');
+      print('centreInfo[email]: ${centreInfo['email']}');
+      print('centreUtil[email]: ${centreUtil['email']}');
+    }
+    
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 50,
-            backgroundImage:
-                NetworkImage('https://via.placeholder.com/150'),
+            backgroundColor: Colors.blue[100],
+            backgroundImage: logoUrl.isNotEmpty
+                ? NetworkImage(logoUrl) 
+                : null,
+            onBackgroundImageError: logoUrl.isNotEmpty
+                ? (_, __) {
+                    // Si l'image ne charge pas, on garde juste le fond coloré
+                  }
+                : null,
+            child: logoUrl.isEmpty 
+                ? const Icon(Icons.business, size: 40, color: Colors.blue) 
+                : null,
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(details['center_name']!,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(Icons.location_on,
-                      color: Colors.grey, size: 16),
-                  const SizedBox(width: 4),
-                  Text(details['location']!,
-                      style: const TextStyle(color: Colors.grey)),
-                ],
-              ),
-            ],
-          )
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Nom du centre en premier (en gros et bleu)
+                Text(
+                  centreName.isNotEmpty ? centreName : 'Centre de formation',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    color: centreName.isNotEmpty ? const Color(0xFF3EB2FF) : Colors.grey,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 6),
+                // Email du centre en dessous
+                Row(
+                  children: [
+                    const Icon(Icons.email_outlined, color: Colors.grey, size: 14),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        centreEmail.isNotEmpty ? centreEmail : 'Email non disponible',
+                        style: TextStyle(
+                          color: centreEmail.isNotEmpty ? Colors.grey[700] : Colors.grey[400],
+                          fontSize: 12,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -343,7 +520,26 @@ class FormationDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoBox(Map<String, String> details) {
+  Widget _buildInfoBox(Map<String, dynamic> details) {
+    final List<Widget> rows = [];
+    
+    rows.add(_buildInfoBoxRow('Places disponibles', (details['places'] ?? '—').toString(), Icons.group));
+    
+    if (details['cout'] != null) {
+      rows.add(const Divider());
+      rows.add(_buildInfoBoxRow('Coût', (details['cout'] ?? '—').toString(), Icons.attach_money));
+    }
+    
+    if (details['type'] != null && details['type'] != '—') {
+      rows.add(const Divider());
+      rows.add(_buildInfoBoxRow('Type de formation', (details['type'] ?? '—').toString(), Icons.school));
+    }
+    
+    if (details['duree'] != null) {
+      rows.add(const Divider());
+      rows.add(_buildInfoBoxRow('Durée', (details['duree'] ?? '—').toString(), Icons.access_time));
+    }
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -351,16 +547,7 @@ class FormationDetailPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
-        children: [
-          _buildInfoBoxRow(
-              'Places disponibles', details['places']!, Icons.group),
-          const Divider(),
-          _buildInfoBoxRow(
-              'Sourcing', details['sourcing']!, Icons.business_center),
-          const Divider(),
-          _buildInfoBoxRow(
-              'Type de formation', details['type']!, Icons.school),
-        ],
+        children: rows,
       ),
     );
   }
@@ -378,5 +565,78 @@ class FormationDetailPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _inscrire({required bool payerDirectement, bool demanderParrainage = false}) async {
+    if (widget.formationId == null) return;
+    
+    setState(() => _loading = true);
+    
+    try {
+      // 1. S'inscrire à la formation
+      print('📝 Inscription à la formation ${widget.formationId}...');
+      await _inscriptions.sInscrire(widget.formationId!, payerDirectement: payerDirectement);
+      print('✅ Inscription réussie');
+      
+      // 2. Si demande de parrainage, créer la demande
+      if (demanderParrainage) {
+        print('💰 Création de la demande de parrainage...');
+        final me = await _profile.getMe();
+        final jeuneId = me['id'] as int;
+        
+        await _parrainages.creerDemande(
+          idJeune: jeuneId,
+          idFormation: widget.formationId!,
+          idParrain: null, // Null = le jeune ne choisit pas de parrain spécifique
+        );
+        print('✅ Demande de parrainage créée');
+      }
+      
+      if (mounted) _showSuccessDialog(context, demanderParrainage);
+    } on Exception catch (e) {
+      final errorMsg = e.toString();
+      print('❌ Erreur inscription: $errorMsg');
+      
+      // Si l'erreur est "déjà inscrit" (409) ET qu'on veut faire une demande de parrainage
+      if (errorMsg.contains('409') && errorMsg.contains('déjà inscrit') && demanderParrainage) {
+        print('ℹ️ Déjà inscrit - Tentative de création du parrainage uniquement...');
+        try {
+          final me = await _profile.getMe();
+          final jeuneId = me['id'] as int;
+          
+          await _parrainages.creerDemande(
+            idJeune: jeuneId,
+            idFormation: widget.formationId!,
+            idParrain: null,
+          );
+          print('✅ Demande de parrainage créée pour inscription existante');
+          
+          if (mounted) _showSuccessDialog(context, true);
+          return;
+        } catch (parrainageError) {
+          print('❌ Erreur création parrainage: $parrainageError');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Erreur lors de la demande de parrainage: ${parrainageError.toString().replaceAll('Exception: ', '')}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } else {
+        // Autre erreur
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur: ${errorMsg.replaceAll('Exception: ', '')}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 }

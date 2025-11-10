@@ -1,47 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/detail_offre_commune_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/offers_service.dart';
 
-class OffreListPage extends StatelessWidget {
+class OffreListPage extends StatefulWidget {
   const OffreListPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    // Mock data for job offers
-    final offres = [
-      {
-        'titre': 'Stage Marketing Digital',
-        'type_contrat': 'Stage',
-        'entreprise': 'DigitalBoost',
-        'lieu': 'Bamako, Mali',
-        'datePublication': '01-01-2024',
-        'description': 'Stage de 6 mois en marketing digital au sein d\'une agence dynamique. Vous participerez à la gestion des campagnes publicitaires et au développement de stratégies marketing innovantes.',
-        'competence': 'Marketing Digital, Réseaux sociaux, Analytics',
-        'date_debut': '2025-01-15 09:00:00.000000',
-        'date_fin': '2025-07-15 18:00:00.000000',
-        'lien_postuler': 'https://www.youtube.com/watch?v=e9J6sI5YBOo&list=RDHGBek8t3x5I&index=5',
-        'logo': 'https://via.placeholder.com/150',
-      },
-      {
-        'titre': 'Offres Menuiserie',
-        'type_contrat': 'CDD',
-        'entreprise': 'FMP',
-        'lieu': 'Bamako, Mali',
-        'datePublication': '01-01-2024',
-        'description': 'Permettre aux jeunes de voir toutes les offres liées à la menuiserie et de postuler directement via le lien du site de l\'entreprise.',
-        'competence': 'Menuiserie, Travail du bois, Assemblage',
-        'date_debut': '2025-02-01 09:00:00.000000',
-        'date_fin': '2025-08-01 18:00:00.000000',
-        'lien_postuler': 'https://www.youtube.com/watch?v=e9J6sI5YBOo&list=RDHGBek8t3x5I&index=5',
-        'logo': 'https://via.placeholder.com/150',
-      }
-    ];
+  State<OffreListPage> createState() => _OffreListPageState();
+}
 
+class _OffreListPageState extends State<OffreListPage> {
+  final OffersService _offersService = OffersService();
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _items = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final list = await _offersService.search();
+      _items = list.map((m) {
+        return <String, dynamic>{
+          'id': m['id'],
+          'titre': m['titre'] ?? '',
+          'type_contrat': m['type_contrat']?.toString() ?? '',
+          'entreprise': m['nomEntreprise'] ?? '',
+          'lieu': '',
+          'datePublication': '',
+          'description': m['description'] ?? '',
+          'lien_postuler': m['lienPostuler'] ?? '',
+          'logo': 'https://via.placeholder.com/150',
+          'date_debut': m['dateDebut']?.toString(),
+          'date_fin': m['dateFin']?.toString(),
+          'competence': m['competence']?.toString() ?? '',
+        };
+      }).toList();
+    } catch (e) {
+      _error = '$e';
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Contenu principal
           Positioned(
             top: 120,
             left: 0,
@@ -55,17 +75,22 @@ class OffreListPage extends StatelessWidget {
                   topRight: Radius.circular(60),
                 ),
               ),
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
-                itemCount: offres.length,
-                itemBuilder: (context, index) {
-                  return OffreCard(offre: offres[index]);
-                },
-              ),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(child: Text(_error!))
+                      : RefreshIndicator(
+                          onRefresh: _fetch,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
+                            itemCount: _items.length,
+                            itemBuilder: (context, index) {
+                              return OffreCard(offre: _items[index]);
+                            },
+                          ),
+                        ),
             ),
           ),
-          
-          // Header avec bouton retour et titre
           Positioned(
             top: 0,
             left: 0,

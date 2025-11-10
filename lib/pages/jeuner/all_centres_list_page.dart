@@ -1,39 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/centre_detail_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/centres_service.dart';
 
-class AllCentresListPage extends StatelessWidget {
+class AllCentresListPage extends StatefulWidget {
   const AllCentresListPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    // Mock data for all centres
-    final centres = [
-      {
-        'logo': 'https://placehold.co/150/EFEFEF/333333?text=ODC',
-        'name': 'ODC_MALI',
-        'location': 'Bamako, Mali',
-        'description': 'L\'Orange Digital Center (ODC) est un écosystème entièrement dédié au développement des compétences numériques et à l\'innovation.',
-      },
-      {
-        'logo': 'https://placehold.co/150/EFEFEF/333333?text=KA',
-        'name': 'Kabako_Academies',
-        'location': 'Bamako, Mali',
-        'description': 'Kabakoo Academies est une initiative panafricaine qui vise à réinventer l\'éducation et la formation professionnelle en Afrique.',
-      },
-      {
-        'logo': 'https://placehold.co/150/EFEFEF/333333?text=DB',
-        'name': 'DigitalBoost',
-        'location': 'Ségou, Mali',
-        'description': 'DigitalBoost est un centre de formation spécialisé dans le marketing digital et la gestion des réseaux sociaux.',
-      },
-    ];
+  State<AllCentresListPage> createState() => _AllCentresListPageState();
+}
 
+class _AllCentresListPageState extends State<AllCentresListPage> {
+  final CentresService _centres = CentresService();
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _items = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final all = await _centres.listAll();
+      // Filtrer les centres actifs
+      final centresActifs = all.where((c) {
+        final u = c['utilisateur'] ?? {};
+        return u['estActive'] == true;
+      }).toList();
+      
+      // Filtrer pour ne garder QUE les centres qui ont publié au moins une formation
+      final List<Map<String, dynamic>> centresAvecFormations = [];
+      for (final centre in centresActifs) {
+        try {
+          final formations = await _centres.getFormationsByCentre(centre['id']);
+          // Vérifier que le centre a des formations ET qu'elles appartiennent bien à ce centre
+          if (formations.isNotEmpty) {
+            // Vérifier que la première formation appartient bien à ce centre
+            final premiereFormation = formations.first;
+            final centreFormationId = premiereFormation['centreFormation']?['id'] ?? 
+                                     premiereFormation['centre']?['id'];
+            if (centreFormationId == centre['id'] || centreFormationId == null) {
+              centresAvecFormations.add(centre);
+            }
+          }
+        } catch (e) {
+          // Pas de formation pour ce centre, on ne l'ajoute pas
+        }
+      }
+      
+      _items = centresAvecFormations;
+    } catch (e) {
+      _error = '$e';
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Contenu principal
           Positioned(
             top: 120,
             left: 0,
@@ -47,18 +86,31 @@ class AllCentresListPage extends StatelessWidget {
                   topRight: Radius.circular(60),
                 ),
               ),
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                itemCount: centres.length,
-                itemBuilder: (context, index) {
-                  final centre = centres[index];
-                  return CentreListItemCard(centre: centre);
-                },
-              ),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(child: Text(_error!))
+                      : RefreshIndicator(
+                          onRefresh: _fetch,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                            itemCount: _items.length,
+                            itemBuilder: (context, index) {
+                              final c = _items[index];
+                              final u = c['utilisateur'] ?? {};
+                              final centre = {
+                                'logo': (u['urlPhoto'] ?? 'https://via.placeholder.com/150').toString(),
+                                'name': (u['nom'] ?? '—').toString(),
+                                'location': (c['adresse'] ?? '—').toString(),
+                                'description': (u['description'] ?? '').toString(), // À propos du centre, pas l'agrément
+                                'id': c['id'],
+                              };
+                              return CentreListItemCard(centre: centre);
+                            },
+                          ),
+                        ),
             ),
           ),
-          
-          // Header avec bouton retour et titre
           Positioned(
             top: 0,
             left: 0,
@@ -108,10 +160,12 @@ class CentreListItemCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            const Divider(),
-            const SizedBox(height: 10),
-            Text(centre['description']),
+            if ((centre['description'] ?? '').toString().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              const Divider(),
+              const SizedBox(height: 10),
+              Text(centre['description']),
+            ],
             const SizedBox(height: 15),
             Align(
               alignment: Alignment.centerRight,
@@ -119,7 +173,9 @@ class CentreListItemCard extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const CentreDetailPage()),
+                    MaterialPageRoute(
+                      builder: (context) => CentreDetailPage(centreId: centre['id']),
+                    ),
                   );
                 },
                 child: const Text('Voir le centre'),

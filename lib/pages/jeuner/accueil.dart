@@ -7,7 +7,9 @@ import 'package:repartir_frontend/pages/jeuner/centre_list_page.dart';
 import 'package:repartir_frontend/pages/jeuner/offre_list_page.dart';
 import 'package:repartir_frontend/pages/jeuner/mes_mentors_page.dart';
 import 'package:repartir_frontend/pages/jeuner/all_centres_list_page.dart';
+import 'package:repartir_frontend/pages/jeuner/notifications_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/notifications_service.dart';
 
 // Définition des couleurs primaires de l'application
 const Color kPrimaryBlue = Color(0xFF3EB2FF); // Un bleu vif et moderne
@@ -29,11 +31,12 @@ class AccueilPage extends StatefulWidget {
 
 class _AccueilPageState extends State<AccueilPage> {
   int _selectedIndex = 0;
+  final GlobalKey<_HomePageContentState> _homeKey = GlobalKey<_HomePageContentState>();
 
   // Liste des pages à afficher
-  static final List<Widget> _pages = <Widget>[
-    const _HomePageContent(), // Page d'accueil originale
-    const MentorsListPage(), // Page des mentors
+  List<Widget> get _pages => <Widget>[
+    _HomePageContent(key: _homeKey), // Page d'accueil originale
+    MentorsListPage(), // Page des mentors
     const ChatListPage(),
     const CentreListPage(), // Placeholder
     const ProfilePage(), // Placeholder
@@ -43,6 +46,13 @@ class _AccueilPageState extends State<AccueilPage> {
     setState(() {
       _selectedIndex = index;
     });
+    
+    // Si on revient à l'accueil, recharger les notifications
+    if (index == 0) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _homeKey.currentState?._loadNotificationCount();
+      });
+    }
   }
 
   // --- 6. Barre de navigation inférieure (Standard) ---
@@ -91,8 +101,44 @@ class _AccueilPageState extends State<AccueilPage> {
 }
 
 // Widget séparé pour le contenu de la page d'accueil originale
-class _HomePageContent extends StatelessWidget {
-  const _HomePageContent();
+class _HomePageContent extends StatefulWidget {
+  const _HomePageContent({Key? key}) : super(key: key);
+
+  @override
+  State<_HomePageContent> createState() => _HomePageContentState();
+}
+
+class _HomePageContentState extends State<_HomePageContent> {
+  final NotificationsService _notifService = NotificationsService();
+  int _notifCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationCount();
+  }
+
+  @override
+  void didUpdateWidget(_HomePageContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Recharger quand le widget est mis à jour
+    _loadNotificationCount();
+  }
+
+  Future<void> _loadNotificationCount() async {
+    try {
+      print('🔄 Rechargement du compteur de notifications...');
+      final count = await _notifService.countNewNotifications();
+      print('🔔 Nouvelles notifications: $count');
+      if (mounted) {
+        setState(() {
+          _notifCount = count;
+        });
+      }
+    } catch (e) {
+      print('❌ Erreur chargement notifications: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,13 +177,14 @@ class _HomePageContent extends StatelessWidget {
           ),
         ),
 
-        // Header avec logo et notifications
+        // Header avec logo à gauche et notification à droite
         Positioned(
           top: 0,
           left: 0,
           right: 0,
           child: CustomHeader(
-            centerWidget: _buildHeaderContent(),
+            leftWidget: _buildLogo(),
+            rightWidget: _buildNotificationIcon(),
             height: 160,
           ),
         ),
@@ -174,58 +221,79 @@ class _HomePageContent extends StatelessWidget {
     );
   }
 
-  // --- Contenu de l'en-tête ---
-  Widget _buildHeaderContent() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16.0, 25.0, 16.0, 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
+  // --- Logo à gauche ---
+  Widget _buildLogo() {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Image.asset(
+          'assets/images/logo_repartir.png',
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+
+  // --- Icône de notification ---
+  Widget _buildNotificationIcon() {
+    return GestureDetector(
+      onTap: () async {
+        // Naviguer vers la page de notifications
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const NotificationsPage(),
+          ),
+        );
+        // Recharger le compteur après retour
+        _loadNotificationCount();
+      },
+      child: Stack(
         children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 3,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Image.asset(
-                'assets/images/logo_repartir.png',
-                fit: BoxFit.contain,
-              ),
-            ),
+          const Icon(
+            Icons.notifications_none,
+            color: Colors.white,
+            size: 28,
           ),
-          Stack(
-            children: [
-              const Icon(
-                Icons.notifications_none,
-                color: Colors.white,
-                size: 28,
-              ),
-              Positioned(
-                top: 2,
-                right: 2,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: kLogoGreen,
-                    shape: BoxShape.circle,
+          if (_notifCount > 0)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 18,
+                  minHeight: 18,
+                ),
+                child: Text(
+                  _notifCount > 9 ? '9+' : '$_notifCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ],
-          ),
+            ),
         ],
       ),
     );

@@ -9,6 +9,9 @@ import 'package:repartir_frontend/pages/onboarding/onboarding_page.dart';
 import 'package:repartir_frontend/pages/parrains/nav.dart';
 import 'package:repartir_frontend/pages/shared/splash_screen.dart';
 
+// NavigatorKey global pour la redirection automatique
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 
 // Import pages
 
@@ -61,6 +64,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey, // ← Ajouter le navigatorKey global
       title: 'RePartir',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
