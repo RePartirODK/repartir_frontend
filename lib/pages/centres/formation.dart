@@ -80,7 +80,7 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             // Header Incurvé
-            CustomHeader(title: "Formation"),
+            CustomHeader(title: "Formation", showBackButton: true,),
 
             // Section "Vos formations" et Bouton Ajouter
             _buildHeaderAndAddButton(),

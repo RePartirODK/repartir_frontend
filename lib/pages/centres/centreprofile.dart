@@ -51,7 +51,7 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
   void _handleEditProfile() {
     debugPrint("Naviguer vers le formulaire d'édition de profil...");
     // Logique de navigation vers la page d'édition
-    Navigator.pushReplacement(context, 
+    Navigator.push(context, 
       MaterialPageRoute(builder: (context) => const EditProfilCentrePage()),
     );
   }

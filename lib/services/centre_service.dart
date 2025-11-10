@@ -5,17 +5,18 @@ import 'package:repartir_frontend/models/request/centre_request.dart';
 import 'package:repartir_frontend/models/request/request_formation.dart';
 import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
+import 'package:repartir_frontend/models/response/response_inscription.dart';
 import 'package:repartir_frontend/models/utilisateur.dart';
 import 'package:repartir_frontend/network/api_config.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 class CentreService {
   static const String baseUrl = "http://localhost:8183/api/utilisateurs";
-  static const String baseUrl1 = 'http://localhost:8183/api/centres';
+  static final String baseUrl1 = '${ApiConfig.baseUrl}/centres';
   final storage = SecureStorageService();
-  //register centre de formation
+
   Future<Utilisateur?> register(CentreRequest centre) async {
-    print("-------------url--------------${ApiConfig.baseUrl}/utilisateurs/register");
+    debugPrint("-------------url--------------${ApiConfig.baseUrl}/utilisateurs/register");
     final url = Uri.parse('${ApiConfig.baseUrl}/utilisateurs/register');
     final response = await http.post(
       url,
@@ -62,6 +63,26 @@ class CentreService {
     }
   }
 
+  // New: list inscriptions (applicants) for all formations of a centre
+  Future<List<ResponseInscription>> getCentreInscriptions(int centreId) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/inscriptions/centre/$centreId');
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${await storage.getAccessToken()}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((e) => ResponseInscription.fromJson(e as Map<String, dynamic>)).toList();
+    } else {
+      debugPrint('Status code: ${response.statusCode}');
+      debugPrint('Response body: ${response.body}');
+      throw Exception('Erreur lors du chargement des inscriptions du centre');
+    }
+  }
   //recupérer les formations du centre
   Future<List<ResponseFormation>> getAllFormations(int centreId) async {
     final String baseUrl = '${ApiConfig.baseUrl}/formations';
@@ -112,7 +133,7 @@ class CentreService {
   }
 
   Future updateCentre(CentreRequest updatedCentre) async {
-    final url = Uri.parse('$baseUrl1 /v1');
+    final url = Uri.parse('$baseUrl/v1');
     final response = await http.put(
       url,
       headers: {
@@ -130,4 +151,5 @@ class CentreService {
       throw Exception("une erreur est survenue");
     }
   }
+
 }

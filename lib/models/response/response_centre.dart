@@ -10,6 +10,7 @@ class ResponseCentre {
   final String role;
   final bool estActive;
   final String agrement;
+  String motDePasse = '';
 
   //constructeur de la classe
   ResponseCentre({
@@ -50,6 +51,7 @@ class ResponseCentre {
   }) {
     return CentreRequest(
       nom: nom ?? this.nom,
+      motDePasse: motDePasse,
       telephone: telephone ?? this.telephone,
       email: email ?? this.email,
       adresse: adresse ?? this.adresse,

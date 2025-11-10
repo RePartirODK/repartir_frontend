@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_inscription.dart';
 import 'package:repartir_frontend/pages/centres/voirappliquant.dart';
+import 'package:repartir_frontend/services/centre_service.dart';
 
 // Définition des constantes et modèles de données
 const Color kPrimaryColor = Color(0xFF3EB2FF);
@@ -68,6 +70,9 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
   // L'index 1 correspond à "Appliquants" dans la BottomNavigationBar
   int _selectedIndex = 1; 
   final TextEditingController _searchController = TextEditingController();
+  final _centreService = CentreService();
+  List<ResponseInscription> _inscriptions = [];
+  List<ResponseInscription> _filtered = [];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -83,6 +88,35 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
     super.dispose();
   }
 
+
+    Future<void> _loadApplicants() async {
+    try {
+      final currentCentre = await _centreService.getCurrentCentre();
+      final centreId = currentCentre?.id ?? 0;
+      if (centreId == 0) {
+        debugPrint('Centre ID not found');
+        return;
+      }
+      final items = await _centreService.getCentreInscriptions(centreId);
+      setState(() {
+        _inscriptions = items;
+        _filtered = items;
+      });
+    } catch (e) {
+      debugPrint('Failed to load applicants: $e');
+    }
+  }
+
+   void _applyFilter() {
+    final q = _searchController.text.trim().toLowerCase();
+    setState(() {
+      if (q.isEmpty) {
+        _filtered = _inscriptions;
+      } else {
+        _filtered = _inscriptions.where((i) => i.nomJeune.toLowerCase().contains(q)).toList();
+      }
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,13 +143,12 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
                   const SizedBox(height: 20),
 
                   // 4. Liste des Appliquants
-                  ...dummyApplicants.map((applicant) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 15.0),
-                      child: _buildApplicantCard(applicant),
-                    );
-                  }),
-
+                    ..._filtered.map((insc) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 15.0),
+              child: _buildApplicantCardFromInscription(insc),
+            );
+          }),
                   const SizedBox(height: 30),
                 ],
               ),
@@ -128,6 +161,47 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
 
   // --- Widgets de construction des sections ---
 
+
+
+   Widget _buildApplicantCardFromInscription(ResponseInscription insc) {
+    return Card(
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Row(
+          children: <Widget>[
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: Colors.blue.withValues(alpha: 0.2),
+              child: const Icon(Icons.person, color: Colors.blue, size: 30),
+            ),
+            const SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    insc.nomJeune,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    insc.titreFormation,
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            _buildViewButtonWithNav(
+              insc
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
@@ -158,7 +232,7 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
         ),
         onChanged: (value) {
           // Logique de filtrage de la liste ici
-          print("Searching for: $value");
+          debugPrint("Searching for: $value");
         },
       ),
     );
@@ -214,12 +288,12 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
           onTap: () {
             /**
              * Navigation vers la page profil de l'appliquant
-             */
+             
             Navigator.push(context, 
             MaterialPageRoute(builder: (context)=>
             const ApplicantProfilePage()
             )
-            );
+            );*/
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
@@ -238,7 +312,43 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
       ),
     );
   }
-
+  
+  Widget _buildViewButtonWithNav(ResponseInscription insc) {
+    return Container(
+      width: 90,
+      decoration: BoxDecoration(
+        color: kPrimaryColor.withValues(alpha:0.7),
+        borderRadius: BorderRadius.circular(5.0),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ApplicantProfilePage(inscription: insc),
+              ),
+            );
+          },
+          child: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+            child: Center(
+              child: Text(
+                'Voir',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
 
 }
 
