@@ -1,10 +1,11 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:repartir_frontend/network/api_config.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 class UtilisateurService {
-  static const String baseUrl = "http://localhost:8183/api/utilisateurs";
+  static final String baseUrl = "${ApiConfig.baseUrl}/utilisateurs";
   final storage = SecureStorageService();
   //methode de suppression de compte
   Future<String?> suppressionCompte(Map<String, String> request) async {
@@ -33,7 +34,7 @@ class UtilisateurService {
 
   //methode de logout
   Future<String?> logout(Map<String, String> request) async{
-    final url = Uri.parse('http://localhost:8183/api/logout');
+    final url = Uri.parse('${ApiConfig.baseUrl}/logout');
     final response = await http.delete(
       url,
       headers: {

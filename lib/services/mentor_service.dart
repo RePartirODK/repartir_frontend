@@ -3,13 +3,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:repartir_frontend/models/request/mentors_request.dart';
 import 'package:repartir_frontend/models/utilisateur.dart';
+import 'package:repartir_frontend/network/api_config.dart';
 
 class MentorService {
    static const String baseUrl = "http://localhost:8183/api/utilisateurs";
 
   //register parrain
   Future<Utilisateur?> registerMentor(MentorsRequest mentor) async {
-    final url = Uri.parse('$baseUrl/register');
+    final url = Uri.parse('${ApiConfig.baseUrl}/utilisateurs/register');
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
@@ -24,7 +25,8 @@ class MentorService {
       throw Exception('Email déjà utilisé');
     } else {
       throw Exception(
-        'Erreur lors de l\'inscription du jeune: ${response.statusCode}',
+        'Erreur lors de l\'inscription du jeune: ${response.statusCode}'
+        '${jsonDecode(response.body)['message']}'
       );
     }
   }

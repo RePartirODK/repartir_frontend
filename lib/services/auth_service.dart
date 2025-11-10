@@ -1,6 +1,7 @@
 import 'package:repartir_frontend/models/response/loginresponse.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:repartir_frontend/network/api_config.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 class AuthService {
@@ -8,7 +9,7 @@ class AuthService {
   final storage = SecureStorageService();
 
   //base dir
-  static const String baseUrl = 'http://localhost:8183/api/auth';
+  static final String baseUrl = '${ApiConfig.baseUrl}/auth';
 
   //Methode de login
   Future<LoginResponse?> login(String email, String motDePasse) async {

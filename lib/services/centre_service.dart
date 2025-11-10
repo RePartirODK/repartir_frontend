@@ -6,6 +6,7 @@ import 'package:repartir_frontend/models/request/request_formation.dart';
 import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/models/utilisateur.dart';
+import 'package:repartir_frontend/network/api_config.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 class CentreService {
@@ -14,7 +15,8 @@ class CentreService {
   final storage = SecureStorageService();
   //register centre de formation
   Future<Utilisateur?> register(CentreRequest centre) async {
-    final url = Uri.parse('$baseUrl/register');
+    print("-------------url--------------${ApiConfig.baseUrl}/utilisateurs/register");
+    final url = Uri.parse('${ApiConfig.baseUrl}/utilisateurs/register');
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
@@ -29,13 +31,14 @@ class CentreService {
       throw Exception('Email déjà utilisé');
     } else {
       throw Exception(
-        'Erreur lors de l\'inscription du centre: ${response.statusCode}',
+        'Erreur lors de l\'inscription du centre: ${response.statusCode}\n'
+        '${jsonDecode(response.body)['message']}',
       );
     }
   }
 
   Future<ResponseCentre?> getCurrentCentre() async {
-    final url = Uri.parse('$baseUrl1/me');
+    final url = Uri.parse('${ApiConfig.baseUrl}/centres/me');
     final token = await storage.getAccessToken();
     debugPrint('Token utilisé pour /me : $token');
     //backend call
@@ -61,7 +64,7 @@ class CentreService {
 
   //recupérer les formations du centre
   Future<List<ResponseFormation>> getAllFormations(int centreId) async {
-    const String baseUrl = 'http://localhost:8183/api/formations';
+    final String baseUrl = '${ApiConfig.baseUrl}/formations';
     final url = Uri.parse('$baseUrl/centre/$centreId');
     final response = await http.get(
       url,
@@ -88,7 +91,7 @@ class CentreService {
     RequestFormation request,
     int centreId,
   ) async {
-    const String baseUrl = 'http://localhost:8183/api/formations';
+    final String baseUrl = '${ApiConfig.baseUrl}/formations';
     final url = Uri.parse('$baseUrl/centre/$centreId');
     final response = await http.post(
       url,
