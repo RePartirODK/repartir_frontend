@@ -1,15 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_detail_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-
-// Modèle simple pour représenter un contact de chat
-class ChatContact {
-  final String name;
-  final String lastMessage;
-  final String imageUrl;
-
-  ChatContact({required this.name, required this.lastMessage, required this.imageUrl});
-}
+import 'package:repartir_frontend/models/chat_contact.dart';
 
 // Page qui affiche la liste des conversations
 class ChatListPage extends StatefulWidget {

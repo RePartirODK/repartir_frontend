@@ -79,6 +79,7 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
     try {
+      debugPrint("Inscription du centre en cours...");
       //appel de l'api
       await centreService.register(centreRequest);
       // ignore: use_build_context_synchronously
@@ -97,7 +98,7 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
         context,
       ).showSnackBar(SnackBar(content: Text("Erreur est survenue")));
       debugPrint(
-        "Erreur lors de l'inscription de l'entreprise: ${e.toString()}",
+        "Erreur lors de l'inscription du Centre: ${e.toString()}",
       );
     }
   }
@@ -140,7 +141,7 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader("Créez votre profil d'entreprise", ''),
+          _buildHeader("Créez votre profil de centre", ''),
           _buildInputField(
             label: 'Nom du centre',
             icon: Icons.business_outlined,
