@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_centre.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
 
 // --- COULEURS ET CONSTANTES GLOBALES ---
 const Color primaryBlue = Color(0xFF3EB2FF); // Couleur principale bleue
@@ -8,8 +10,9 @@ const Color primaryOrange = Color(0xFFFF9800); // Couleur Orange pour le logo OD
 
 // --- 2. WIDGET PRINCIPAL : FormationDetailsPage ---
 class FormationDetailsPage extends StatelessWidget {
-  const FormationDetailsPage({super.key});
-
+  const FormationDetailsPage({super.key, required this.formation, this.centre});
+  final ResponseFormation formation;
+  final ResponseCentre? centre;
   @override
   Widget build(BuildContext context) {
     // Utilisation de SafeArea pour éviter le chevauchement avec la barre de statut
@@ -42,9 +45,9 @@ class FormationDetailsPage extends StatelessWidget {
                     const SizedBox(height: 20),
                     
                     // --- 2.2 Titre de la Formation ---
-                    const Text(
-                      'Développement Web Frontend',
-                      style: TextStyle(
+                    Text(
+                      formation.titre,
+                      style: const TextStyle(
                         fontSize: 24, 
                         fontWeight: FontWeight.bold, 
                         color: primaryBlue,
@@ -78,10 +81,11 @@ class FormationDetailsPage extends StatelessWidget {
 
   // Carte du centre de formation et localisation
   Widget _buildCenterHeaderCard() {
+    final centreName = centre?.nom ?? 'Centre';
+    final centreLocation = centre?.adresse ?? 'Adresse indisponible';
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Logo ODC
         Container(
           width: 80,
           height: 80,
@@ -99,23 +103,22 @@ class FormationDetailsPage extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 15),
-        // Nom et Lieu
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 10),
-              const Text(
-                'ODC_MALI',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              Text(
+                centreName,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
               Row(
-                children: const [
-                  Icon(Icons.location_on, color: Colors.red, size: 16),
-                  SizedBox(width: 4),
+                children: [
+                  const Icon(Icons.location_on, color: Colors.red, size: 16),
+                  const SizedBox(width: 4),
                   Text(
-                    'Bamako, Mali',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                    centreLocation,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                 ],
               ),
@@ -125,9 +128,9 @@ class FormationDetailsPage extends StatelessWidget {
       ],
     );
   }
-
+ 
   // Section Description et Programme
-  Widget _buildDescriptionSection() {
+   Widget _buildDescriptionSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -136,28 +139,41 @@ class FormationDetailsPage extends StatelessWidget {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        // Description
-        const Text(
-          'Cette formation intensive vous permettra de maîtriser les technologies frontend les plus demandées sur le marché. Nos formateurs expérimentés vous guideront à travers des exercices pratiques et des projets concrets pour assurer une montée en compétence rapide et efficace.',
-          style: TextStyle(fontSize: 14, height: 1.4),
+        Text(
+          formation.description,
+          style: const TextStyle(fontSize: 14, height: 1.4),
         ),
         const SizedBox(height: 15),
-
-        // Programme
         const Text(
           'Au programme:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 5),
-        _buildProgramItem('React et son écosystème'),
-        _buildProgramItem('TypeScript pour le développement web'),
-        _buildProgramItem('Tests unitaires et d\'intégration'),
-        _buildProgramItem('Performance et optimisation'),
-        _buildProgramItem('Accessibilité web'),
+        _buildProgramItem('Format: ${formation.format}'),
+        _buildProgramItem('Durée: ${formation.duree}'),
+        if (formation.urlFormation != null && formation.urlFormation!.isNotEmpty)
+          _buildProgramItem('Lien: ${formation.urlFormation}'),
       ],
     );
   }
-
+   // Section Dates
+   Widget _buildDateSection() {
+    final start = formation.dateDebut;
+    final end = formation.dateFin;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.calendar_today, color: primaryBlue, size: 20),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            'Du ${start.day}/${start.month}/${start.year} au ${end.day}/${end.month}/${end.year}',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+        ),
+      ],
+    );
+  }
   // Item du programme avec tiret
   Widget _buildProgramItem(String text) {
     return Padding(
@@ -169,38 +185,26 @@ class FormationDetailsPage extends StatelessWidget {
     );
   }
 
-  // Section Dates
-  Widget _buildDateSection() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Icon(Icons.calendar_today, color: primaryBlue, size: 20),
-        SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            'Du 15 septembre 2023 au 15 décembre 2023',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-        ),
-      ],
-    );
-  }
-
+ 
+  
   // Carte des détails pratiques (Places, Sommes, Type)
-  Widget _buildPracticalDetailsCard() {
+
+Widget _buildPracticalDetailsCard() {
+    final places = formation.nbrePlace;
+    final cout = formation.cout;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: primaryBlue.withOpacity(0.1), // Fond bleu très clair
+        color: primaryBlue.withOpacity(0.1),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
         children: [
-          _buildDetailRow(Icons.people, 'Places disponibles', '12'),
+          _buildDetailRow(Icons.people, 'Places disponibles', '$places'),
           const SizedBox(height: 10),
-          _buildDetailRow(Icons.attach_money, 'Sommes', 'Oui'),
+          _buildDetailRow(Icons.attach_money, 'Sommes', cout > 0 ? 'Oui' : 'Non'),
           const SizedBox(height: 10),
-          _buildDetailRow(Icons.business, 'Type de formation', 'Présentiel'),
+          _buildDetailRow(Icons.business, 'Type de formation', formation.format),
         ],
       ),
     );

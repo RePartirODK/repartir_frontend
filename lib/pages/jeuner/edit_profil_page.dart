@@ -1,5 +1,10 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/profile_service.dart';
 
 class EditProfilePage extends StatefulWidget {
   final Map<String, String> userData;
@@ -11,11 +16,18 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
+  final ProfileService _profile = ProfileService();
+  final ImagePicker _picker = ImagePicker();
   late TextEditingController _nameController;
   late TextEditingController _aboutController;
   late TextEditingController _addressController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
+  bool _saving = false;
+  String? _error;
+  String? _photoUrl;
+  File? _selectedImage;
+  Uint8List? _selectedImageBytes;
 
   @override
   void initState() {
@@ -26,6 +38,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
         TextEditingController(text: widget.userData['address']);
     _emailController = TextEditingController(text: widget.userData['email']);
     _phoneController = TextEditingController(text: widget.userData['phone']);
+    _loadCurrentPhoto();
+  }
+
+  Future<void> _loadCurrentPhoto() async {
+    try {
+      final me = await _profile.getMe();
+      final utilisateur = (me['utilisateur'] ?? {}) as Map<String, dynamic>;
+      final newPhotoUrl = utilisateur['urlPhoto'] as String?;
+      
+      print('🖼️ URL photo récupérée: $newPhotoUrl');
+      
+      if (mounted) {
+        setState(() {
+          _photoUrl = newPhotoUrl;
+        });
+      }
+    } catch (e) {
+      print('❌ Erreur lors du chargement de la photo: $e');
+      // Ignorer l'erreur, on continuera sans photo
+    }
   }
 
   @override
@@ -57,22 +89,49 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 children: [
                   // Avatar avec bouton caméra
                   Center(
-                    child: CircleAvatar(
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: Stack(
+                        children: [
+                          CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.white,
                       child: CircleAvatar(
                         radius: 48,
-                        backgroundImage: NetworkImage(
-                            'https://via.placeholder.com/150'), // Placeholder image
-                        child: Align(
-                          alignment: Alignment.bottomRight,
+                              backgroundColor: Colors.grey[200],
+                              backgroundImage: _selectedImageBytes != null
+                                  ? MemoryImage(_selectedImageBytes!)
+                                  : (_selectedImage != null && !kIsWeb
+                                      ? FileImage(_selectedImage!)
+                                      : (_photoUrl != null && _photoUrl!.isNotEmpty
+                                          ? NetworkImage(_photoUrl!)
+                                          : null)),
+                              onBackgroundImageError: _selectedImageBytes != null || 
+                                                      (_selectedImage != null && !kIsWeb) ||
+                                                      (_photoUrl != null && _photoUrl!.isNotEmpty)
+                                  ? (_, __) {}
+                                  : null,
+                              child: _selectedImageBytes == null && 
+                                     _selectedImage == null &&
+                                     (_photoUrl == null || _photoUrl!.isEmpty)
+                                  ? const Icon(Icons.person, size: 48, color: Colors.grey)
+                                  : null,
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
                           child: CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: 15,
-                            child: Icon(Icons.camera_alt,
-                                size: 20.0, color: Colors.blue),
+                              backgroundColor: Colors.blue,
+                              radius: 18,
+                              child: const Icon(
+                                Icons.camera_alt,
+                                size: 20.0,
+                                color: Colors.white,
+                              ),
                           ),
                         ),
+                        ],
                       ),
                     ),
                   ),
@@ -92,16 +151,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     children: [
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {
-                            // Save data and return
-                            Navigator.pop(context, {
-                              'name': _nameController.text,
-                              'about': _aboutController.text,
-                              'address': _addressController.text,
-                              'email': _emailController.text,
-                              'phone': _phoneController.text,
-                            });
-                          },
+                          onPressed: _saving ? null : _onSave,
                           icon: const Icon(Icons.check, color: Colors.white),
                           label: const Text('Enregistrer',
                               style: TextStyle(color: Colors.white)),
@@ -163,6 +213,175 @@ class _EditProfilePageState extends State<EditProfilePage> {
         fillColor: Colors.white,
       ),
     );
+  }
+}
+
+extension on _EditProfilePageState {
+  Future<void> _pickImage() async {
+    // Afficher un dialogue pour choisir entre caméra et galerie
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Choisir une source'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Prendre une photo'),
+                onTap: () => Navigator.of(context).pop(ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choisir depuis la galerie'),
+                onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (source == null) return;
+
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _selectedImageBytes = bytes;
+          if (!kIsWeb) {
+            _selectedImage = File(image.path);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la sélection de l\'image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<List<int>> _getImageBytes() async {
+    if (_selectedImageBytes != null) {
+      print('📷 Image depuis bytes (taille: ${_selectedImageBytes!.length} bytes)');
+      return _selectedImageBytes!;
+    } else if (_selectedImage != null && !kIsWeb) {
+      final bytes = await _selectedImage!.readAsBytes();
+      print('📷 Image depuis fichier (taille: ${bytes.length} bytes)');
+      return bytes;
+    } else {
+      throw Exception('Aucune image sélectionnée');
+    }
+  }
+
+  Future<void> _onSave() async {
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      // Fetch current profile to merge fields not edited here
+      final me = await _profile.getMe();
+      final utilisateur = (me['utilisateur'] ?? {}) as Map<String, dynamic>;
+
+      final parts = _nameController.text.trim().split(RegExp(r'\s+'));
+      final String prenom = parts.isNotEmpty ? parts.first : (me['prenom'] ?? '');
+      final String nom = parts.length > 1 ? parts.sublist(1).join(' ') : (utilisateur['nom'] ?? '');
+
+      final payload = <String, dynamic>{
+        'prenom': prenom.isEmpty ? (me['prenom'] ?? '') : prenom,
+        'a_propos': _aboutController.text.isEmpty ? (me['a_propos'] ?? '') : _aboutController.text,
+        'age': me['age'],
+        'niveau': me['niveau'],
+        'genre': me['genre'],
+        'urlDiplome': me['urlDiplome'],
+        'nom': nom.isEmpty ? (utilisateur['nom'] ?? '') : nom,
+        'telephone': _phoneController.text.isEmpty ? (utilisateur['telephone'] ?? '') : _phoneController.text,
+        'urlPhoto': utilisateur['urlPhoto'],
+      };
+      
+      // Si une nouvelle photo a été sélectionnée, l'uploader séparément
+      if (_selectedImageBytes != null || (_selectedImage != null && !kIsWeb)) {
+        try {
+          final imageBytes = await _getImageBytes();
+          final email = _emailController.text.isNotEmpty 
+              ? _emailController.text 
+              : (utilisateur['email'] ?? '');
+          
+          print('📷 Upload de la photo...');
+          final uploadResult = await _profile.updatePhoto(imageBytes, email);
+          print('✅ Photo uploadée avec succès: $uploadResult');
+          
+          // Recharger pour avoir la nouvelle URL
+          print('🔄 Rechargement du profil pour obtenir la nouvelle URL...');
+          await _loadCurrentPhoto();
+          print('🔄 Profil rechargé');
+          
+          setState(() {
+            _selectedImage = null;
+            _selectedImageBytes = null;
+          });
+        } catch (e) {
+          print('❌ ERREUR lors de l\'upload de la photo: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Erreur lors de l\'upload de la photo: ${e.toString().replaceAll('Exception: ', '')}'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+          setState(() {
+            _saving = false;
+          });
+          return;
+        }
+      }
+
+      print('📤 Envoi du profil au backend...');
+      await _profile.updateMe(payload);
+      print('✅ Profil mis à jour avec succès');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profil mis à jour avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, {
+          'name': _nameController.text,
+          'about': _aboutController.text,
+          'address': _addressController.text,
+          'email': _emailController.text,
+          'phone': _phoneController.text,
+        });
+      }
+    } catch (e) {
+      _error = '$e';
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la sauvegarde: $_error')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
+    }
   }
 }
 

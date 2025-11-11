@@ -39,6 +39,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
       if (loginResponse != null) {
         final roles = loginResponse.roles;
         final userRole = roles.isNotEmpty ? roles.first : '';
+        debugPrint("----------role---------------$roles");
         switch (userRole) {
           case 'ROLE_ENTREPRISE':
             Navigator.pushAndRemoveUntil(

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:repartir_frontend/models/response/loginresponse.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -21,7 +22,7 @@ class AuthService {
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"email": email, "motDePasse": motDePasse}),
     );
-
+    //
     //on capte ce que le back nous retourne
     if (response.statusCode == 200) {
       //on decode le body en json
@@ -40,7 +41,7 @@ class AuthService {
           : '';
 
       await storage.saveUserInfo(role: firstRole, email: loginResponse.email);
-
+      debugPrint("---------------Login done,User info saved----------------");
       return loginResponse;
     } else if (response.statusCode == 403) {
       throw Exception('Email ou mot de passe incorrect');
@@ -52,6 +53,4 @@ class AuthService {
   Future<void> logout() async {
     await storage.clearTokens();
   }
-
-  
 }

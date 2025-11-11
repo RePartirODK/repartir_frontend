@@ -28,7 +28,7 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
   final storage = SecureStorageService();
   final utilisateurService = UtilisateurService();
 
-  // Fonction de déconnexion simulée
+  // Fonction de déconnexion 
   Future<void> _handleLogout(String email) async {
     try {
       debugPrint("Déconnexion de l'utilisateur...");

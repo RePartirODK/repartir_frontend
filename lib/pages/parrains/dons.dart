@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/parrains/detailsdemande.dart';
+import 'package:repartir_frontend/services/centres_service.dart';
+import 'package:repartir_frontend/services/jeune_service.dart';
+import 'package:repartir_frontend/services/parrainages_service.dart';
 // Définition des couleurs
 const Color primaryBlue = Color(0xFF3EB2FF);
 const Color primaryGreen = Color(0xFF4CAF50);
@@ -14,41 +18,75 @@ class DonationsPage extends StatefulWidget {
 }
 
 class _DonationsPageState extends State<DonationsPage> {
-  // Données fictives
-  final List<Map<String, String>> donationNeeds = [
-    {
-      'name': 'Kadiatou Tall',
-      'description': 'Souhaite suivre une formation en couture',
-    },
-    {
-      'name': 'Moussa Diallo',
-      'description': 'Besoin d\'équipement pour un atelier de menuiserie',
-    },
-    {
-      'name': 'Ali Coulibaly',
-      'description': 'Recherche une bourse pour des études en informatique',
-    },
-    {
-      'name': 'Ousmane Traoré',
-      'description': 'Besoin de fournitures scolaires',
-    },
-    {
-      'name': 'Ousmane Traoré',
-      'description': 'Besoin de fournitures scolaires',
-    },
-  ];
+  final ParrainagesService _parrainagesService = ParrainagesService();
+  final JeuneService _jeuneService = JeuneService();
+  final CentresService _centresService = CentresService();
 
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _pending = [];
+  final Map<int, Map<String, dynamic>> _jeunesById = {};
+  final Map<int, ResponseFormation> _formationsById = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      // 1) Pending parrainage demandes
+      final demandes = await _parrainagesService.demandesEnAttente();
+      // 2) Jeunes list (for name mapping)
+      final jeunes = await _jeuneService.listAll();
+      for (final j in jeunes) {
+        final id = _asInt(j['id']);
+        _jeunesById[id] = j;
+      }
+      // 3) Hydrate formations (title mapping)
+      final centresJson = await _centresService.listActifs();
+      for (final c in centresJson) {
+        final idCentre =
+            c['id'] is int ? c['id'] as int : int.tryParse(c['id']?.toString() ?? '') ?? 0;
+        if (idCentre == 0) continue;
+       final formations = await _centresService.getFormationsByCentre(idCentre);
+       for (final f in formations) {
+          final rf = ResponseFormation.fromJson(f);
+          _formationsById[rf.id] = rf;
+        }
+      }
+      setState(() {
+       _pending = demandes;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+ }
+   int _asInt(dynamic v) {
+    if (v is int) return v;
+    return int.tryParse(v?.toString() ?? '') ?? 0;
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // ---------------- HEADER ----------------
-            CustomHeader(title: "Donations"),
-            const SizedBox(height: 20),
+      body: _loading
+         ? const Center(child: CircularProgressIndicator())
+         : _error != null
+              ? Center(child: Text('Erreur: $_error'))
+              : SingleChildScrollView(
+                 child: Column(
+                   children: [
+             // ---------------- HEADER ----------------
+             CustomHeader(title: "Donations"),
+             const SizedBox(height: 20),
+            
 
             // ---------------- MESSAGE ----------------
             Padding(
@@ -79,10 +117,22 @@ class _DonationsPageState extends State<DonationsPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 0),
               child: Column(
-                children: donationNeeds.map((need) {
+                children: _pending.map((p) {
+                  final idJeune = _asInt(p['idJeune']);
+                  final idFormation = _asInt(p['idFormation']);
+                  final jeune = _jeunesById[idJeune] ?? {};
+                  final utilisateur = jeune['utilisateur'] as Map<String, dynamic>? ?? {};
+                  final prenom = (jeune['prenom'] ?? '').toString();
+                  final nom = (utilisateur['nom'] ?? '').toString();
+                  final name = (prenom.isNotEmpty || nom.isNotEmpty)
+                     ? '$prenom $nom'.trim()
+                      : 'Jeune #$idJeune';
+                  final formationTitle =
+                      _formationsById[idFormation]?.titre ?? 'Formation #$idFormation';
+                  final description = 'Souhaite être parrainé pour: $formationTitle';
                   return _buildDonationItem(
-                    name: need['name']!,
-                    description: need['description']!,
+                    name: name,
+                    description: description,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -95,7 +145,6 @@ class _DonationsPageState extends State<DonationsPage> {
                 }).toList(),
               ),
             ),
-
             const SizedBox(height: 80), // Espace pour la NavBar
           ],
         ),

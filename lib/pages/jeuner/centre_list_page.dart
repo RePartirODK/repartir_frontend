@@ -2,9 +2,85 @@ import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/centre_detail_page.dart';
 import 'package:repartir_frontend/pages/jeuner/formation_detail_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/centres_service.dart';
+import 'package:repartir_frontend/services/api_service.dart';
 
-class CentreListPage extends StatelessWidget {
+class CentreListPage extends StatefulWidget {
   const CentreListPage({Key? key}) : super(key: key);
+
+  @override
+  State<CentreListPage> createState() => _CentreListPageState();
+}
+
+class _CentreListPageState extends State<CentreListPage> {
+  final CentresService _centres = CentresService();
+  final ApiService _api = ApiService();
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _items = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      // Vérifier si l'utilisateur est connecté
+      final isConnected = await _api.hasToken();
+      if (!isConnected) {
+        throw Exception('Vous devez être connecté pour voir les centres de formation. Veuillez vous connecter.');
+      }
+      
+      final all = await _centres.listAll();
+      // Filtrer les centres actifs
+      final centresActifs = all.where((c) {
+        final u = c['utilisateur'] ?? {};
+        return u['estActive'] == true;
+      }).toList();
+      
+      // Récupérer TOUTES les formations de TOUS les centres actifs
+      final List<Map<String, dynamic>> toutesFormations = [];
+      for (final centre in centresActifs) {
+        try {
+          final formations = await _centres.getFormationsByCentre(centre['id']);
+          // Pour chaque formation, ajouter les infos du centre
+          for (final formation in formations) {
+            // Vérifier que la formation appartient bien à ce centre
+            final centreFormationId = formation['centreFormation']?['id'] ?? 
+                                     formation['centre']?['id'];
+            if (centreFormationId == centre['id'] || centreFormationId == null) {
+              // Ajouter les infos du centre à la formation
+              formation['centreInfo'] = {
+                'id': centre['id'],
+                'nom': centre['utilisateur']?['nom'] ?? '',
+                'logo': centre['utilisateur']?['urlPhoto'] ?? '',
+                'adresse': centre['adresse'] ?? '',
+              };
+              toutesFormations.add(formation);
+            }
+          }
+        } catch (e) {
+          // Ignorer les erreurs pour ce centre et continuer
+        }
+      }
+      
+      _items = toutesFormations;
+    } catch (e) {
+      _error = '$e';
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +88,6 @@ class CentreListPage extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Contenu principal
           Positioned(
             top: 120,
             left: 0,
@@ -28,49 +103,48 @@ class CentreListPage extends StatelessWidget {
               ),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                        ? Center(child: Text(_error!))
+                        : RefreshIndicator(
+                            onRefresh: _fetch,
                 child: ListView.builder(
                   padding: EdgeInsets.zero,
-                  itemCount: 2, // Number of centres
+                              itemCount: _items.length,
                   itemBuilder: (context, index) {
-                    // Replace with your data model
-                    final centres = [
-                            {
-                              'logo': 'https://via.placeholder.com/150',
-                              'name': 'ODC_MALI',
-                              'location': 'Bamako, Mali',
-                              'formation': 'Formation Développeur Web',
-                              'description': 'Apprenez les bases du développement web avec HTML, CSS et JavaScript',
-                              'date': 'Du 15 Sept 2023 - au 15 Mars 2024',
-                              'link': 'En ligne www.formation-dev.com/web',
-                              'places': '5 places disponibles',
-                              'price': 'Scolarité : 1.100.000cfa',
-                            },
-                            {
-                              'logo': 'https://via.placeholder.com/150',
-                              'name': 'Kabako_Academies',
-                              'location': 'Bamako, Mali',
-                              'formation': 'Web Design',
-                              'description': '6 mois de formation globale en webdesign, marketing digital, conception d\'applications, et entrepreneuriat IA travers Kabakoo',
-                              'date': 'Du 15 Sept 2023 - au 15 Mars 2024',
-                              'link': 'En ligne www.formation-dev.com/web',
-                              'places': '3 places disponibles',
-                            },
-                    ];
-                    final centre = centres[index];
-                    return CentreCard(centre: centre);
+                                final f = _items[index]; // f est maintenant une formation
+                                final centreInfo = f['centreInfo'] ?? {};
+                                final dateDebut = f['date_debut']?.toString() ?? '';
+                                final dateFin = f['date_fin']?.toString() ?? '';
+                                final card = {
+                                  'logo': (centreInfo['logo'] ?? 'https://via.placeholder.com/150').toString(),
+                                  'name': (centreInfo['nom'] ?? 'Centre').toString(),
+                                  'location': (centreInfo['adresse'] ?? '—').toString(),
+                                  'formation': (f['titre'] ?? '').toString(),
+                                  'description': (f['description'] ?? '').toString(),
+                                  'date': (dateDebut.isNotEmpty || dateFin.isNotEmpty)
+                                      ? 'Du ${dateDebut} - au ${dateFin}'
+                                      : '',
+                                  'link': (f['urlFormation'] ?? '').toString(),
+                                  'places': (f['nbrePlace'] ?? '').toString(),
+                                  'price': (f['cout'] != null) ? 'Scolarité : ${f['cout']}' : null,
+                                  'id': centreInfo['id'],
+                                  'formationId': f['id'], // ID de la formation
+                                };
+                                return CentreCard(centre: card);
                   },
                 ),
               ),
             ),
           ),
-          
-          // Header avec titre (sans bouton retour)
+          ),
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             child: CustomHeader(
-              title: 'Formations',
+              title: 'Centres de formation',
               height: 120,
             ),
           ),
@@ -91,7 +165,9 @@ class CentreCard extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const CentreDetailPage()),
+          MaterialPageRoute(
+            builder: (context) => CentreDetailPage(centreId: centre['id']),
+          ),
         );
       },
       child: Card(
@@ -122,24 +198,37 @@ class CentreCard extends StatelessWidget {
               const SizedBox(height: 10),
               const Divider(),
               const SizedBox(height: 10),
+              if (centre['formation']?.toString().isNotEmpty ?? false) ...[
               Text(centre['formation'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 5),
+              ],
+              if (centre['description']?.toString().isNotEmpty ?? false) ...[
               Text(centre['description']),
               const SizedBox(height: 10),
+              ],
+              if (centre['date']?.toString().isNotEmpty ?? false)
               _buildInfoRow(Icons.date_range, centre['date']),
+              if (centre['link']?.toString().isNotEmpty ?? false)
               _buildInfoRow(Icons.link, centre['link']),
-              _buildInfoRow(Icons.group, centre['places']),
-              if (centre.containsKey('price'))
+              if (centre['places']?.toString().isNotEmpty ?? false)
+                _buildInfoRow(Icons.group, '${centre['places']} places disponibles'),
+              if (centre.containsKey('price') && centre['price'] != null)
                 _buildInfoRow(Icons.attach_money, centre['price']),
               const SizedBox(height: 15),
               Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton(
                   onPressed: () {
+                    // Sur l'onglet Formations, toujours rediriger vers le détail de la formation
+                    final formationId = centre['formationId'];
+                    if (formationId != null) {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const FormationDetailPage()),
+                        MaterialPageRoute(
+                          builder: (context) => FormationDetailPage(formationId: formationId),
+                        ),
                     );
+                    }
                   },
                   child: const Text('Voir détails'),
                   style: ElevatedButton.styleFrom(

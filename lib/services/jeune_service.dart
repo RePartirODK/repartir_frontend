@@ -4,10 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:repartir_frontend/models/request/jeunerequest.dart';
 import 'package:repartir_frontend/models/utilisateur.dart';
 import 'package:repartir_frontend/network/api_config.dart';
+import 'package:repartir_frontend/services/api_service.dart';
 
 class JeuneService {
   static const String baseUrl = "http://localhost:8183/api/utilisateurs";
-
+  final ApiService _api = ApiService();
   //register jeune
   Future<Utilisateur?> registerJeune(JeuneRequest jeune) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/utilisateurs/register');
@@ -28,5 +29,15 @@ class JeuneService {
         'Erreur lors de l\'inscription du jeune: ${response.statusCode}',
       );
     }
+  }
+
+  /// Lister tous les jeunes (auth requis selon sécurité globale)
+  Future<List<Map<String, dynamic>>> listAll() async {
+    final res = await _api.get('/jeunes');
+    final List data = _api.decodeJson<List<dynamic>>(
+      res,
+      (d) => d as List<dynamic>,
+    );
+    return data.map((e) => e as Map<String, dynamic>).toList();
   }
 }
