@@ -70,9 +70,15 @@ class MentoringsService {
     return res.body;
   }
 
-  /// Attribuer une note au jeune
-  Future<String> attribuerNoteJeune(int idMentoring, int note) async {
+  /// Le jeune note le mentor (PUT /api/mentorings/note/jeune/{id})
+  Future<String> noterMentor(int idMentoring, int note) async {
     final res = await _api.put('/mentorings/note/jeune/$idMentoring?note=$note');
+    return res.body;
+  }
+
+  /// Le mentor note le jeune (PUT /api/mentorings/note/mentor/{id})
+  Future<String> noterJeune(int idMentoring, int note) async {
+    final res = await _api.put('/mentorings/note/mentor/$idMentoring?note=$note');
     return res.body;
   }
 }

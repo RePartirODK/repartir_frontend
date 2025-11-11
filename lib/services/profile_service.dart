@@ -3,15 +3,43 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
 import 'package:repartir_frontend/services/api_service.dart';
+import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 class ProfileService {
   ProfileService({ApiService? api}) : _api = api ?? ApiService();
 
   final ApiService _api;
+  final SecureStorageService _storage = SecureStorageService();
 
+  /// Récupère le profil de l'utilisateur connecté selon son rôle
   Future<Map<String, dynamic>> getMe() async {
-    final res = await _api.get('/jeunes/profile');
-    return _api.decodeJson<Map<String, dynamic>>(res, (d) => d as Map<String, dynamic>);
+    try {
+      // Récupérer le rôle depuis le storage
+      final role = await _storage.getUserRole();
+      print('👤 Récupération profil pour rôle: $role');
+      
+      // Utiliser l'endpoint /profile approprié selon le rôle
+      String endpoint;
+      switch (role) {
+        case 'ROLE_MENTOR':
+          endpoint = '/mentors/profile';
+          break;
+        case 'ROLE_JEUNE':
+        default:
+          endpoint = '/jeunes/profile';
+          break;
+      }
+      
+      print('👤 Endpoint: $endpoint');
+      final res = await _api.get(endpoint);
+      final profile = _api.decodeJson<Map<String, dynamic>>(res, (d) => d as Map<String, dynamic>);
+      print('✅ Profil récupéré complet: $profile');
+      print('✅ ID: ${profile['id']}, Prenom: ${profile['prenom']}');
+      return profile;
+    } catch (e) {
+      print('❌ Erreur getMe: $e');
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> updateMe(Map<String, dynamic> partial) async {

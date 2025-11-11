@@ -39,7 +39,7 @@ class _OffreListPageState extends State<OffreListPage> {
           'datePublication': '',
           'description': m['description'] ?? '',
           'lien_postuler': m['lienPostuler'] ?? '',
-          'logo': 'https://via.placeholder.com/150',
+        'logo': 'https://via.placeholder.com/150',
           'date_debut': m['dateDebut']?.toString(),
           'date_fin': m['dateFin']?.toString(),
           'competence': m['competence']?.toString() ?? '',
@@ -81,15 +81,15 @@ class _OffreListPageState extends State<OffreListPage> {
                       ? Center(child: Text(_error!))
                       : RefreshIndicator(
                           onRefresh: _fetch,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
                             itemCount: _items.length,
-                            itemBuilder: (context, index) {
+                itemBuilder: (context, index) {
                               return OffreCard(offre: _items[index]);
-                            },
-                          ),
-                        ),
+                },
+              ),
             ),
+          ),
           ),
           Positioned(
             top: 0,

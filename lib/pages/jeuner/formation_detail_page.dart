@@ -455,9 +455,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
           const SizedBox(width: 16),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
                 // Nom du centre en premier (en gros et bleu)
                 Text(
                   centreName.isNotEmpty ? centreName : 'Centre de formation',
@@ -471,10 +471,10 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                 ),
                 const SizedBox(height: 6),
                 // Email du centre en dessous
-                Row(
-                  children: [
+              Row(
+                children: [
                     const Icon(Icons.email_outlined, color: Colors.grey, size: 14),
-                    const SizedBox(width: 4),
+                  const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         centreEmail.isNotEmpty ? centreEmail : 'Email non disponible',
@@ -486,9 +486,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                         maxLines: 1,
                       ),
                     ),
-                  ],
-                ),
-              ],
+                ],
+              ),
+            ],
             ),
           ),
         ],

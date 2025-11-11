@@ -361,24 +361,24 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
                         ),
                       )
                     : SingleChildScrollView(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // --- CARTE D'INFORMATION DU MENTOR ---
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // --- CARTE D'INFORMATION DU MENTOR ---
                             _buildMentorInfoCard(kPrimaryBlue, mentorToDisplay),
-                            const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                            // --- SECTION "À PROPOS" ---
-                            const Text(
-                              'À propos du mentor',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
+                  // --- SECTION "À PROPOS" ---
+                  const Text(
+                    'À propos du mentor',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
                               mentorToDisplay.about,
-                              style: TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.5),
-                            ),
+                    style: TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.5),
+                  ),
                   const SizedBox(height: 24),
 
                   // --- CHAMP "OBJECTIF" ---
@@ -489,7 +489,7 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
                    mentor.imageUrl == 'https://placehold.co/150/EFEFEF/333333?text=M' ||
                    mentor.imageUrl.contains('placeholder')
                 ? CircleAvatar(
-                    radius: 46,
+              radius: 46,
                     backgroundColor: Colors.blue[100]!,
                     child: const Icon(Icons.person, size: 40, color: Colors.blue),
                   )
@@ -506,22 +506,22 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
           ),
           const SizedBox(height: 8),
           if (mentor.specialty.isNotEmpty && mentor.specialty != '—')
-            Text(
-              mentor.specialty,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.white.withOpacity(0.9),
-              ),
+          Text(
+            mentor.specialty,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white.withOpacity(0.9),
             ),
+          ),
           if (mentor.experience.isNotEmpty && mentor.experience != '—') ...[
-            const SizedBox(height: 4),
-            Text(
-              mentor.experience,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white.withOpacity(0.8),
-              ),
+          const SizedBox(height: 4),
+          Text(
+            mentor.experience,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.8),
             ),
+          ),
           ],
         ],
       ),

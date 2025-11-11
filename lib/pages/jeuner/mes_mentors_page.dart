@@ -6,6 +6,7 @@ import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/services/mentorings_service.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/api_service.dart';
+import 'package:repartir_frontend/pages/jeuner/mentor_actif_detail_page.dart';
 
 class MesMentorsPage extends StatefulWidget {
   const MesMentorsPage({Key? key}) : super(key: key);
@@ -78,6 +79,7 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
           'avatar': urlPhoto,
           'experience': experience,
           'etat': mentoring['statut'] ?? 'VALIDE',
+          'mentoring': mentoring, // Passer tout le mentoring pour les détails
         };
       }).toList();
       
@@ -153,6 +155,10 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
                                     final avatar = mentor['avatar'] ?? '';
                                     final experienceText = experience > 0 ? '$experience ans d\'expérience' : '';
                                     
+                                    // Récupérer la note que le jeune a donnée au mentor
+                                    final mentoring = mentor['mentoring'] ?? {};
+                                    final noteJeune = mentoring['noteJeune'] ?? 0;
+                                    
                                     return Card(
                                       margin: const EdgeInsets.only(bottom: 16),
                                       shape: RoundedRectangleBorder(
@@ -199,6 +205,15 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
                                                 ),
                                               ),
                                             ],
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Ma note attribuée: $noteJeune/20',
+                                              style: TextStyle(
+                                                color: Colors.blue[700],
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
                                           ],
                                         ),
                                         isThreeLine: experienceText.isNotEmpty,
@@ -219,6 +234,22 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
                                             );
                                           },
                                         ),
+                                        onTap: () async {
+                                          final result = await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => MentorActifDetailPage(
+                                                mentoring: mentor['mentoring'],
+                                              ),
+                                            ),
+                                          );
+                                          
+                                          // ✅ Recharger les données si changement
+                                          if (result == true) {
+                                            print('✅ Retour avec changement, rechargement mes mentors...');
+                                            await _fetch();
+                                          }
+                                        },
                                       ),
                                     );
                                   },

@@ -65,7 +65,9 @@ class _MentorSignupPageState extends State<MentorSignupPage> {
       );
 
       // Appel au backend
-      await mentorService.registerMentor(mentorsRequest);
+      // TODO: Endpoint d'inscription mentor non encore disponible dans le backend fourni
+      // await mentorService.registerMentor(mentorsRequest);
+      print('Inscription mentor: ${mentorsRequest.prenom} ${mentorsRequest.nom}');
 
       // Fermer le loader
       // ignore: use_build_context_synchronously

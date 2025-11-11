@@ -224,27 +224,27 @@ class _HomePageContentState extends State<_HomePageContent> {
   // --- Logo à gauche ---
   Widget _buildLogo() {
     return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Image.asset(
-          'assets/images/logo_repartir.png',
-          fit: BoxFit.contain,
-        ),
-      ),
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 3,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset(
+                'assets/images/logo_repartir.png',
+                fit: BoxFit.contain,
+              ),
+            ),
     );
   }
 
@@ -263,22 +263,22 @@ class _HomePageContentState extends State<_HomePageContent> {
         _loadNotificationCount();
       },
       child: Stack(
-        children: [
-          const Icon(
-            Icons.notifications_none,
-            color: Colors.white,
-            size: 28,
-          ),
+            children: [
+              const Icon(
+                Icons.notifications_none,
+                color: Colors.white,
+                size: 28,
+              ),
           if (_notifCount > 0)
-            Positioned(
+              Positioned(
               top: 0,
               right: 0,
-              child: Container(
+                child: Container(
                 padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
+                  decoration: const BoxDecoration(
                   color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
+                    shape: BoxShape.circle,
+                  ),
                 constraints: const BoxConstraints(
                   minWidth: 18,
                   minHeight: 18,
@@ -293,7 +293,7 @@ class _HomePageContentState extends State<_HomePageContent> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            ),
+          ),
         ],
       ),
     );
