@@ -3,6 +3,7 @@ import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/parrains/detailsdemande.dart';
 import 'package:repartir_frontend/services/centres_service.dart';
+import 'package:repartir_frontend/services/formations_service.dart';
 import 'package:repartir_frontend/services/jeune_service.dart';
 import 'package:repartir_frontend/services/parrainages_service.dart';
 // Définition des couleurs
@@ -12,7 +13,6 @@ const Color primaryGreen = Color(0xFF4CAF50);
 // -------------------- PAGE DONATIONS --------------------
 class DonationsPage extends StatefulWidget {
   const DonationsPage({super.key});
-
   @override
   State<DonationsPage> createState() => _DonationsPageState();
 }
@@ -20,7 +20,7 @@ class DonationsPage extends StatefulWidget {
 class _DonationsPageState extends State<DonationsPage> {
   final ParrainagesService _parrainagesService = ParrainagesService();
   final JeuneService _jeuneService = JeuneService();
-  final CentresService _centresService = CentresService();
+  final FormationsService _formationsService = FormationsService();
 
   bool _loading = true;
   String? _error;
@@ -45,17 +45,8 @@ class _DonationsPageState extends State<DonationsPage> {
         _jeunesById[id] = j;
       }
       // 3) Hydrate formations (title mapping)
-      final centresJson = await _centresService.listActifs();
-      for (final c in centresJson) {
-        final idCentre =
-            c['id'] is int ? c['id'] as int : int.tryParse(c['id']?.toString() ?? '') ?? 0;
-        if (idCentre == 0) continue;
-       final formations = await _centresService.getFormationsByCentre(idCentre);
-       for (final f in formations) {
-          final rf = ResponseFormation.fromJson(f);
-          _formationsById[rf.id] = rf;
-        }
-      }
+     await _hydrateFormations();
+      
       setState(() {
        _pending = demandes;
         _loading = false;
@@ -70,6 +61,26 @@ class _DonationsPageState extends State<DonationsPage> {
    int _asInt(dynamic v) {
     if (v is int) return v;
     return int.tryParse(v?.toString() ?? '') ?? 0;
+  }
+
+
+   Future<void> _hydrateFormations() async {
+    try {
+      // collect unique formation IDs from pending requests
+      final ids = <int>{};
+      for (final p in _pending) {
+        final idFormation = _asInt(p['idFormation']);
+        if (idFormation != 0) ids.add(idFormation);
+      }
+      // fetch each formation detail
+      for (final id in ids) {
+        final f = await _formationsService.details(id);
+        final rf = ResponseFormation.fromJson(f);
+        _formationsById[id] = rf;
+      }
+    } catch (_) {
+      // leave map empty; UI will fallback to "Formation #id"
+    }
   }
   @override
   Widget build(BuildContext context) {
@@ -137,7 +148,11 @@ class _DonationsPageState extends State<DonationsPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const DetailPage(),
+                          builder: (context) => DetailPage(
+                            idJeune: idJeune,
+                            idFormation: idFormation,
+                            idParrainage: _asInt(p['id']),
+                          ),
                         ),
                       );
                     },

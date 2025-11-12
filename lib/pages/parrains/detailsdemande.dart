@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/parrains/pagepaiement.dart';
+import 'package:repartir_frontend/services/formations_service.dart';
+import 'package:repartir_frontend/services/jeune_service.dart';
 
 // Assurez-vous d'avoir CustomBottomNavBar, CustomShapeClipper, primaryBlue, et primaryGreen définis
 // Si vous utilisez des fichiers séparés, n'oubliez pas d'importer :
@@ -16,7 +19,15 @@ const Color lightRed = Color(0xFFFDD8D8); // Couleur pour le badge "En attente"
 
 // --- PAGE PRINCIPALE ---
 class DetailPage extends StatefulWidget {
-  const DetailPage({super.key});
+  const DetailPage({
+    super.key,
+    required this.idJeune,
+    required this.idFormation,
+    required this.idParrainage,
+  });
+  final int idJeune;
+  final int idFormation;
+  final int idParrainage;
 
   @override
   State<DetailPage> createState() => _DetailPageState();
@@ -33,6 +44,49 @@ class _DetailPageState extends State<DetailPage> {
   final String trainingCenter = "Centre de formations Sabatiso";
   final String situation = "Attbougou 1008 logements en face de la boulangerie";
 
+  //pour les données réelles
+  final _jeuneService = JeuneService();
+  final _formationsService = FormationsService();
+
+  bool _loading = true;
+  String? _error;
+
+  // Fetched data
+  String _jeuneName = '—';
+  ResponseFormation? _formation;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDetails();
+  }
+
+  Future<void> _loadDetails() async {
+     try {     // Fetch all jeunes and find the one with the given id
+      final jeunes = await _jeuneService.listAll();
+      final jeune = jeunes.firstWhere(
+        (j) => (j['id'] is int ? j['id'] as int : int.tryParse(j['id']?.toString() ?? '') ?? 0) == widget.idJeune,
+        orElse: () => {},
+      );
+      final utilisateur = jeune['utilisateur'] as Map<String, dynamic>? ?? {};
+      final prenom = (jeune['prenom'] ?? '').toString();
+      final nom = (utilisateur['nom'] ?? '').toString();
+      _jeuneName = (prenom.isNotEmpty || nom.isNotEmpty) ? '$prenom $nom'.trim() : 'Jeune #${widget.idJeune}';
+
+      // Fetch formation details by id
+      final f = await _formationsService.details(widget.idFormation);
+      _formation = ResponseFormation.fromJson(f);
+
+      setState(() {
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final double contentStartOffset =
@@ -40,16 +94,19 @@ class _DetailPageState extends State<DetailPage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(child: Text('Erreur: $_error'))
+              : SingleChildScrollView(
+                  child: Column(
+                    children: <Widget>[
             // --- 1. Header (Fond bleu 'blob') ---
-            CustomHeader(title: "Détails",
-            showBackButton: true,),
+            CustomHeader(title: "Détails", showBackButton: true),
             // --- 4. Contenu Principal Scrollable ---
             Padding(
               padding: EdgeInsets.only(
-               top: 4.0
+                top: 4.0,
               ), // Démarre le contenu sous le header visible
               child: SingleChildScrollView(
                 padding:
@@ -58,26 +115,29 @@ class _DetailPageState extends State<DetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     // --- Avatar et Nom du Jeune ---
-                    _buildProfileSection(jeuneName),
+                    _buildProfileSection(_jeuneName),
                     const SizedBox(height: 30),
-        
+
                     // --- Bloc de Détails de la Formation ---
                     _buildFormationDetailsBlock(
-                      formationType: formationType,
-                      startDate: startDate,
-                      endDate: endDate,
-                      certification: certification,
-                    ),
+                       formationType: _formation?.titre ?? 'Formation #${widget.idFormation}',
+                      startDate: _formatDate(_formation?.dateDebut),
+                      endDate: _formatDate(_formation?.dateFin),
+                      certification: _formation != null && (_formation!.duree.isNotEmpty)
+                          ? 'Oui'
+                          : '—',
+                     ),
+                  
                     const SizedBox(height: 30),
-        
+
                     // --- Bloc d'Inscription et Situation ---
                     _buildInscriptionBlock(
-                      status: inscriptionStatus,
-                      centre: trainingCenter,
-                      situation: situation,
-                    ),
+                      status: _formation?.statut ?? '—',
+                      centre: 'Centre #${_formation?.idCentre ?? '—'}',
+                      situation: '—',
+                     ),
                     const SizedBox(height: 40),
-        
+
                     // --- Bouton d'Action ---
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -85,9 +145,17 @@ class _DetailPageState extends State<DetailPage> {
                         text: 'Procéder au payement',
                         onPressed: () {
                           //navigation vers la page de paiement
-                          Navigator.push(context,
-                          MaterialPageRoute(builder: 
-                          (context)=> PaymentPage()));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PaymentPage(
+                                 idJeune: widget.idJeune,
+                               idFormation: widget.idFormation,
+                                idParrainage: widget.idParrainage,
+                                jeuneName: _jeuneName,
+                              ),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -128,6 +196,11 @@ class _DetailPageState extends State<DetailPage> {
         ],
       ),
     );
+  }
+
+    String _formatDate(DateTime? d) {
+    if (d == null) return '—';
+    return '${d.day}/${d.month}/${d.year}';
   }
 
   /// Bloc de Détails de la Formation
@@ -298,7 +371,7 @@ class _DetailPageState extends State<DetailPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Color(0xFFF82020).withOpacity(0.35), // Couleur rose pâle
+        color: Color(0xFFF82020).withValues(alpha: 0.35), // Couleur rose pâle
         borderRadius: BorderRadius.circular(20),
       ),
       width: 150,
@@ -332,7 +405,7 @@ class _DetailPageState extends State<DetailPage> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.grey.withValues(alpha: 0.3),
             spreadRadius: 2,
             blurRadius: 5,
             offset: const Offset(0, 3),

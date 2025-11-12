@@ -36,7 +36,7 @@ class _NavHomePageState extends State<NavHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("------------NavHomePage init------------");
+    
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _pages),
         
