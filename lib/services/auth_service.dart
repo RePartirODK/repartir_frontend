@@ -40,6 +40,15 @@ class AuthService {
           : '';
 
       await storage.saveUserInfo(role: firstRole, email: loginResponse.email);
+      
+      // ✅ Sauvegarder le userId si disponible dans la réponse
+      if (loginResponse.id != null) {
+        await storage.saveId(loginResponse.id!);
+        print('✅ UserId sauvegardé depuis login: ${loginResponse.id}');
+      } else {
+        print('⚠️ Le backend ne renvoie pas l\'ID utilisateur dans la réponse de login !');
+        print('⚠️ Le chat ne pourra pas différencier les messages envoyés des messages reçus.');
+      }
 
       return loginResponse;
     } else if (response.statusCode == 403) {

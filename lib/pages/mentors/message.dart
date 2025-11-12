@@ -1,8 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_detail_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/pages/mentors/messagedetails.dart';
-import 'package:repartir_frontend/models/chat_contact.dart';
+import 'package:repartir_frontend/services/mentor_service.dart';
+import 'package:repartir_frontend/services/profile_service.dart';
+import 'package:repartir_frontend/services/chat_service.dart';
+import 'package:repartir_frontend/models/conversation_info.dart';
 
 // Page qui affiche la liste des conversations
 class MentorChatListPage extends StatefulWidget {
@@ -12,39 +17,170 @@ class MentorChatListPage extends StatefulWidget {
   State<MentorChatListPage> createState() => _MentorChatListPageState();
 }
 
-class _MentorChatListPageState extends State<MentorChatListPage> {
-  // Données factices pour la liste des chats
-  final List<ChatContact> _allContacts = [
-    ChatContact(name: 'Fatoumata Diawara', lastMessage: 'À bientôt pour ton entretien !', imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=FD'),
-    ChatContact(name: 'Bakary Diallo', lastMessage: 'Super ! Merci pour ton aide', imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=BD'),
-    ChatContact(name: 'Djibril Maiga', lastMessage: 'J\'ai trouvé un stage intéressant pour toi', imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=DM'),
-    ChatContact(name: 'Amadou Diallo', lastMessage: 'On se retrouve à la bibliothèque ?', imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=AD'),
-    ChatContact(name: 'Madjess Sylla', lastMessage: 'N\'oublie pas de préparer ton CV', imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=MS'),
-    ChatContact(name: 'Ibrahim S Diallo', lastMessage: 'Voici le lien pour la formation', imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=ID'),
-  ];
-
-  List<ChatContact> _filteredContacts = [];
+class _MentorChatListPageState extends State<MentorChatListPage> with WidgetsBindingObserver {
+  final MentorService _mentorService = MentorService();
+  final ProfileService _profileService = ProfileService();
+  final ChatService _chatService = ChatService();
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  
+  List<ConversationInfo> _allConversations = [];
+  List<ConversationInfo> _filteredConversations = [];
   final TextEditingController _searchController = TextEditingController();
+  bool _isLoading = true;
+  int? _currentUserId;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
-    _filteredContacts = _allContacts;
+    WidgetsBinding.instance.addObserver(this);
     _searchController.addListener(_filterContacts);
+    _loadConversations();
+    
+    // Recharger la liste toutes les 3 secondes
+    _refreshTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      _loadConversations();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Recharger quand l'app revient au premier plan
+      _loadConversations();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.removeListener(_filterContacts);
     _searchController.dispose();
+    _refreshTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadConversations() async {
+    // Ne pas recharger si déjà en train de charger
+    if (_isLoading && _allConversations.isNotEmpty) return;
+    
+    if (_allConversations.isEmpty) {
+      setState(() => _isLoading = true);
+    }
+
+    try {
+      // Récupérer le profil pour avoir l'ID mentor
+      final profile = await _profileService.getMe();
+      final mentorId = profile['id'] as int;
+      
+      // Récupérer l'ID utilisateur pour compter les messages non lus
+      final userIdStr = await _storage.read(key: 'user_id');
+      _currentUserId = userIdStr != null ? int.tryParse(userIdStr) : null;
+
+      // Récupérer les mentorings du mentor
+      final mentorings = await _mentorService.getMentorMentorings(mentorId);
+
+      // Filtrer uniquement les mentorings VALIDE (conversations actives)
+      final validMentorings = mentorings
+          .where((m) => m['statut'] == 'VALIDE')
+          .toList();
+
+      // Enrichir chaque conversation avec le dernier message et les messages non lus
+      final List<ConversationInfo> enrichedConversations = [];
+      
+      for (var mentoring in validMentorings) {
+        final mentoringId = mentoring['id'] as int;
+        final jeuneName = '${mentoring['prenomJeune'] ?? ''} ${mentoring['nomJeune'] ?? ''}'.trim();
+        final urlPhotoJeune = mentoring['urlPhotoJeune'] ?? '';
+        
+        // Récupérer l'historique des messages
+        final messages = await _chatService.getMessageHistory(mentoringId);
+        
+        String? lastMessage;
+        DateTime? lastMessageTime;
+        int unreadCount = 0;
+        
+        if (messages.isNotEmpty) {
+          final lastMsg = messages.last;
+          lastMessage = lastMsg.content;
+          lastMessageTime = lastMsg.timestamp;
+          
+          // Récupérer le timestamp du dernier message lu pour cette conversation
+          final lastReadStr = await _storage.read(key: 'last_read_$mentoringId');
+          DateTime? lastReadTime;
+          if (lastReadStr != null) {
+            try {
+              lastReadTime = DateTime.parse(lastReadStr);
+            } catch (e) {
+              print('⚠️ Erreur parsing lastReadTime: $e');
+            }
+          } else {
+            // Première utilisation : marquer tout comme déjà lu
+            // (on ne compte pas les anciens messages comme "non lus")
+            lastReadTime = DateTime.now();
+            await _storage.write(
+              key: 'last_read_$mentoringId',
+              value: lastReadTime.toIso8601String(),
+            );
+          }
+          
+          // Compter uniquement les messages reçus APRÈS le dernier message lu
+          if (_currentUserId != null) {
+            unreadCount = messages.where((msg) {
+              // Message de l'autre personne (pas moi)
+              final isFromOther = msg.senderId != _currentUserId!;
+              
+              // Message plus récent que le dernier message lu
+              final isUnread = msg.timestamp.isAfter(lastReadTime!);
+              
+              return isFromOther && isUnread;
+            }).length;
+          }
+        }
+        
+        enrichedConversations.add(ConversationInfo(
+          mentoringId: mentoringId,
+          contactName: jeuneName,
+          contactPhoto: urlPhotoJeune,
+          lastMessage: lastMessage,
+          lastMessageTime: lastMessageTime,
+          unreadCount: unreadCount,
+          mentoring: mentoring,
+        ));
+      }
+      
+      // Trier par dernier message (le plus récent en haut)
+      enrichedConversations.sort((a, b) {
+        if (a.lastMessageTime == null && b.lastMessageTime == null) return 0;
+        if (a.lastMessageTime == null) return 1;
+        if (b.lastMessageTime == null) return -1;
+        return b.lastMessageTime!.compareTo(a.lastMessageTime!);
+      });
+
+      setState(() {
+        _allConversations = enrichedConversations;
+        _filteredConversations = enrichedConversations;
+        _isLoading = false;
+      });
+
+      print('✅ ${_allConversations.length} conversations chargées et triées');
+    } catch (e) {
+      print('❌ Erreur chargement conversations: $e');
+      setState(() => _isLoading = false);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    }
   }
 
   void _filterContacts() {
     String query = _searchController.text.toLowerCase();
     setState(() {
-      _filteredContacts = _allContacts.where((contact) {
-        return contact.name.toLowerCase().contains(query);
+      _filteredConversations = _allConversations.where((conversation) {
+        return conversation.contactName.toLowerCase().contains(query);
       }).toList();
     });
   }
@@ -69,61 +205,71 @@ class _MentorChatListPageState extends State<MentorChatListPage> {
                   topRight: Radius.circular(60),
                 ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                  // Barre de recherche
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Rechercher...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30.0),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[200],
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Liste des contacts
-                  Expanded(
-                    child: ListView.separated(
-                      itemCount: _filteredContacts.length,
-                      separatorBuilder: (context, index) => const Divider(indent: 80, height: 1),
-                      itemBuilder: (context, index) {
-                        final contact = _filteredContacts[index];
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: CircleAvatar(
-                            radius: 28,
-                            backgroundImage: NetworkImage(contact.imageUrl),
-                          ),
-                          title: Text(contact.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text(contact.lastMessage, overflow: TextOverflow.ellipsis),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => MentorChatDetailPage(contact: contact),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _allConversations.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline,
+                                size: 80,
+                                color: Colors.grey.shade400,
                               ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                  ],
-                ),
-              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Aucune conversation active',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 20),
+                              // Barre de recherche
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: TextField(
+                                  controller: _searchController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Rechercher un jeune...',
+                                    prefixIcon: const Icon(Icons.search),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(30.0),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey[200],
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              // Liste des conversations
+                              Expanded(
+                                child: RefreshIndicator(
+                                  onRefresh: _loadConversations,
+                                  child: ListView.separated(
+                                    itemCount: _filteredConversations.length,
+                                    separatorBuilder: (context, index) => const Divider(indent: 80, height: 1),
+                                    itemBuilder: (context, index) {
+                                      final conversation = _filteredConversations[index];
+                                      return _buildConversationTile(conversation);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
             ),
           ),
           
@@ -139,6 +285,138 @@ class _MentorChatListPageState extends State<MentorChatListPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildConversationTile(ConversationInfo conversation) {
+    // Formater le temps du dernier message
+    String timeText = '';
+    if (conversation.lastMessageTime != null) {
+      final now = DateTime.now();
+      final diff = now.difference(conversation.lastMessageTime!);
+      
+      if (diff.inDays == 0) {
+        // Aujourd'hui: afficher l'heure
+        timeText = DateFormat('HH:mm').format(conversation.lastMessageTime!);
+      } else if (diff.inDays == 1) {
+        timeText = 'Hier';
+      } else if (diff.inDays < 7) {
+        // Cette semaine: afficher le jour
+        timeText = DateFormat('EEEE', 'fr_FR').format(conversation.lastMessageTime!);
+      } else {
+        // Plus ancien: afficher la date
+        timeText = DateFormat('dd/MM/yy').format(conversation.lastMessageTime!);
+      }
+    }
+
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Stack(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: const Color(0xFF6C63FF).withOpacity(0.1),
+            backgroundImage: conversation.contactPhoto.isNotEmpty && 
+                             conversation.contactPhoto.startsWith('http')
+                ? NetworkImage(conversation.contactPhoto)
+                : null,
+            child: conversation.contactPhoto.isEmpty || 
+                   !conversation.contactPhoto.startsWith('http')
+                ? const Icon(Icons.person, color: Color(0xFF6C63FF))
+                : null,
+          ),
+          // Badge pour messages non lus
+          if (conversation.unreadCount > 0)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 20,
+                  minHeight: 20,
+                ),
+                child: Text(
+                  conversation.unreadCount > 99 
+                      ? '99+' 
+                      : '${conversation.unreadCount}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
+      ),
+      title: Text(
+        conversation.contactName,
+        style: TextStyle(
+          fontWeight: conversation.unreadCount > 0 
+              ? FontWeight.bold 
+              : FontWeight.w600,
+        ),
+      ),
+      subtitle: Row(
+        children: [
+          Expanded(
+            child: Text(
+              conversation.lastMessage ?? 'Aucun message',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: conversation.unreadCount > 0 
+                    ? Colors.black87
+                    : Colors.grey[600],
+                fontWeight: conversation.unreadCount > 0 
+                    ? FontWeight.w500 
+                    : FontWeight.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+      trailing: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            timeText,
+            style: TextStyle(
+              color: conversation.unreadCount > 0 
+                  ? const Color(0xFF6C63FF)
+                  : Colors.grey[500],
+              fontSize: 12,
+              fontWeight: conversation.unreadCount > 0 
+                  ? FontWeight.bold 
+                  : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatDetailPage(
+              mentoringId: conversation.mentoringId,
+              contactName: conversation.contactName,
+              contactPhoto: conversation.contactPhoto,
+            ),
+          ),
+        );
+        
+        // Recharger après retour du chat
+        if (result == true || mounted) {
+          await _loadConversations();
+        }
+      },
     );
   }
 }

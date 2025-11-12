@@ -1,0 +1,31 @@
+feat: implémentation complète du système de chat WebSocket temps réel
+
+✅ Backend Spring Boot:
+- WebSocketConfig avec STOMP et JWT
+- ChatController pour envoi/réception messages
+- Suppression messages avec notification temps réel
+- Validation sécurité (participants uniquement)
+
+✅ Frontend Flutter:
+- ChatService avec stomp_dart_client v2.1.3
+- Connexion WebSocket sécurisée JWT
+- ChatPage avec UI moderne (bulles de messages)
+- ConversationsListPage (liste mentorings VALIDE)
+- Navigation depuis accueil mentor/jeune (FAB)
+
+✅ Fonctionnalités:
+- Messages temps réel bidirectionnels
+- Historique des messages (BD)
+- Suppression avec notification WebSocket
+- Reconnexion automatique
+- Indicateur état connexion (En ligne/Hors ligne)
+- Scroll automatique
+- Long press pour supprimer ses messages
+
+📝 Backend à compléter:
+- Endpoint GET /api/mentorings/{id}/messages pour historique
+- Repository: findByMentoringIdOrderByDateAsc()
+
+📚 Documentation: docs/chat_websocket_implementation.md
+
+

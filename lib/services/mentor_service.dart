@@ -92,4 +92,17 @@ class MentorService {
   Future<void> deleteMentoring(int idMentoring) async {
     await _api.delete('/mentorings/$idMentoring');
   }
+
+  /// GET /api/mentorings/jeune/{idJeune}
+  /// Récupère tous les mentorings d'un jeune
+  Future<List<Map<String, dynamic>>> getJeuneMentorings(int idJeune) async {
+    try {
+      final res = await _api.get('/mentorings/jeune/$idJeune');
+      final List data = _api.decodeJson<List<dynamic>>(res, (d) => d as List<dynamic>);
+      return data.map((e) => e as Map<String, dynamic>).toList();
+    } catch (e) {
+      print('❌ Erreur getJeuneMentorings: $e');
+      return [];
+    }
+  }
 }

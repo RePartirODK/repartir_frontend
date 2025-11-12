@@ -145,9 +145,9 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
                                   ),
                                 )
                               : ListView.builder(
-                                  padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
+                padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
                                   itemCount: _mentorsList.length,
-                                  itemBuilder: (context, index) {
+                itemBuilder: (context, index) {
                                     final mentor = _mentorsList[index];
                                     final name = mentor['name'] ?? 'Mentor';
                                     final speciality = mentor['speciality'] ?? '';
@@ -159,16 +159,16 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
                                     final mentoring = mentor['mentoring'] ?? {};
                                     final noteJeune = mentoring['noteJeune'] ?? 0;
                                     
-                                    return Card(
-                                      margin: const EdgeInsets.only(bottom: 16),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(15),
-                                      ),
-                                      elevation: 4,
-                                      child: ListTile(
+                  return Card(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          elevation: 4,
+                          child: ListTile(
                                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                        leading: CircleAvatar(
-                                          radius: 30,
+                            leading: CircleAvatar(
+                              radius: 30,
                                           backgroundColor: Colors.blue[100],
                                           backgroundImage: avatar.isNotEmpty && !avatar.contains('placeholder')
                                               ? NetworkImage(avatar)
@@ -179,7 +179,7 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
                                           child: avatar.isEmpty || avatar.contains('placeholder')
                                               ? const Icon(Icons.person, size: 30, color: Colors.blue)
                                               : null,
-                                        ),
+                            ),
                                         title: Text(
                                           name,
                                           style: const TextStyle(
@@ -217,23 +217,22 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
                                           ],
                                         ),
                                         isThreeLine: experienceText.isNotEmpty,
-                                        trailing: IconButton(
-                                          icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF3EB2FF)),
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => ChatDetailPage(
-                                                  contact: ChatContact(
-                                                    name: mentor['name']!,
-                                                    imageUrl: mentor['avatar']!,
-                                                    lastMessage: '',
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF3EB2FF)),
+                              onPressed: () {
+                                final mentoringId = mentoring['id'] as int;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ChatDetailPage(
+                                      mentoringId: mentoringId,
+                                      contactName: name,
+                                      contactPhoto: avatar,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                                         onTap: () async {
                                           final result = await Navigator.push(
                                             context,
@@ -250,13 +249,13 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
                                             await _fetch();
                                           }
                                         },
-                                      ),
-                                    );
-                                  },
+                          ),
+                  );
+                },
                                 ),
-                        ),
               ),
             ),
+          ),
           
           // Header avec bouton retour et titre
           Positioned(
