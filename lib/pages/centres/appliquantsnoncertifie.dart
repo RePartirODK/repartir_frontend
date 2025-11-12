@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
+import 'package:repartir_frontend/models/response/response_inscription.dart';
 import 'package:repartir_frontend/pages/centres/voirappliquant.dart';
+import 'package:repartir_frontend/services/centre_service.dart';
 
 const Color kPrimaryColor = Color(0xFF3EB2FF);
 const Color kSecondary = Color(0xFF4CAF50);
@@ -50,7 +53,9 @@ final List<Applicant> dummyApplicants = [
 ];
 
 class ApplicantsFormationNonTerminePage extends StatefulWidget {
-  const ApplicantsFormationNonTerminePage({super.key});
+  const ApplicantsFormationNonTerminePage({super.key,
+  required this.formation});
+  final ResponseFormation formation;
 
   @override
   // ignore: library_private_types_in_public_api
@@ -60,6 +65,29 @@ class ApplicantsFormationNonTerminePage extends StatefulWidget {
 
 class _ApplicantsFormationNonTerminePageState
     extends State<ApplicantsFormationNonTerminePage> {
+
+        final _centreService = CentreService();
+  List<ResponseInscription> _inscriptions = [];
+  List<ResponseInscription> _filtered = [];
+
+ @override
+  void initState() {
+    super.initState();
+    _loadApplicantsForFormation();
+  }
+
+    Future<void> _loadApplicantsForFormation() async {
+    try {
+      final items = await _centreService.getInscriptionsByFormation(widget.formation.id);
+      setState(() {
+        _inscriptions = items;
+        _filtered = items;
+      });
+    } catch (e) {
+      debugPrint('Failed to load applicants for formation ${widget.formation.id}: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,11 +107,11 @@ class _ApplicantsFormationNonTerminePageState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   // 2.2. Compteur d'Appliquants
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 20.0),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20.0),
                     child: Text(
-                      "5 Appliquants",
-                      style: TextStyle(
+                      "${_filtered.length} Appliquants",
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: kSecondary, // Couleur verte pour le compteur
@@ -91,13 +119,22 @@ class _ApplicantsFormationNonTerminePageState
                     ),
                   ),
 
-                  // 2.3. Liste des Appliquants
-                  ...dummyApplicants.map((applicant) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 15.0),
-                      child: _buildApplicantCard(applicant),
-                    );
-                  }),
+                 // 2.3. Liste des Appliquants
+                  if (_filtered.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16.0),
+                      child: Text(
+                        "Aucun appliquant trouvé.",
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                    )
+                  else
+                    ..._filtered.map((insc) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 15.0),
+                        child: _buildApplicantCardFromInscription(insc),
+                      );
+                    }),
 
                   const SizedBox(height: 30),
                 ],
@@ -110,6 +147,89 @@ class _ApplicantsFormationNonTerminePageState
   }
 
  
+  Widget _buildApplicantCardFromInscription(ResponseInscription insc) {
+    return Card(
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Row(
+          children: <Widget>[
+            // Avatar
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: kPrimaryColor.withValues(alpha: 0.15),
+              child: const Icon(Icons.person, color: kPrimaryColor, size: 30),
+            ),
+            const SizedBox(width: 15),
+
+            // Nom et formation
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    insc.nomJeune,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    insc.titreFormation,
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+
+            // Boutons d'action/Statut (Alignés à droite)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const SizedBox(height: 5),
+                Container(
+                  width: 90,
+                  decoration: BoxDecoration(
+                    color: kPrimaryColor.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(5.0),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ApplicantProfilePage(inscription: insc),
+                          ),
+                        );
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+                        child: Center(
+                          child: Text(
+                            'Voir',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   Widget _buildApplicantCard(Applicant applicant) {
     return Card(
       elevation: 2.0,

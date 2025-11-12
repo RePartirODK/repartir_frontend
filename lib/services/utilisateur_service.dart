@@ -63,4 +63,15 @@ class UtilisateurService {
       throw Exception("Échec de l’upload : $e");
     }
   }
+
+    Future<String> updatePassword(int userId, String ancienMotDePasse, String nouveauMotDePasse) async {
+    final response = await _api.put(
+      '/updatepassword/$userId',
+      body: jsonEncode({
+        'ancienMotDePasse': ancienMotDePasse,
+        'nouveauMotDePasse': nouveauMotDePasse,
+      }),
+    );
+    return _api.decodeJson(response, (data) => data.toString());
+  }
 }

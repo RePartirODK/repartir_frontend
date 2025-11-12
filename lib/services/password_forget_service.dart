@@ -1,43 +1,32 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:repartir_frontend/services/api_service.dart';
 
 class PasswordForgetService {
   static const String baseUrl = 'http://localhost:8183/api/password';
 
-  Future<String?> sendCode(Map<String, String> request) async {
-    //endpoint de l'api
-    final url = Uri.parse('$baseUrl/forget');
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(request),
-    );
-    switch (response.statusCode) {
-      case 200:
-        return "Email Envoyé";
-      case 400:
-        throw Exception("Requête invalide ");
-      case 403:
-        throw Exception("Accès interdit");
-      default:
-        throw Exception("Erreur interne");
-    }
-  }
+  final ApiService _api = ApiService();
 
-  Future<String?> resetPassword(Map<String, String> request) async {
-    final url = Uri.parse('$baseUrl/reset');
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(request),
+  Future<String> sendCode(String email) async {
+    final res = await _api.post(
+      '/password/forget',
+      body: jsonEncode({'email': email}),
     );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data.toString();
-    } else if (response.statusCode == 400) {
-      throw Exception("Requête invalide");
-    } else {
-      throw Exception("Une erreur s'est produite");
-    }
+    return _api.decodeJson(res, (d) =>  d['message'].toString());
+  }
+  Future<String> resetPassword({
+    required String email,
+    required String code,
+    required String nouveauPassword,
+  }) async {
+    final res = await _api.post(
+      '/password/reset',
+      body: jsonEncode({
+        'email': email,
+        'code': code,
+        'nouveauPassword': nouveauPassword,
+      }),
+    );
+    return _api.decodeJson(res, (d) => d['message'].toString());
   }
 }
+

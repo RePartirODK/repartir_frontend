@@ -70,4 +70,13 @@ class CentreService {
     );
     return _api.decodeJson(response, (data) => ResponseCentre.fromJson(data));
   }
+
+  /// --- INSCRIPTIONS POUR UNE FORMATION ---
+  Future<List<ResponseInscription>> getInscriptionsByFormation(int formationId) async {
+    final response = await _api.get('/inscriptions/formation/$formationId');
+    return _api.decodeJson(response, (data) {
+      final list = data as List<dynamic>;
+      return list.map((e) => ResponseInscription.fromJson(e)).toList();
+    });
+  }
 }

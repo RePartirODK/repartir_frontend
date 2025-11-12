@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/password_change_dialog.dart';
 import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/pages/centres/editerprofil.dart';
 import 'package:repartir_frontend/provider/centre_provider.dart';
@@ -278,7 +279,8 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
           'Change le mot de passe',
           Icons.arrow_forward_ios,
           onTap: () {
-            print('Naviguer vers changer mot de passe');
+            debugPrint('Naviguer vers changer mot de passe');
+            showPasswordChangeDialog(context);
           },
         ),
 

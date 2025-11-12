@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/password_change_dialog.dart';
 import 'package:repartir_frontend/models/request/parrain_request.dart';
 import 'package:repartir_frontend/models/response/response_parrain.dart';
 import 'package:repartir_frontend/pages/parrains/editerprofiparrain.dart';
@@ -214,7 +215,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 15),
-                  _buildSettingItem(context, 'Changer le mot de passe', () {}),
+                  _buildSettingItem(context, 'Changer le mot de passe', () {
+                    showPasswordChangeDialog(context);
+                  }),
                   _buildSettingItem(
                     context,
                     'Supprimer mon compte',
@@ -343,7 +346,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha(10),
             blurRadius: 3,
             offset: const Offset(0, 2),
           ),
