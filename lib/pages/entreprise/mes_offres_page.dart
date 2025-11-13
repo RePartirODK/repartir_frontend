@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart'; // Pour les constantes de couleur
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
 import 'package:repartir_frontend/pages/entreprise/profil_entreprise_page.dart';
 import 'package:repartir_frontend/pages/entreprise/detail_offre_page.dart';
 import 'package:repartir_frontend/pages/entreprise/nouvelle_offre_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/offre_emploi_service.dart';
+import 'package:repartir_frontend/services/profile_service.dart';
+import 'package:repartir_frontend/models/offre_emploi.dart';
 
 class MesOffresPage extends StatefulWidget {
   const MesOffresPage({super.key});
@@ -14,30 +18,43 @@ class MesOffresPage extends StatefulWidget {
 }
 
 class _MesOffresPageState extends State<MesOffresPage> {
-  String _companyName = "TechPartner"; // Placeholder pour le nom de l'entreprise
-  int _selectedIndex = 1; // Index pour la barre de navigation
+  final OffreEmploiService _offreService = OffreEmploiService();
+  final ProfileService _profileService = ProfileService();
+  
+  String _companyName = "TechPartner";
+  String _companyImageUrl = '';
+  int _selectedIndex = 1;
+  List<OffreEmploi> _offres = [];
+  bool _isLoading = true;
 
-  // Liste des offres publiées (placeholder)
-  final List<Map<String, dynamic>> _offres = [
-    {
-      'titre': 'Développeur Front-End',
-      'dateDebut': '01-10-2025',
-      'dateFin': '01-10-2025',
-      'logo': 'assets/images/logo_repartir.png',
-    },
-    {
-      'titre': 'Développeur Back-End',
-      'dateDebut': '15-09-2025',
-      'dateFin': '15-10-2025',
-      'logo': 'assets/images/logo_repartir.png',
-    },
-    {
-      'titre': 'Designer UI/UX',
-      'dateDebut': '20-09-2025',
-      'dateFin': '20-11-2025',
-      'logo': 'assets/images/logo_repartir.png',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final profile = await _profileService.getMe();
+      final offres = await _offreService.getMesOffres();
+      
+      setState(() {
+        _companyName = profile['nom'] ?? 'Entreprise';
+        _companyImageUrl = profile['urlPhotoEntreprise'] ?? '';
+        _offres = offres;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('❌ Erreur chargement données: $e');
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,11 +89,12 @@ class _MesOffresPageState extends State<MesOffresPage> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            final result = await Navigator.push(
                               context,
                               MaterialPageRoute(builder: (context) => const NouvelleOffrePage()),
                             );
+                            if (result == true) _loadData();
                           },
                           child: Container(
                             width: 50,
@@ -112,14 +130,30 @@ class _MesOffresPageState extends State<MesOffresPage> {
 
                   // Liste des offres
                   Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _offres.length,
-                      itemBuilder: (context, index) {
-                        final offre = _offres[index];
-                        return _buildOffreCard(offre, index);
-                      },
-                    ),
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _offres.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.work_off_outlined, size: 60, color: Colors.grey.shade400),
+                                    const SizedBox(height: 16),
+                                    Text('Aucune offre publiée', style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
+                                  ],
+                                ),
+                              )
+                            : RefreshIndicator(
+                                onRefresh: _loadData,
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  itemCount: _offres.length,
+                                  itemBuilder: (context, index) {
+                                    final offre = _offres[index];
+                                    return _buildOffreCard(offre, index);
+                                  },
+                                ),
+                              ),
                   ),
                 ],
               ),
@@ -149,7 +183,9 @@ class _MesOffresPageState extends State<MesOffresPage> {
   }
 
   // Carte d'offre
-  Widget _buildOffreCard(Map<String, dynamic> offre, int index) {
+  Widget _buildOffreCard(OffreEmploi offre, int index) {
+    final isActive = offre.isActive;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(15),
@@ -164,19 +200,18 @@ class _MesOffresPageState extends State<MesOffresPage> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Logo de l'entreprise
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              offre['logo'],
-              height: 50,
-              width: 50,
-              fit: BoxFit.contain,
+        child: Row(
+          children: [
+            // Logo de l'entreprise
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: Colors.grey.shade200,
+              backgroundImage: _companyImageUrl.isNotEmpty ? NetworkImage(_companyImageUrl) : null,
+              child: _companyImageUrl.isEmpty
+                  ? Icon(Icons.business, size: 25, color: Colors.grey.shade600)
+                  : null,
             ),
-          ),
-          const SizedBox(width: 15),
+            const SizedBox(width: 15),
           
           // Informations de l'offre
           Expanded(
@@ -184,30 +219,41 @@ class _MesOffresPageState extends State<MesOffresPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  offre['titre'],
+                  offre.titre,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 5),
                 Row(
                   children: [
-                    Icon(
-                      Icons.calendar_today_outlined,
-                      size: 16,
-                      color: Colors.grey.shade600,
-                    ),
+                    Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey.shade600),
                     const SizedBox(width: 5),
                     Text(
-                      '${offre['dateDebut']}/${offre['dateFin']}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade600,
-                      ),
+                      '${DateFormat('dd/MM/yy').format(offre.dateDebut)} - ${DateFormat('dd/MM/yy').format(offre.dateFin)}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                   ],
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isActive ? Colors.green.shade100 : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    isActive ? 'Active' : 'Expirée',
+                    style: TextStyle(
+                      color: isActive ? Colors.green.shade700 : Colors.grey.shade700,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -216,41 +262,22 @@ class _MesOffresPageState extends State<MesOffresPage> {
           // Actions
           Column(
             children: [
-              TextButton(
+              IconButton(
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => DetailOffrePage(offre: offre),
+                      builder: (context) => DetailOffrePage(offre: offre.toDetailMap()),
                     ),
                   );
                 },
-                child: const Text(
-                  'Voir détails',
-                  style: TextStyle(
-                    color: kPrimaryBlue,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                icon: const Icon(Icons.visibility_outlined, color: kPrimaryBlue, size: 22),
+                tooltip: 'Voir détails',
               ),
-              GestureDetector(
-                onTap: () {
-                  _showDeleteDialog(offre['titre'], index);
-                },
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.delete_outline,
-                    color: Colors.grey.shade600,
-                    size: 20,
-                  ),
-                ),
+              IconButton(
+                onPressed: () => _showDeleteDialog(offre.titre, offre.id),
+                icon: Icon(Icons.delete_outline, color: Colors.red.shade400, size: 22),
+                tooltip: 'Supprimer',
               ),
             ],
           ),
@@ -260,7 +287,7 @@ class _MesOffresPageState extends State<MesOffresPage> {
   }
 
   // Dialog de confirmation de suppression
-  void _showDeleteDialog(String titre, int index) {
+  void _showDeleteDialog(String titre, int offreId) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -346,21 +373,30 @@ class _MesOffresPageState extends State<MesOffresPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _offres.removeAt(index);
-                          });
+                        onPressed: () async {
                           Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Offre "$titre" supprimée'),
-                              backgroundColor: Colors.green,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          );
+                          try {
+                            await _offreService.supprimerOffre(offreId);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Offre "$titre" supprimée'),
+                                  backgroundColor: Colors.green,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              );
+                              _loadData();
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('❌ Erreur: $e')),
+                              );
+                            }
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.shade400,

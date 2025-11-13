@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
@@ -71,6 +72,19 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey, // ← Ajouter le navigatorKey global
       title: 'RePartir',
       debugShowCheckedModeBanner: false,
+      
+      // Configuration de la localisation en français
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('fr', 'FR'), // Français
+        Locale('en', 'US'), // Anglais
+      ],
+      locale: const Locale('fr', 'FR'),
+      
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2196F3)),
         useMaterial3: true,

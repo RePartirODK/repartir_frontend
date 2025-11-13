@@ -24,6 +24,9 @@ class ProfileService {
         case 'ROLE_MENTOR':
           endpoint = '/mentors/profile';
           break;
+        case 'ROLE_ENTREPRISE':
+          endpoint = '/entreprises/profile';
+          break;
         case 'ROLE_JEUNE':
         default:
           endpoint = '/jeunes/profile';

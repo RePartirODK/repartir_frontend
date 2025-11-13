@@ -5,6 +5,8 @@ import 'package:repartir_frontend/pages/entreprise/mes_offres_page.dart';
 import 'package:repartir_frontend/pages/entreprise/nouvelle_offre_page.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/profile_service.dart';
+import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 class ProfilEntreprisePage extends StatefulWidget {
   const ProfilEntreprisePage({super.key});
@@ -14,28 +16,68 @@ class ProfilEntreprisePage extends StatefulWidget {
 }
 
 class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
-  String _companyName = "Orange Digital Center";
-  String _companyCategory = "Numérique";
-  String _companyDescription = "Nous aidons les entreprises africaines à se digitaliser à travers des solutions web et mobiles modernes.";
-  String _location = "Bamako, Mali";
-  String _email = "contact@techmali.ml";
-  String _phone = "+223 79 12 45 67";
-  String _companyImageUrl = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop&crop=center';
+  final ProfileService _profileService = ProfileService();
+  final SecureStorageService _storage = SecureStorageService();
+  
+  bool _isLoading = true;
+  String _companyName = "Entreprise";
+  String _companyCategory = "";
+  String _companyDescription = "";
+  String _location = "";
+  String _email = "";
+  String _phone = "";
+  String _companyImageUrl = '';
+  int _imageRefreshKey = 0; // Pour forcer le rafraîchissement de l'image
   int _selectedIndex = 2; // Index pour la barre de navigation (Profil sélectionné)
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() => _isLoading = true);
+    try {
+      final profile = await _profileService.getMe();
+      
+      setState(() {
+        _companyName = profile['nom'] ?? 'Entreprise';
+        _companyCategory = profile['secteurActivite'] ?? '';
+        _companyDescription = profile['description'] ?? '';
+        _location = profile['adresse'] ?? '';
+        _email = profile['email'] ?? '';
+        _phone = profile['telephone'] ?? '';
+        _companyImageUrl = profile['urlPhotoEntreprise'] ?? '';
+        _imageRefreshKey++; // Incrémenter pour forcer le rafraîchissement de l'image
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('❌ Erreur chargement profil: $e');
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: _buildBottomNavigation(),
-      body: Stack(
-        children: [
-          // Contenu principal
-          SingleChildScrollView(
-            child: Column(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
               children: [
-                // Espace pour l'en-tête
-                const SizedBox(height: 130),
+                // Contenu principal
+                SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Espace pour l'en-tête
+                      const SizedBox(height: 130),
                 
                 // En-tête avec image de profil
                 Container(
@@ -62,20 +104,30 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
                       ],
                     ),
                     child: ClipOval(
-                      child: Image.network(
-                        _companyImageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.blue.shade50,
-                            child: Icon(
-                              Icons.business,
-                              size: 60,
-                              color: Colors.blue.shade400,
+                      child: _companyImageUrl.isEmpty
+                          ? Container(
+                              color: Colors.blue.shade50,
+                              child: Icon(
+                                Icons.business,
+                                size: 60,
+                                color: Colors.blue.shade400,
+                              ),
+                            )
+                          : Image.network(
+                              '$_companyImageUrl?v=$_imageRefreshKey', // Cache-busting
+                              key: ValueKey('company_avatar_$_imageRefreshKey'), // Force rebuild
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.blue.shade50,
+                                  child: Icon(
+                                    Icons.business,
+                                    size: 60,
+                                    color: Colors.blue.shade400,
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -145,11 +197,16 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildContactInfo(Icons.location_on, _location),
-                  const SizedBox(height: 15),
-                  _buildContactInfo(Icons.email, _email),
-                  const SizedBox(height: 15),
-                  _buildContactInfo(Icons.phone, _phone),
+                  if (_location.isNotEmpty) ...[
+                    _buildContactInfo(Icons.location_on, _location),
+                    const SizedBox(height: 15),
+                  ],
+                  if (_email.isNotEmpty) ...[
+                    _buildContactInfo(Icons.email, _email),
+                    const SizedBox(height: 15),
+                  ],
+                  if (_phone.isNotEmpty)
+                    _buildContactInfo(Icons.phone, _phone),
                 ],
               ),
             ),
@@ -169,11 +226,14 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
                           Icons.edit,
                           'Modifier le profil',
                           Colors.blue,
-                          () {
-                            Navigator.push(
+                          () async {
+                            final result = await Navigator.push(
                               context,
                               MaterialPageRoute(builder: (context) => const ModifierProfilPage()),
                             );
+                            if (result == true) {
+                              _loadProfile(); // Recharger le profil après modification
+                            }
                           },
                         ),
                       ),
@@ -371,24 +431,30 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.of(context).pop();
+                          
+                          // Nettoyer les tokens
+                          await _storage.clearTokens();
+                          
                           // Déconnexion et retour à la page d'authentification
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => const AuthenticationPage()),
-                            (Route<dynamic> route) => false,
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Déconnexion effectuée'),
-                              backgroundColor: Colors.green,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                          if (mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+                              (Route<dynamic> route) => false,
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Déconnexion effectuée'),
+                                backgroundColor: Colors.green,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.shade400,
