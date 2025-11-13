@@ -20,7 +20,6 @@ class _NavHomePageState extends State<NavHomePage> {
   int _selectedIndex = 0;
 
   late final List<Widget> _pages;
-
   @override
   void initState() {
     super.initState();
@@ -37,8 +36,11 @@ class _NavHomePageState extends State<NavHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _pages),
+        
+
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,

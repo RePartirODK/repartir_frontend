@@ -80,7 +80,7 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             // Header Incurvé
-            CustomHeader(title: "Formation"),
+            CustomHeader(title: "Formation", showBackButton: true,),
 
             // Section "Vos formations" et Bouton Ajouter
             _buildHeaderAndAddButton(),
@@ -172,7 +172,9 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      const ApplicantsFormationNonTerminePage(),
+                      ApplicantsFormationNonTerminePage(
+                        formation: formation
+                      ),
                 ),
               );
             },
@@ -194,7 +196,9 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      const ApplicantsFormationNonTerminePage(),
+                      ApplicantsFormationNonTerminePage(
+                        formation: formation
+                      ),
                 ),
               );
             },
@@ -213,7 +217,9 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const ApplicantsFormationTerminePage(),
+                  builder: (context) => ApplicantsFormationTerminePage(
+                    formation: formation
+                    ),
                 ),
               );
             },

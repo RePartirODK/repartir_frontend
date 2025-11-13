@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/models/request/centre_request.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
+import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/services/centre_service.dart';
 
 class CentreSignupPage extends StatefulWidget {
@@ -13,6 +14,8 @@ class CentreSignupPage extends StatefulWidget {
 class _CentreSignupPageState extends State<CentreSignupPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  final Set<int> _selectedDomainIds = {};
+  final List<Map<String, dynamic>> _domains = [];
   TextEditingController adresseController = TextEditingController();
   TextEditingController nomController = TextEditingController();
   TextEditingController emailController = TextEditingController();
@@ -22,6 +25,7 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
   TextEditingController agrementController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final centreService = CentreService();
+  bool _loadingDomains = false;
 
   @override
   void initState() {
@@ -31,6 +35,7 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
         _currentPage = _pageController.page?.round() ?? 0;
       });
     });
+    _loadDomaines();
   }
 
   @override
@@ -69,7 +74,7 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
       telephone: telephoneController.text.trim(),
       adresse: adresseController.text.trim(),
       agrement: agrementController.text.trim(),
-      // domaines: _selectedDomains.toList(),
+      domaineIds: _selectedDomainIds.toList(),
     );
     debugPrint(centreRequest.toJson().toString());
     //on affiche un loader
@@ -81,12 +86,28 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
     try {
       debugPrint("Inscription du centre en cours...");
       //appel de l'api
-      await centreService.register(centreRequest);
+      final user = await centreService.register(centreRequest);
       // ignore: use_build_context_synchronously
       Navigator.of(context).pop(); // enlever le loader
 
+
+      // Associer les domaines si l'entreprise a été créée avec succès
+      if (user != null && _selectedDomainIds.isNotEmpty) {
+        await centreService.associateDomaines(
+          user.id,
+          _selectedDomainIds.toList(),
+        );
+      }
       //affichage de la modal de succes
       _showSuccessDialog();
+
+            // Redirection vers AuthenticationPage
+      Navigator.pushAndRemoveUntil(
+        // ignore: use_build_context_synchronously
+        context,
+        MaterialPageRoute(builder: (context) => AccueilPage()),
+        (Route<dynamic> route) => false,
+      );
     } catch (e) {
       // Fermer le loader
       // ignore: use_build_context_synchronously
@@ -97,9 +118,7 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
         // ignore: use_build_context_synchronously
         context,
       ).showSnackBar(SnackBar(content: Text("Erreur est survenue")));
-      debugPrint(
-        "Erreur lors de l'inscription du Centre: ${e.toString()}",
-      );
+      debugPrint("Erreur lors de l'inscription du Centre: ${e.toString()}");
     }
   }
 
@@ -129,10 +148,28 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
         child: PageView(
           controller: _pageController,
           physics: const NeverScrollableScrollPhysics(),
-          children: [_buildStep1()],
+          children: [_buildStep1(), _buildStep2()],
         ),
       ),
     );
+  }
+
+  Future<void> _loadDomaines() async {
+    setState(() => _loadingDomains = true);
+    try {
+      final domaines = await centreService.getDomaines();
+      setState(() {
+        _domains.clear();
+        _domains.addAll(domaines);
+      });
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des domaines: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erreur lors du chargement des domaines')),
+      );
+    } finally {
+      setState(() => _loadingDomains = false);
+    }
   }
 
   Widget _buildStep1() {
@@ -217,7 +254,6 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
             },
             onEditingComplete: () {
               setState(() {});
-
               FocusScope.of(context).unfocus();
             },
           ),
@@ -248,10 +284,111 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
             },
           ),
           const SizedBox(height: 40),
+          _buildNavigationButton("Suivant", () {
+            if (_formKey.currentState?.validate() == true) {
+              _pageController.nextPage(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut,
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    "Veuillez remplir correctement tous les champs obligatoires.",
+                  ),
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
+            }}),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep2() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 30.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader("Vos domaines d'activité", "Étape 2 sur 2"),
+          if (_loadingDomains)
+            const Center(child: CircularProgressIndicator())
+          else if (_domains.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: Text(
+                'Aucun domaine disponible.',
+                style: TextStyle(color: Colors.black54),
+              ),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 15,
+                mainAxisSpacing: 15,
+                childAspectRatio: 1.2,
+              ),
+              itemCount: _domains.length,
+              itemBuilder: (context, index) {
+                final domain = _domains[index];
+                final domaineId = domain['id'] as int;
+                final libelle = domain['libelle'] as String? ?? 'Domaine';
+                final isSelected = _selectedDomainIds.contains(domaineId);
+                return _buildDomainCard(libelle, isSelected, domaineId);
+              },
+            ),
+          const SizedBox(height: 40),
           _buildNavigationButton("S'inscrire", () {
             _submitInscription();
           }),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDomainCard(String domain, bool isSelected, int domaineId) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (isSelected) {
+            _selectedDomainIds.remove(domaineId);
+          } else {
+            _selectedDomainIds.add(domaineId);
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue : Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey.shade200,
+          ),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: Colors.blue.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            domain,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ),
       ),
     );
   }

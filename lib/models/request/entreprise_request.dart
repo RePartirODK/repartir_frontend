@@ -8,6 +8,7 @@ class EntrepriseRequest {
 
   final String adresse;
   final String agrement;
+  final List<int>? domaineIds;
 
   //constructeur de la classe EntrepriseRequest
   EntrepriseRequest({
@@ -18,6 +19,7 @@ class EntrepriseRequest {
     required this.motDePasse,
     required this.adresse,
     required this.agrement,
+    this.domaineIds,
   });
 
   //convertir en json

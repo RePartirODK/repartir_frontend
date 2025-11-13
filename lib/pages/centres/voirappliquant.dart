@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_inscription.dart';
 
 // Définition des constantes
 const Color kPrimaryColor = Color(0xFF3EB2FF);
@@ -59,7 +60,8 @@ final Applicant moussaToure = Applicant(
 // **************************************************
 
 class ApplicantProfilePage extends StatefulWidget {
-  const ApplicantProfilePage({super.key});
+  const ApplicantProfilePage({super.key, this.inscription});
+  final ResponseInscription? inscription;
 
   @override
   // ignore: library_private_types_in_public_api

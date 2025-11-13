@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:repartir_frontend/models/response/loginresponse.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -21,7 +22,7 @@ class AuthService {
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"email": email, "motDePasse": motDePasse}),
     );
-
+    //
     //on capte ce que le back nous retourne
     if (response.statusCode == 200) {
       //on decode le body en json
@@ -40,16 +41,7 @@ class AuthService {
           : '';
 
       await storage.saveUserInfo(role: firstRole, email: loginResponse.email);
-      
-      // ✅ Sauvegarder le userId si disponible dans la réponse
-      if (loginResponse.id != null) {
-        await storage.saveId(loginResponse.id!);
-        print('✅ UserId sauvegardé depuis login: ${loginResponse.id}');
-      } else {
-        print('⚠️ Le backend ne renvoie pas l\'ID utilisateur dans la réponse de login !');
-        print('⚠️ Le chat ne pourra pas différencier les messages envoyés des messages reçus.');
-      }
-
+      debugPrint("---------------Login done,User info saved----------------");
       return loginResponse;
     } else if (response.statusCode == 403) {
       throw Exception('Email ou mot de passe incorrect');
@@ -61,6 +53,4 @@ class AuthService {
   Future<void> logout() async {
     await storage.clearTokens();
   }
-
-  
 }

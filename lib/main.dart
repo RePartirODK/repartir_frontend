@@ -84,6 +84,7 @@ class MyApp extends StatelessWidget {
   '/homeparrain': (context) => NavHomePage(),
   '/homejeune': (context) => AccueilPage(),
   '/homeentreprise': (context) => const AccueilEntreprisePage(),
+  
       },
     );
   }

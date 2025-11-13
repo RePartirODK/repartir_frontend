@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
+import 'package:repartir_frontend/models/response/response_inscription.dart';
 import 'package:repartir_frontend/pages/centres/voirappliquant.dart';
+import 'package:repartir_frontend/services/centre_service.dart';
 
 const Color kPrimaryColor = Color(0xFF3EB2FF);
 const double kHeaderHeight = 200.0;
@@ -49,7 +52,11 @@ final List<Applicant> dummyApplicants = [
 ];
 
 class ApplicantsFormationTerminePage extends StatefulWidget {
-  const ApplicantsFormationTerminePage({super.key});
+  const ApplicantsFormationTerminePage({super.key,
+  required this.formation});
+ 
+  final ResponseFormation formation;
+
 
   @override
   // ignore: library_private_types_in_public_api
@@ -59,8 +66,27 @@ class ApplicantsFormationTerminePage extends StatefulWidget {
 
 class _ApplicantsFormationTerminePageState
     extends State<ApplicantsFormationTerminePage> {
-  
+  final _centreService = CentreService();
+  List<ResponseInscription> _inscriptions = [];
+  List<ResponseInscription> _filtered = [];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadApplicantsForFormation();
+  }
+
+  Future<void> _loadApplicantsForFormation() async {
+    try {
+      final items = await _centreService.getInscriptionsByFormation(widget.formation.id);
+      setState(() {
+        _inscriptions = items;
+        _filtered = items;
+      });
+    } catch (e) {
+      debugPrint('Failed to load applicants for formation ${widget.formation.id}: $e');
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,10 +96,7 @@ class _ApplicantsFormationTerminePageState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           // 1. Header Incurvé
-          CustomHeader(
-            title: "Appliquant",
-            showBackButton: true,
-          ),
+          CustomHeader(title: "Appliquant", showBackButton: true),
 
           // 2. Contenu scrollable
           Expanded(
@@ -82,15 +105,12 @@ class _ApplicantsFormationTerminePageState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  // 2.1. Titre et Flèche de Retour
-                 
-
                   // 2.2. Compteur d'Appliquants
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 20.0),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20.0),
                     child: Text(
-                      "5 Appliquants",
-                      style: TextStyle(
+                      "${_filtered.length} Appliquants",
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.green, // Couleur verte pour le compteur
@@ -99,12 +119,21 @@ class _ApplicantsFormationTerminePageState
                   ),
 
                   // 2.3. Liste des Appliquants
-                  ...dummyApplicants.map((applicant) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 15.0),
-                      child: _buildApplicantCard(applicant),
-                    );
-                  }),
+                  if (_filtered.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16.0),
+                      child: Text(
+                        "Aucun appliquant trouvé.",
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                    )
+                  else
+                    ..._filtered.map((insc) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 15.0),
+                        child: _buildApplicantCardFromInscription(insc),
+                      );
+                    }),
 
                   const SizedBox(height: 30),
                 ],
@@ -115,10 +144,8 @@ class _ApplicantsFormationTerminePageState
       ),
     );
   }
-
   // --- Widgets de construction des sections ---
-
-  Widget _buildApplicantCard(Applicant applicant) {
+   Widget _buildApplicantCardFromInscription(ResponseInscription insc) {
     return Card(
       elevation: 2.0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
@@ -127,22 +154,30 @@ class _ApplicantsFormationTerminePageState
         padding: const EdgeInsets.all(15.0),
         child: Row(
           children: <Widget>[
-            // Avatar de l'applicant
             CircleAvatar(
               radius: 25,
-              backgroundColor: applicant.avatarColor.withValues(alpha: 0.8),
-              child: Icon(applicant.icon, color: Colors.white, size: 30),
+              backgroundColor: kPrimaryColor.withValues(alpha: 0.15),
+              child: const Icon(Icons.person, color: kPrimaryColor, size: 30),
             ),
             const SizedBox(width: 15),
 
-            // Nom de l'applicant
             Expanded(
-              child: Text(
-                applicant.name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    insc.nomJeune,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    insc.titreFormation,
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ],
               ),
             ),
 
@@ -150,10 +185,11 @@ class _ApplicantsFormationTerminePageState
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                // Badge statique (page des formations terminées)
                 _buildActionButton(
-                  applicant.isCertified ? 'Certifié' : 'Non Certifié',
+                  'Terminé',
                   onTap: () {},
-                  isPrimary: applicant.isCertified,
+                  isPrimary: true,
                 ),
                 const SizedBox(height: 5),
                 _buildActionButton(
@@ -161,8 +197,8 @@ class _ApplicantsFormationTerminePageState
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context)=>
-                      const ApplicantProfilePage()
+                      MaterialPageRoute(
+                        builder: (context) => ApplicantProfilePage(inscription: insc),
                       ),
                     );
                   },
@@ -175,7 +211,6 @@ class _ApplicantsFormationTerminePageState
       ),
     );
   }
-
   Widget _buildActionButton(
     String text, {
     required VoidCallback onTap,
@@ -219,9 +254,4 @@ class _ApplicantsFormationTerminePageState
       ),
     );
   }
-
 }
-
-// ------------------------------------------------------------------
-// --- WIDGETS DU HEADER INCURVÉ (réutilisés) ---
-
