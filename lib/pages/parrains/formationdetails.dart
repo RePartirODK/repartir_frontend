@@ -4,6 +4,7 @@ import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/parrains/voirdetailformation.dart';
 import 'package:repartir_frontend/services/centres_service.dart';
+import 'package:repartir_frontend/services/formations_service.dart';
 
 // Définition des couleurs (doivent correspondre à celles utilisées dans detail_page.dart)
 const Color primaryBlue = Color(0xFF3EB2FF);
@@ -31,6 +32,7 @@ class _FormationPageState extends State<FormationPage>
   List<ResponseFormation> _formations = [];
   final CentresService _centresService = CentresService();
   final Map<int, ResponseCentre> _centresById = {};
+  final FormationsService _formationService = FormationsService();
   // Contrôleur pour les onglets 'Toutes' et 'Nouvelles'
   late TabController _tabController;
 
@@ -64,7 +66,7 @@ class _FormationPageState extends State<FormationPage>
             ? c['id'] as int
             : int.tryParse(c['id']?.toString() ?? '') ?? 0;
         if (idCentre == 0) continue;
-        final list = await _centresService.getFormationsByCentre(idCentre);
+        final list = await _formationService.listByCentre(idCentre);
         for (final f in list) {
           agg.add(ResponseFormation.fromJson(f));
         }

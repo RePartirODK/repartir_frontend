@@ -101,6 +101,25 @@ class CentreService {
     }
   }
 
+
+   /// --- METTRE À JOUR UNE FORMATION ---
+  Future<ResponseFormation?> updateFormation(int id, RequestFormation request) async {
+    final response = await _api.put(
+      '/formations/$id',
+      body: jsonEncode(request.toJson()),
+    );
+    return _api.decodeJson(response, (data) => ResponseFormation.fromJson(data));
+  }
+
+  //suppression d'une formation
+  Future<void> deleteFormation(int id) async {
+    final response = await _api.delete('/formations/$id');
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      // delegate to decodeJson to throw a meaningful error
+      _api.decodeJson(response, (data) => data);
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getDomaines() async {
     final response = await _api.get('/domaines/lister');
     return _api.decodeJson(response, (data) {

@@ -87,10 +87,7 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
       debugPrint("Inscription du centre en cours...");
       //appel de l'api
       final user = await centreService.register(centreRequest);
-      // ignore: use_build_context_synchronously
-      Navigator.of(context).pop(); // enlever le loader
-
-
+     
       // Associer les domaines si l'entreprise a été créée avec succès
       if (user != null && _selectedDomainIds.isNotEmpty) {
         await centreService.associateDomaines(
@@ -98,6 +95,8 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
           _selectedDomainIds.toList(),
         );
       }
+       // ignore: use_build_context_synchronously
+      Navigator.of(context).pop(); // enlever le loader
       //affichage de la modal de succes
       _showSuccessDialog();
 

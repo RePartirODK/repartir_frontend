@@ -14,8 +14,8 @@ const Color kPrimaryColor = Color(0xFF3EB2FF);
 // Cette page est un formulaire, donc pas de BottomNavigationBar
 
 class AddFormationPage extends ConsumerStatefulWidget {
- 
-  const AddFormationPage({super.key});
+  const AddFormationPage({super.key, this.initial});
+  final ResponseFormation? initial;
 
   @override
   // ignore: library_private_types_in_public_api
@@ -23,7 +23,6 @@ class AddFormationPage extends ConsumerStatefulWidget {
 }
 
 class _AddFormationPageState extends ConsumerState<AddFormationPage> {
- 
   // Contrôleurs pour les champs de texte
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -56,6 +55,19 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
         return 'HYBRIDE';
       default:
         throw Exception('Format inconnu: $value');
+    }
+  }
+
+  String _labelFromApiFormat(String value) {
+    switch (value.toUpperCase()) {
+      case 'PRESENTIEL':
+        return 'Presentiel';
+      case 'ENLIGNE':
+        return 'En ligne';
+      case 'HYBRIDE':
+        return 'Hybride';
+      default:
+        return '';
     }
   }
 
@@ -140,27 +152,41 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
       );
 
       int centreId = int.tryParse(await storage.getUserId() ?? '0') ?? 0;
-      ResponseFormation? nouvelleFormation = await centreService
-      .createFormation(formation, centreId);
+      if (widget.initial != null) {
+        final updated = await centreService.updateFormation(
+          widget.initial!.id,
+          formation,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Formation mise à jour avec succès !")),
+        );
+        await ref.read(formationProvider.notifier).loadFormations(centreId);
+        // ignore: use_build_context_synchronously
+        Navigator.of(context).pop(updated);
+      } else {
+        ResponseFormation? nouvelleFormation = await centreService
+            .createFormation(formation, centreId);
 
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Formation ajoutée avec succès !")),
-      );
-      //mettre à jour les formations dans le provider
-      ref.read(formationProvider.notifier)
-      .addFormation(nouvelleFormation!);
-      // Réinitialisation des champs après ajout
-      _titleController.clear();
-      _descriptionController.clear();
-      _durationController.clear();
-      _costController.clear();
-      _startDateController.clear();
-      _endDateController.clear();
-      _placesController.clear();
-      _domainController.clear();
-      _urlController.clear();
-      setState(() => _selectedFormat = null);
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Formation ajoutée avec succès !")),
+        );
+        //mettre à jour les formations dans le provider
+        ref.read(formationProvider.notifier).addFormation(nouvelleFormation!);
+        // Réinitialisation des champs après ajout
+        _titleController.clear();
+        _descriptionController.clear();
+        _durationController.clear();
+        _costController.clear();
+        _startDateController.clear();
+        _endDateController.clear();
+        _placesController.clear();
+        _domainController.clear();
+        _urlController.clear();
+        setState(() => _selectedFormat = null);
+       // ignore: use_build_context_synchronously
+       Navigator.of(context).pop(nouvelleFormation);
+      }
     } catch (e) {
       ScaffoldMessenger.of(
         // ignore: use_build_context_synchronously
@@ -168,6 +194,25 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
       ).showSnackBar(SnackBar(content: Text("Erreur: ${e.toString()}")));
     } finally {
       setState(() => _isSubmitting = false);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final init = widget.initial;
+    if (init != null) {
+      _titleController.text = init.titre;
+      _descriptionController.text = init.description;
+      _durationController.text = init.duree;
+      _costController.text = init.cout.toString();
+      _placesController.text = init.nbrePlace.toString();
+      _startDateController.text =
+          "${init.dateDebut.day}/${init.dateDebut.month}/${init.dateDebut.year}";
+      _endDateController.text =
+          "${init.dateFin.day}/${init.dateFin.month}/${init.dateFin.year}";
+      _selectedFormat = _labelFromApiFormat(init.format);
+      _urlController.text = (init.urlFormation ?? '');
     }
   }
 
@@ -197,7 +242,12 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               // Intitulé de la formation
-              CustomHeader(title: "Nouvelle formation", showBackButton: true),
+              CustomHeader(
+                title: widget.initial == null
+                    ? "Nouvelle formation"
+                    : "Éditer formation",
+                showBackButton: true,
+              ),
               Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
@@ -445,7 +495,7 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
                                     color: Colors.white,
                                   )
                                 : const Text(
-                                    'Ajouter formation',
+                                    'Enregistrer',
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,

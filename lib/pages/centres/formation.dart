@@ -25,34 +25,6 @@ class Formation {
   });
 }
 
-final List<Formation> dummyFormations = [
-  Formation(
-    title: 'Métallurgie',
-    description: 'description de la formation de métallurgie',
-    status: "En cours",
-  ),
-  Formation(
-    title: 'Menuiserie',
-    description: 'description de la formation de menuiserie',
-    status: "En attente",
-  ),
-  Formation(
-    title: 'Maçonnerie',
-    description: 'description de la formation de maçonnerie',
-    status: "Terminé",
-  ),
-  Formation(
-    title: 'Électricité',
-    description: 'description de la formation d\'électricité',
-    status: "En cours",
-  ),
-  Formation(
-    title: 'Plomberie',
-    description: 'description de la formation de plomberie',
-    status: "Terminé",
-  ),
-];
-
 // **************************************************
 // 1. WIDGET STATEFUL POUR GÉRER L'ÉTAT DE LA PAGE
 // **************************************************
@@ -80,7 +52,7 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             // Header Incurvé
-            CustomHeader(title: "Formation", showBackButton: true,),
+            CustomHeader(title: "Formation", showBackButton: true),
 
             // Section "Vos formations" et Bouton Ajouter
             _buildHeaderAndAddButton(),
@@ -120,8 +92,9 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
               );
 
               // Recharge les formations au retour
-              final centreId = int.tryParse(await stockage
-                  .getUserId() ?? '0') ?? 0; // id du centre connecté
+              final centreId =
+                  int.tryParse(await stockage.getUserId() ?? '0') ??
+                  0; // id du centre connecté
               await ref
                   .read(formationProvider.notifier)
                   .loadFormations(centreId);
@@ -165,21 +138,61 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
           _buildActionButton(
             'Voir les appliquants',
             onPressed: () {
-              /**
-             * Navigation vers la page d'affichage des appliquants
-             */
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      ApplicantsFormationNonTerminePage(
-                        formation: formation
-                      ),
+                      ApplicantsFormationNonTerminePage(formation: formation),
                 ),
               );
             },
           ),
-          _buildActionButton('Désactiver', onPressed: () {}, isOutline: true),
+
+          _buildActionButton(
+            'Supprimer',
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Supprimer la formation'),
+                  content: Text(
+                    '''Êtes-vous sûr de vouloir supprimer "${formation.titre}" ?
+                    Cette action entraînera le remboursement des inscriptions payés''',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Annuler'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Supprimer'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                try {
+                  await centreService.deleteFormation(formation.id);
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Formation supprimée')),
+                  );
+                  final centreId =
+                      int.tryParse(await stockage.getUserId() ?? '0') ?? 0;
+                  await ref
+                      .read(formationProvider.notifier)
+                      .loadFormations(centreId);
+                } catch (e) {
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erreur: ${e.toString()}')),
+                  );
+                }
+              }
+            },
+            isOutline: true,
+          ),
         ];
         break;
       case "EN_ATTENTE":
@@ -189,21 +202,78 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
           _buildActionButton(
             'Voir les appliquants',
             onPressed: () {
-              /**
-             * Navigation vers la page d'affichage des appliquants
-             */
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      ApplicantsFormationNonTerminePage(
-                        formation: formation
-                      ),
+                      ApplicantsFormationNonTerminePage(formation: formation),
                 ),
               );
             },
           ),
-          _buildActionButton('Editer', onPressed: () {}, isOutline: true),
+          _buildActionButton(
+            'Editer',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddFormationPage(initial: formation),
+                ),
+              );
+              final centreId =
+                  int.tryParse(await stockage.getUserId() ?? '0') ?? 0;
+              await ref
+                  .read(formationProvider.notifier)
+                  .loadFormations(centreId);
+            },
+            isOutline: true,
+          ),
+
+          _buildActionButton(
+            'Supprimer',
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Supprimer la formation'),
+                  content: Text(
+                    'Êtes-vous sûr de vouloir supprimer "${formation.titre}" ?\n'
+                    'Cette action entraînera le remboursement des inscriptions payées',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Annuler'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Supprimer'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                try {
+                  await centreService.deleteFormation(formation.id);
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Formation supprimée')),
+                  );
+                  final centreId =
+                      int.tryParse(await stockage.getUserId() ?? '0') ?? 0;
+                  await ref
+                      .read(formationProvider.notifier)
+                      .loadFormations(centreId);
+                } catch (e) {
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erreur: ${e.toString()}')),
+                  );
+                }
+              }
+            },
+            isOutline: true,
+          ),
         ];
         break;
       case "TERMINE":
@@ -217,9 +287,8 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ApplicantsFormationTerminePage(
-                    formation: formation
-                    ),
+                  builder: (context) =>
+                      ApplicantsFormationTerminePage(formation: formation),
                 ),
               );
             },
@@ -288,11 +357,13 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
         borderRadius: BorderRadius.circular(5.0),
       ),
       child: Text(
-        status.toLowerCase().replaceAll('_', ' ').replaceFirstMapped(
-  RegExp(r'\w'),
-  (m) => m.group(0)!.toUpperCase(),
-)
-,
+        status
+            .toLowerCase()
+            .replaceAll('_', ' ')
+            .replaceFirstMapped(
+              RegExp(r'\w'),
+              (m) => m.group(0)!.toUpperCase(),
+            ),
         style: TextStyle(
           color: textColor,
           fontSize: 12,

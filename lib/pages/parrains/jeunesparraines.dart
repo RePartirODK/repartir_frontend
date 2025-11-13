@@ -46,14 +46,7 @@ class _SponsoredYouthPageState extends State<SponsoredYouthPage> {
   final Map<int, ResponseFormation> _formationsById = {};
   final Map<int, ResponseCentre> _centresById = {};
   // Données de simulation avec le nouvel indicateur
-  final List<SponsoredYouth> youths = [
-    SponsoredYouth('Ousmane Diallo', 'Mécanique', true, 'male'),
-    SponsoredYouth('Kadidja Traoré', 'Couture', true, 'female'),
-    SponsoredYouth('Mamadou Kane', 'Développement Web', true, 'male'),
-    SponsoredYouth('Aïcha Sidibé', 'Hôtellerie', true, 'female'),
-    SponsoredYouth('Issa Touré', 'Électricité Bâtiment', true, 'male'),
-    SponsoredYouth('Fatou Camara', 'Design Graphique', true, 'female'),
-  ];
+
 
   @override
   void initState() {

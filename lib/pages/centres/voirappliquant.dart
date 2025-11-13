@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/models/response/response_inscription.dart';
+import 'package:repartir_frontend/services/centre_service.dart';
+import 'package:repartir_frontend/services/jeune_service.dart';
+import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 // Définition des constantes
 const Color kPrimaryColor = Color(0xFF3EB2FF);
@@ -74,6 +78,14 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
 
   // État pour basculer entre les onglets : 'En cours' ou 'Terminés'
   String _currentTab = 'Terminés'; 
+  final CentreService _centreService = CentreService();
+  final SecureStorageService _storage = SecureStorageService();
+  final JeuneService _jeuneService = JeuneService();
+  bool _loading = true;
+  String? _error;
+  List<ResponseInscription> _inscriptionsJeune = [];
+  Map<String, ResponseFormation> _formationsByTitle = {};
+  String? _avatarUrl;
   
   // Fonction de mise à jour pour la BottomNavigationBar
   void _onItemTapped(int index) {
@@ -91,12 +103,63 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _loadApplicantData();
+  }
+
+  Future<void> _loadApplicantData() async {
+    try {
+      final centreId = int.tryParse(await _storage.getUserId() ?? '0') ?? 0;
+      final all = await _centreService.getCentreInscriptions(centreId);
+      final targetName = widget.inscription?.nomJeune ?? '';
+      final filtered = all.where((e) => e.nomJeune == targetName).toList();
+
+      final formations = await _centreService.getAllFormations(centreId);
+      final map = <String, ResponseFormation>{};
+      for (final f in formations) {
+        map[f.titre] = f;
+      }
+
+      // Avatar du jeune (via liste des jeunes)
+      final jeunes = await _jeuneService.listAll();
+      String? urlPhoto;
+      for (final j in jeunes) {
+        final u = j['utilisateur'] as Map<String, dynamic>? ?? {};
+        final prenom = (j['prenom'] ?? '').toString();
+        final nom = (u['nom'] ?? '').toString();
+        final full = (prenom.isNotEmpty || nom.isNotEmpty) ? '$prenom $nom'.trim() : '';
+        if (full == targetName) {
+          urlPhoto = (u['urlPhoto'] ?? '').toString();
+          break;
+        }
+      }
+
+      setState(() {
+        _inscriptionsJeune = filtered;
+        _formationsByTitle = map;
+        _avatarUrl = (urlPhoto != null && urlPhoto.isNotEmpty) ? urlPhoto : null;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
+     return Scaffold(
       backgroundColor: Colors.white,
 
       
-      body: Column(
+      body: _loading
+          ? const Center(child: CircularProgressIndicator(color: kPrimaryColor))
+          : _error != null
+              ? Center(child: Text('Erreur: $_error'))
+              : Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           // 1. Header Incurvé
@@ -110,7 +173,7 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
               child: Column(
                 children: <Widget>[
                   // 2.1. Titre et Flèche de Retour
-                  _buildHeader(context, moussaToure),
+                 _buildHeaderFromInscription(widget.inscription),
 
                   // 2.2. Toggle Button (En cours / Terminés)
                   _buildToggleButtons(),
@@ -118,7 +181,7 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
                   const SizedBox(height: 20),
 
                   // 2.3. Contenu Dynamique (Liste des formations)
-                  _buildFormationList(moussaToure),
+                  _buildFormationListFromInscription(widget.inscription),
                   
                   const SizedBox(height: 30),
                 ],
@@ -132,29 +195,27 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
 
   // --- Widgets de construction des sections ---
 
-  Widget _buildHeader(BuildContext context, Applicant applicant) {
+   Widget _buildHeaderFromInscription(ResponseInscription? inscription) {
+    final String name = inscription?.nomJeune.isNotEmpty == true ? inscription!.nomJeune : 'Appliquant';
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 15.0, bottom: 20.0, left: 20, right: 20),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Espace pour aligner le titre
-              const SizedBox(width: 48), 
+            children: const [
+              SizedBox(width: 48),
             ],
           ),
         ),
-        
-        // Avatar et Nom
         CircleAvatar(
           radius: 50,
-          backgroundColor: applicant.avatarColor.withValues(alpha: 0.8),
-          child: Icon(applicant.icon, color: Colors.white, size: 60),
+          backgroundColor: kPrimaryColor.withValues(alpha: 0.8),
+          child: const Icon(Icons.person, color: Colors.white, size: 60),
         ),
         const SizedBox(height: 8),
         Text(
-          applicant.name,
+          name,
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -164,7 +225,6 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
       ],
     );
   }
-
   Widget _buildToggleButtons() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -218,7 +278,8 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
     );
   }
 
-  Widget _buildFormationList(Applicant applicant) {
+  Widget _buildFormationListFromInscription(ResponseInscription? inscription) {
+    final String titre = inscription?.titreFormation ?? 'Formation';
     if (_currentTab == 'En cours') {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -230,7 +291,7 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
-            ...applicant.ongoingFormations.map((f) => _buildOngoingFormationCard(f)).toList(),
+            _buildOngoingFormationCardFromInscription(titre),
           ],
         ),
       );
@@ -245,14 +306,14 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
-            ...applicant.completedFormations.map((f) => _buildCompletedFormationCard(f)).toList(),
+            _buildCompletedFormationCardFromInscription(titre),
           ],
         ),
       );
     }
   }
 
-  Widget _buildOngoingFormationCard(OngoingFormation formation) {
+ Widget _buildOngoingFormationCardFromInscription(String titreFormation) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 15),
@@ -261,16 +322,14 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
         padding: const EdgeInsets.all(15.0),
         child: Row(
           children: [
-            // Image de la formation (simulée ici par un placeholder)
             Container(
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+               color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.groups, color: kPrimaryColor, size: 30),
-              // Normalement, vous utiliseriez Image.asset ou Image.network ici
             ),
             const SizedBox(width: 15),
             Expanded(
@@ -278,18 +337,17 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    formation.title,
+                    titreFormation,
                     style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                   const SizedBox(height: 5),
                   Row(
                     children: [
-                      // Barre de progression
                       Expanded(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(5),
                           child: LinearProgressIndicator(
-                            value: formation.progressPercent / 100,
+                            value: 0.0,
                             backgroundColor: Colors.grey[300],
                             valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
                             minHeight: 8,
@@ -297,9 +355,9 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Text(
-                        '${formation.progressPercent}%',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                      const Text(
+                        '0%',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
                       ),
                     ],
                   ),
@@ -311,8 +369,7 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
       ),
     );
   }
-
-  Widget _buildCompletedFormationCard(CompletedFormation formation) {
+  Widget _buildCompletedFormationCardFromInscription(String titreFormation) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 15),
@@ -321,7 +378,6 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
         padding: const EdgeInsets.all(15.0),
         child: Row(
           children: [
-            // Image de la formation (simulée ici)
             Container(
               width: 50,
               height: 50,
@@ -329,7 +385,6 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
               ),
-              // Simulation de l'image de la formation
               child: const Icon(Icons.settings, color: Colors.black54, size: 30), 
             ),
             const SizedBox(width: 15),
@@ -337,11 +392,10 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
               child: Row(
                 children: [
                   Text(
-                    formation.title,
+                    titreFormation,
                     style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                   const Spacer(),
-                  // Statut Certificat obtenu
                   const Icon(Icons.workspace_premium, color: Colors.amber, size: 30),
                   const SizedBox(width: 5),
                   const Text(
@@ -356,5 +410,4 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
       ),
     );
   }
-
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/password_change_dialog.dart';
+import 'package:repartir_frontend/services/utilisateur_service.dart';
 import 'edit_profil_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
@@ -16,7 +17,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final ProfileService _profile = ProfileService();
   final AuthService _auth = AuthService();
-
+  final utilisateurService = UtilisateurService();
   bool _loading = true;
   String? _error;
   String name = "";
@@ -322,7 +323,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (confirm == true) {
       try {
-        await _auth.logout();
+        await utilisateurService.logout({'email': email});
         if (mounted) {
           // Rediriger vers la page d'authentification
           Navigator.pushAndRemoveUntil(

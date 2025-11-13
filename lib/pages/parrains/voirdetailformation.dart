@@ -195,7 +195,7 @@ Widget _buildPracticalDetailsCard() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: primaryBlue.withOpacity(0.1),
+        color: primaryBlue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
