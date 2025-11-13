@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/models/request/entreprise_request.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
+import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/services/entreprise_service.dart'; // Added import for AuthenticationPage
 
 class EntrepriseSignupPage extends StatefulWidget {
@@ -25,11 +26,9 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
   TextEditingController agrementController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final entrepriseService = EntrepriseService();
-   final GlobalKey<FormFieldState<String>> _confirmFieldKey =
-      GlobalKey<FormFieldState<String>>();
 
   @override
-    void initState() {
+  void initState() {
     super.initState();
     _pageController.addListener(() {
       setState(() {
@@ -39,7 +38,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
     _loadDomaines();
   }
 
-    Future<void> _loadDomaines() async {
+  Future<void> _loadDomaines() async {
     setState(() => _loadingDomains = true);
     try {
       final domaines = await entrepriseService.getDomaines();
@@ -108,12 +107,23 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
       // ignore: use_build_context_synchronously
       Navigator.of(context).pop(); // enlever le loader
 
-        // Associer les domaines si l'entreprise a été créée avec succès
+      // Associer les domaines si l'entreprise a été créée avec succès
       if (user != null && _selectedDomainIds.isNotEmpty) {
-        await entrepriseService.associateDomaines(user.id, _selectedDomainIds.toList());
+        await entrepriseService.associateDomaines(
+          user.id,
+          _selectedDomainIds.toList(),
+        );
       }
       //affichage de la modal de succes
       _showSuccessDialog();
+
+            // Redirection vers AuthenticationPage
+      Navigator.pushAndRemoveUntil(
+        // ignore: use_build_context_synchronously
+        context,
+        MaterialPageRoute(builder: (context) => AccueilPage()),
+        (Route<dynamic> route) => false,
+      );
     } catch (e) {
       // Fermer le loader
       // ignore: use_build_context_synchronously
@@ -231,28 +241,22 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
             icon: Icons.lock_reset_outlined,
             obscureText: true,
             controller: confirmeMotDePasseController,
-            
+
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Veuillez confirmer le mot de passe';
               }
-               if (value != motDePasseController.text) {
-      return 'Les mots de passe ne correspondent pas';
-    }
+              if (value != motDePasseController.text) {
+                return 'Les mots de passe ne correspondent pas';
+              }
               // Here you would typically compare with the original password
               return null;
             },
             onEditingComplete: () {
-            setState(() {
-      
-    });
-
-    
-    FocusScope.of(context).unfocus();
-               
+              setState(() {});
+              FocusScope.of(context).unfocus();
             },
           ),
-          
           const SizedBox(height: 20),
           _buildInputField(
             label: 'Numéro d\'agrément',
@@ -280,21 +284,21 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
           ),
           const SizedBox(height: 40),
           _buildNavigationButton("Suivant", () {
-             if (_formKey.currentState?.validate() == true) {
-                _pageController.nextPage(
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Veuillez remplir correctement tous les champs obligatoires.",
-                    ),
-                    backgroundColor: Colors.redAccent,
+            if (_formKey.currentState?.validate() == true) {
+              _pageController.nextPage(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut,
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    "Veuillez remplir correctement tous les champs obligatoires.",
                   ),
-                );
-              }
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
+            }
           }),
         ],
       ),
@@ -308,7 +312,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader("Vos domaines d'activité", "Étape 2 sur 2"),
-            if (_loadingDomains)
+          if (_loadingDomains)
             const Center(child: CircularProgressIndicator())
           else if (_domains.isEmpty)
             const Padding(
@@ -346,8 +350,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
     );
   }
 
-
-   Widget _buildDomainCard(String domain, bool isSelected, int domaineId) {
+  Widget _buildDomainCard(String domain, bool isSelected, int domaineId) {
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -504,7 +507,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
       validator: validator,
       controller: controller,
       onEditingComplete: onEditingComplete,
-      autovalidateMode: AutovalidateMode.onUserInteraction, 
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.grey.shade600),
@@ -526,7 +529,6 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
     );
   }
 
-  
   Widget _buildNavigationButton(String text, VoidCallback onPressed) {
     return SizedBox(
       width: double.infinity,

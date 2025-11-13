@@ -10,6 +10,7 @@ class CentreRequest {
   final String adresse;
   final String agrement;
   final String? urlPhoto;
+  final List<int>? domaineIds;
 
   //constructeur
   CentreRequest({
@@ -19,7 +20,8 @@ class CentreRequest {
     required this.agrement,
     required this.telephone,
     required this.motDePasse,
-    this.urlPhoto
+    this.urlPhoto,
+    this.domaineIds,
   });
 
   Map<String, dynamic> toMap() {
@@ -31,7 +33,7 @@ class CentreRequest {
       'adresse': adresse,
       'agrement': agrement,
       'role': role,
-      'urlPhoto':urlPhoto,
+      'urlPhoto': urlPhoto,
     };
   }
 
@@ -77,24 +79,24 @@ class CentreRequest {
         adresse.hashCode ^
         agrement.hashCode;
   }
-CentreRequest copyWith({
-  String? nom,
-  String? motDePasse,
-  String? telephone,
-  String? email,
-  String? adresse,
-  String? agrement,
-  String? urlPhoto,
-}) {
-  return CentreRequest(
-    nom: nom ?? this.nom,
-    motDePasse: motDePasse ?? this.motDePasse,
-    telephone: telephone ?? this.telephone,
-    email: email ?? this.email,
-    adresse: adresse ?? this.adresse,
-    agrement: agrement ?? this.agrement,
-    urlPhoto: urlPhoto ?? this.urlPhoto,
-  );
-}
 
+  CentreRequest copyWith({
+    String? nom,
+    String? motDePasse,
+    String? telephone,
+    String? email,
+    String? adresse,
+    String? agrement,
+    String? urlPhoto,
+  }) {
+    return CentreRequest(
+      nom: nom ?? this.nom,
+      motDePasse: motDePasse ?? this.motDePasse,
+      telephone: telephone ?? this.telephone,
+      email: email ?? this.email,
+      adresse: adresse ?? this.adresse,
+      agrement: agrement ?? this.agrement,
+      urlPhoto: urlPhoto ?? this.urlPhoto,
+    );
+  }
 }

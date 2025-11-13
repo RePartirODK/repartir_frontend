@@ -223,19 +223,29 @@ class _EditProfilParrainPageState extends ConsumerState<EditProfilParrainPage> {
                   ),
                   _buildTextField(label: 'Profession', controller: professionController),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _saving ? null : _saveProfile,
+                   ElevatedButton(
+                    onPressed: _saveProfile,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryBlue,
+                      fixedSize: Size(MediaQuery.of(context).size.width * 0.5,
+                          MediaQuery.of(context).size.width * 0.129),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: _saving
-                        ? const SizedBox(
-                            height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Enregistrer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Enregistrer',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
+                  
+                  
                   const SizedBox(height: 30),
                 ],
               ),

@@ -5,6 +5,7 @@ class JeuneRequest {
   final String? urlPhoto;
   final String motDePasse;
   final String role = "JEUNE";
+  final List<int>? domaineIds;
 
   //champs this
   final String aPropos;
@@ -27,6 +28,7 @@ class JeuneRequest {
     required this.age,
     this.niveau,
     this.urlDiplome,
+    this.domaineIds,
   });
 
   /// Conversion en JSON (sans champs null)

@@ -241,6 +241,8 @@ class _EditProfilCentrePageState extends ConsumerState<EditProfilCentrePage> {
                     onPressed: _saveProfile,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryBlue,
+                      fixedSize: Size(MediaQuery.of(context).size.width * 0.5,
+                          MediaQuery.of(context).size.width * 0.129),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 15),
                       shape: RoundedRectangleBorder(
@@ -249,13 +251,15 @@ class _EditProfilCentrePageState extends ConsumerState<EditProfilCentrePage> {
                     ),
                     child: const Text(
                       'Enregistrer',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  
+                  const SizedBox(height:80),
                 ],
               ),
             ),

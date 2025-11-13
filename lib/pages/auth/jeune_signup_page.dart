@@ -15,7 +15,7 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   String? _gender = 'homme';
-  final Set<String> _selectedDomains = {};
+  final Set<int> _selectedDomainIds = {};
   final TextEditingController nomController = TextEditingController();
   final TextEditingController prenomController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -26,19 +26,9 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
   final TextEditingController niveauController = TextEditingController();
   final JeuneService jeuneService = JeuneService();
   final _formKey = GlobalKey<FormState>();
-  final List<String> _domains = [
-    'Menuiserie',
-    'Coiffure',
-    'Mécanique automobile',
-    'Agriculture',
-    'Électricité bâtiment',
-    'élevage',
-    'Couture / stylisme',
-    'Cuisine',
-    'Numérique',
-    'restaurations',
-  ];
-
+  final List<Map<String, dynamic>> _domains = [];
+  bool _loadingDomains = false;
+ 
   Future<void> submitInscription() async {
     //verifier que tous les champs sont valide
     if (_formKey.currentState?.validate() != true) {
@@ -84,11 +74,14 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
         age: int.tryParse(ageController.text) ?? 0,
         aPropos: aProposController.text,
         niveau: niveauController.text.isNotEmpty ? niveauController.text : null,
+      domaineIds: _selectedDomainIds.isEmpty ? null : _selectedDomainIds.toList(),
       );
 
       // Appel au backend
       final utilisateur = await jeuneService.registerJeune(jeuneRequest);
-
+if (utilisateur != null && _selectedDomainIds.isNotEmpty) {
+       await jeuneService.associateDomaines(utilisateur.id, _selectedDomainIds.toList());
+     }
       // Fermer le loader
       // ignore: use_build_context_synchronously
       Navigator.of(context).pop();
@@ -127,6 +120,25 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
         _currentPage = _pageController.page?.round() ?? 0;
       });
     });
+    _loadDomaines();
+  }
+
+  Future<void> _loadDomaines() async {
+    setState(() => _loadingDomains = true);
+    try {
+      final domaines = await jeuneService.getDomaines();
+      setState(() {
+        _domains.clear();
+        _domains.addAll(domaines);
+      });
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des domaines: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erreur lors du chargement des domaines')),
+      );
+    } finally {
+      setState(() => _loadingDomains = false);
+    }
   }
 
   @override
@@ -345,26 +357,35 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader("Vos centres d'intérêt", "Étape 2 sur 2 (●'◡'●)"),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 15,
-              childAspectRatio: 1.2,
+           if (_loadingDomains)
+            const Center(child: CircularProgressIndicator())
+          else if (_domains.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: Text('Aucun domaine disponible.', style: TextStyle(color: Colors.black54)),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 15,
+                mainAxisSpacing: 15,
+                childAspectRatio: 1.2,
+              ),
+              itemCount: _domains.length,
+              itemBuilder: (context, index) {
+                final domain = _domains[index];
+                final id = (domain['id'] as int);
+                final libelle = (domain['libelle']?.toString() ?? 'Domaine');
+                final isSelected = _selectedDomainIds.contains(id);
+                return _buildDomainCard(libelle, isSelected, id);
+              },
             ),
-            itemCount: _domains.length,
-            itemBuilder: (context, index) {
-              final domain = _domains[index];
-              final isSelected = _selectedDomains.contains(domain);
-              return _buildDomainCard(domain, isSelected);
-            },
-          ),
+         
           const SizedBox(height: 40),
-          _buildNavigationButton("S'inscrire", () {
-            
-
+          _buildNavigationButton("S'inscrire", () {         
              if (_formKey.currentState?.validate() != true) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -502,14 +523,14 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
     );
   }
 
-  Widget _buildDomainCard(String domain, bool isSelected) {
+   Widget _buildDomainCard(String domain, bool isSelected, int domaineId) {
     return GestureDetector(
       onTap: () {
         setState(() {
           if (isSelected) {
-            _selectedDomains.remove(domain);
+            _selectedDomainIds.remove(domaineId);
           } else {
-            _selectedDomains.add(domain);
+             _selectedDomainIds.add(domaineId);
           }
         });
       },
