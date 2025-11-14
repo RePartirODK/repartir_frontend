@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/parrains/detailsdemande.dart';
-import 'package:repartir_frontend/services/centres_service.dart';
 import 'package:repartir_frontend/services/formations_service.dart';
 import 'package:repartir_frontend/services/jeune_service.dart';
 import 'package:repartir_frontend/services/parrainages_service.dart';
@@ -22,17 +21,23 @@ class _DonationsPageState extends State<DonationsPage> {
   final ParrainagesService _parrainagesService = ParrainagesService();
   final JeuneService _jeuneService = JeuneService();
   final FormationsService _formationsService = FormationsService();
-
+  final _searchController = TextEditingController();
   bool _loading = true;
   String? _error;
   List<Map<String, dynamic>> _pending = [];
   final Map<int, Map<String, dynamic>> _jeunesById = {};
   final Map<int, ResponseFormation> _formationsById = {};
-
+  List<Map<String, dynamic>> _filtered = [];
   @override
   void initState() {
     super.initState();
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -51,6 +56,7 @@ class _DonationsPageState extends State<DonationsPage> {
       setState(() {
         _pending = demandes;
         _loading = false;
+        _filtered = List<Map<String, dynamic>>.from(demandes);
       });
     } catch (e) {
       setState(() {
@@ -140,9 +146,10 @@ class _DonationsPageState extends State<DonationsPage> {
                         final name = (prenom.isNotEmpty || nom.isNotEmpty)
                             ? '$prenom $nom'.trim()
                             : 'Jeune #$idJeune';
-                        debugPrint("l'id de la formation $idFormation"); // Affiche l'id de la formation dans le log
-                        final formationTitle =
-                           _getFormationTitle(idFormation);
+                        debugPrint(
+                          "l'id de la formation $idFormation",
+                        ); // Affiche l'id de la formation dans le log
+                        final formationTitle = _getFormationTitle(idFormation);
                         final description =
                             'Souhaite être parrainé pour: $formationTitle';
                         return _buildDonationItem(
@@ -172,8 +179,7 @@ class _DonationsPageState extends State<DonationsPage> {
   }
 
   // -------------------- WIDGETS --------------------
-
-   String _getFormationTitle(int idFormation) {
+  String _getFormationTitle(int idFormation) {
     final f = _formationsById[idFormation];
     if (f != null && f.titre.isNotEmpty) {
       return f.titre;
@@ -182,7 +188,8 @@ class _DonationsPageState extends State<DonationsPage> {
     _fetchFormationIfNeeded(idFormation);
     return 'Formation #$idFormation';
   }
-   Future<void> _fetchFormationIfNeeded(int id) async {
+
+  Future<void> _fetchFormationIfNeeded(int id) async {
     if (id == 0 || _formationsById.containsKey(id)) return;
     try {
       final json = await _formationsService.details(id);
@@ -196,6 +203,7 @@ class _DonationsPageState extends State<DonationsPage> {
       // Silent fail; fallback title remains
     }
   }
+
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -212,8 +220,10 @@ class _DonationsPageState extends State<DonationsPage> {
           ),
         ],
       ),
-      child: const TextField(
-        decoration: InputDecoration(
+      child: TextField(
+        controller: _searchController,
+        onChanged: _applyFilter,
+        decoration: const InputDecoration(
           hintText: 'Rechercher ...',
           hintStyle: TextStyle(color: Colors.grey),
           prefixIcon: Icon(Icons.search, color: Colors.grey),
@@ -222,6 +232,29 @@ class _DonationsPageState extends State<DonationsPage> {
         ),
       ),
     );
+  }
+
+  void _applyFilter(String q) {
+    final query = q.trim().toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filtered = List<Map<String, dynamic>>.from(_pending);
+        return;
+      }
+      _filtered = _pending.where((p) {
+        final idJeune = _asInt(p['idJeune']);
+        final jeune = _jeunesById[idJeune] ?? {};
+        final utilisateur = jeune['utilisateur'] as Map<String, dynamic>? ?? {};
+        final prenom = (jeune['prenom'] ?? '').toString().toLowerCase();
+        final nom = (utilisateur['nom'] ?? '').toString().toLowerCase();
+        final name = ('$prenom $nom').trim();
+
+        final idFormation = _asInt(p['idFormation']);
+        final formationTitle = _getFormationTitle(idFormation).toLowerCase();
+
+        return name.contains(query) || formationTitle.contains(query);
+      }).toList();
+    });
   }
 
   Widget _buildDonationItem({

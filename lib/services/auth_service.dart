@@ -52,13 +52,35 @@ class AuthService {
         case 403:
           throw AuthException("Email ou mot de passe incorrect.");
 
-        case 500:
-          throw AuthException("Erreur interne du serveur. Réessayez plus tard.");
+          case 400:
+         // Rendre le message explicite avec le détail renvoyé par le backend
+         try {
+           final err = jsonDecode(response.body);
+           final msg = err['message'] ?? err['error'] ?? err['detail'] ?? 'Requête invalide.';
+           throw AuthException("Requête invalide (400): $msg");
+         } catch (_) {
+           throw AuthException("Requête invalide (400). Vérifiez le format des identifiants et réessayez.");
+         }
 
-        default:
-          throw AuthException(
-              "Erreur inattendue (${response.statusCode}). Vérifiez votre connexion.");
-      }
+
+        case 500:
+          try {
+            final err = jsonDecode(response.body);
+            final msg = err['message'] ?? err['error'] ?? err['detail'] ?? 'Erreur interne du serveur.';
+            throw AuthException("Erreur interne du serveur (500): $msg");
+          } catch (_) {
+            throw AuthException("Erreur interne du serveur (500). Réessayez plus tard.");
+          }
+
+        
+           default:
+          try {
+            final err = jsonDecode(response.body);
+            final msg = err['message'] ?? err['error'] ?? err['detail'] ?? response.body;
+            throw AuthException("Erreur (${response.statusCode}): $msg");
+          } catch (_) {
+            throw AuthException("Erreur (${response.statusCode}). Détails: ${response.body}");
+          }}
     } on http.ClientException catch (e) {
       debugPrint("Erreur réseau : $e");
       throw AuthException("Problème de connexion réseau.");

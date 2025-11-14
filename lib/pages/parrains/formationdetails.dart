@@ -20,7 +20,7 @@ const Color primaryRed = Color(0xFFF44336);
 
 // --- PAGE PRINCIPALE : FORMATIONS ---
 class FormationPage extends StatefulWidget {
-  const FormationPage({Key? key}) : super(key: key);
+  const FormationPage({super.key});
 
   @override
   State<FormationPage> createState() => _FormationPageState();
@@ -35,7 +35,8 @@ class _FormationPageState extends State<FormationPage>
   final FormationsService _formationService = FormationsService();
   // Contrôleur pour les onglets 'Toutes' et 'Nouvelles'
   late TabController _tabController;
-
+  List<ResponseFormation> _filteredFormations = [];
+  final TextEditingController _searchController = TextEditingController();
   @override
   void initState() {
     super.initState();
@@ -46,6 +47,7 @@ class _FormationPageState extends State<FormationPage>
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -74,6 +76,7 @@ class _FormationPageState extends State<FormationPage>
       if (mounted) {
         setState(() {
           _formations = agg;
+          _filteredFormations = List<ResponseFormation>.from(agg);
           _isLoading = false;
         });
       }
@@ -81,6 +84,7 @@ class _FormationPageState extends State<FormationPage>
       if (mounted) {
         setState(() {
           _formations = [];
+          _filteredFormations = [];
           _isLoading = false;
         });
       }
@@ -133,12 +137,12 @@ class _FormationPageState extends State<FormationPage>
                 controller: _tabController,
                 children: [
                   // Onglet 1: Toutes les formations
-                  _buildFormationList(_formations),
-
+                  _buildFormationList(_filteredFormations),
+                 
                   // Onglet 2: Nouvelles formations (simplement les 2 dernières)
-                  _buildFormationList(
-                    _formations.sublist(
-                      _formations.length > 2 ? _formations.length - 2 : 0,
+                   _buildFormationList(
+                    _filteredFormations.sublist(
+                      _filteredFormations.length > 2 ? _filteredFormations.length - 2 : 0,
                     ),
                   ),
                 ],
@@ -165,8 +169,12 @@ class _FormationPageState extends State<FormationPage>
           ),
         ],
       ),
-      child: const TextField(
-        decoration: InputDecoration(
+
+
+       child: TextField(
+        controller: _searchController,
+        onChanged: _applyFilter,
+        decoration: const InputDecoration(
           hintText: 'Rechercher une formation',
           hintStyle: TextStyle(color: Colors.grey),
           prefixIcon: Icon(Icons.search, color: Colors.grey),
@@ -175,6 +183,20 @@ class _FormationPageState extends State<FormationPage>
         ),
       ),
     );
+  }
+
+   void _applyFilter(String q) {
+    final query = q.trim().toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredFormations = List<ResponseFormation>.from(_formations);
+        return;
+      }
+      _filteredFormations = _formations.where((f) {
+        final titre = (f.titre).toString().toLowerCase();
+        return titre.contains(query);
+      }).toList();
+    });
   }
 
   // Onglets "Toutes" et "Nouvelles"

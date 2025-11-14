@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 import 'package:repartir_frontend/main.dart' show navigatorKey;
 import 'package:repartir_frontend/network/api_config.dart';
-import 'dart:io';
 
 class ApiService {
   ApiService({http.Client? client}) : _client = client ?? http.Client();
@@ -34,11 +33,11 @@ class ApiService {
 
   /// --- GET ---
   Future<http.Response> get(String path, {Map<String, dynamic>? query}) async {
-    final uri = Uri.parse(
-      '$apiBaseUrl$path',
-    ).replace(queryParameters: _encodeQuery(query));
-    final headers = await _authHeaders();
-    return _client.get(uri, headers: headers);
+   final uri = Uri.parse('$apiBaseUrl$path').replace(queryParameters: _encodeQuery(query));
+    return _executeWithAutoRefresh(() async {
+      final headers = await _authHeaders();
+      return _client.get(uri, headers: headers);
+    });
   }
 
   /// --- POST ---
@@ -48,11 +47,13 @@ class ApiService {
     Map<String, String>? extraHeaders,
     Map<String, dynamic>? query,
   }) async {
-    final uri = Uri.parse(
-      '$apiBaseUrl$path',
-    ).replace(queryParameters: _encodeQuery(query));
-    final headers = await _authHeaders(extra: extraHeaders);
-    return _client.post(uri, headers: headers, body: body);
+
+      final uri = Uri.parse('$apiBaseUrl$path').replace(queryParameters: _encodeQuery(query));
+    return _executeWithAutoRefresh(() async {
+      final headers = await _authHeaders(extra: extraHeaders);
+      return _client.post(uri, headers: headers, body: body);
+    });
+    
   }
 
   /// --- PUT ---
@@ -61,32 +62,42 @@ class ApiService {
     Object? body,
     Map<String, String>? extraHeaders,
   }) async {
-    final uri = Uri.parse('$apiBaseUrl$path');
-    final headers = await _authHeaders(extra: extraHeaders);
-    return _client.put(uri, headers: headers, body: body);
+
+
+     final uri = Uri.parse('$apiBaseUrl$path');
+    return _executeWithAutoRefresh(() async {
+      final headers = await _authHeaders();
+      return _client.patch(uri, headers: headers, body: body);
+    });
+  
   }
 
   /// --- PATCH ---
   Future<http.Response> patch(String path, {Object? body}) async {
     final uri = Uri.parse('$apiBaseUrl$path');
     final headers = await _authHeaders();
-    return _client.patch(uri, headers: headers, body: body);
+    return _executeWithAutoRefresh(() async {
+      return _client.patch(uri, headers: headers, body: body);
+    });
   }
 
   /// --- DELETE avec body optionnel ---
   Future<http.Response> delete(String path, {Object? body}) async {
-    final uri = Uri.parse('$apiBaseUrl$path');
-    final headers = await _authHeaders();
-    if (body != null) {
-      return _client
-          .send(
-            http.Request('DELETE', uri)
-              ..headers.addAll(headers)
-              ..body = body is String ? body : jsonEncode(body),
-          )
-          .then(http.Response.fromStream);
-    }
-    return _client.delete(uri, headers: headers);
+ return _executeWithAutoRefresh(() async {
+   final uri = Uri.parse('$apiBaseUrl$path');
+      final headers = await _authHeaders();
+      if (body != null) {
+        return _client
+            .send(
+              http.Request('DELETE', uri)
+                ..headers.addAll(headers)
+                ..body = body is String ? body : jsonEncode(body),
+            )
+            .then(http.Response.fromStream);
+      }
+      return _client.delete(uri, headers: headers);
+    });
+  
   }
 
   /// --- MULTIPART pour upload de fichiers ---
@@ -170,5 +181,46 @@ class ApiService {
   Future<bool> hasToken() async {
     final token = await _storage.getAccessToken();
     return token != null && token.isNotEmpty;
+  }
+
+
+   /// --- Auto-refresh access token on 401 and retry the request ---
+  Future<http.Response> _executeWithAutoRefresh(
+    Future<http.Response> Function() send,
+  ) async {
+    final response = await send();
+    if (response.statusCode != 401) return response;
+    final refreshed = await _refreshAccessToken();
+    if (!refreshed) {
+      _handleAuthError(); // fall back to logout
+      return response;
+    }
+    // Retry the original request with new token
+    return await send();
+  }
+
+  /// --- Call /auth/refresh to renew the access token ---
+  Future<bool> _refreshAccessToken() async {
+    try {
+      final refreshToken = await _storage.getRefresToken();
+      if (refreshToken == null || refreshToken.isEmpty) return false;
+      final url = Uri.parse('$apiBaseUrl/auth/refresh');
+      final res = await _client.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refreshToken': refreshToken}),
+      );
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        final data = jsonDecode(utf8.decode(res.bodyBytes));
+        final newAccess = data['access_token']?.toString();
+        final newRefresh = (data['refresh_token'] ?? refreshToken).toString();
+        if (newAccess == null || newAccess.isEmpty) return false;
+        await _storage.saveTokens(newAccess, newRefresh);
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 }

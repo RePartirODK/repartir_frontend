@@ -49,5 +49,13 @@ class JeuneService {
       return list.map((e) => e as Map<String, dynamic>).toList();
     });
   }
+
+    Future<List<Map<String, dynamic>>> getUtilisateursByDomaine(int domaineId) async {
+    final response = await _api.get('/user-domaines/domaine/$domaineId');
+    return _api.decodeJson(response, (data) {
+      final list = data as List<dynamic>;
+      return list.map((e) => e as Map<String, dynamic>).toList();
+    });
+  }
   
 }

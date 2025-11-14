@@ -120,6 +120,7 @@ class _CentreDetailPageState extends State<CentreDetailPage> {
                                       'cout': f['cout'],
                                       'format': f['format'],
                                       'duree': f['duree'],
+                                      'statut': (f['statut'] ?? '').toString(),
                                       'centreName': (centreUtil['nom'] ?? '').toString(),
                                       'centreLocation': (centreInfo['adresse'] ?? '').toString(),
                                     };
@@ -284,6 +285,7 @@ class FormationCard extends StatelessWidget {
                   child: const Text('Voir détails'),
                 ),
                 const SizedBox(width: 10),
+                 if ((formation['statut']?.toString() ?? '') == 'EN_ATTENTE')
                 ElevatedButton(
                   onPressed: () {
                     Navigator.push(
@@ -293,7 +295,6 @@ class FormationCard extends StatelessWidget {
                       ),
                     );
                   },
-                  child: const Text("S'inscrire"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
@@ -301,6 +302,7 @@ class FormationCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
+                  child: Text("S'inscrire"),
                 ),
               ],
             )

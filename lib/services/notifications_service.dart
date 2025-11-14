@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:repartir_frontend/services/mentorings_service.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
@@ -142,7 +143,7 @@ class NotificationsService {
         return decoded.map((key, value) => MapEntry(key, value.toString()));
       }
     } catch (e) {
-      print('Pas de notifications précédentes');
+      debugPrint('Pas de notifications précédentes');
     }
     return {};
   }

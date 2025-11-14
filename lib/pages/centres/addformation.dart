@@ -5,9 +5,9 @@ import 'package:repartir_frontend/models/request/request_formation.dart';
 import 'package:intl/intl.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/provider/formation_provider.dart';
+import 'package:repartir_frontend/services/api_service.dart';
 import 'package:repartir_frontend/services/centre_service.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
-
 // Définition de la couleur principale
 const Color kPrimaryColor = Color(0xFF3EB2FF);
 
@@ -36,6 +36,7 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
 
   final dateFormat = DateFormat('dd/MM/yyyy');
   final centreService = CentreService();
+  final ApiService _api = ApiService();
   bool _isSubmitting = false;
   //form key pour la validation du formulaire
   final _formKey = GlobalKey<FormState>();
@@ -57,6 +58,10 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
         throw Exception('Format inconnu: $value');
     }
   }
+
+  //dropdown
+   List<String> _domaineOptions = [];
+  String? _selectedDomaine;
 
   String _labelFromApiFormat(String value) {
     switch (value.toUpperCase()) {
@@ -82,6 +87,7 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
       initialDate: minDate ?? DateTime.now(),
       firstDate: minDate ?? DateTime.now(),
       lastDate: DateTime(2101),
+      locale: const Locale('fr'),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -112,7 +118,9 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Veuillez corriger les erreurs")),
+        const SnackBar(
+          content: Text("Veuillez renseignez les champs correctement"),
+        ),
       );
       return;
     }
@@ -184,8 +192,8 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
         _domainController.clear();
         _urlController.clear();
         setState(() => _selectedFormat = null);
-       // ignore: use_build_context_synchronously
-       Navigator.of(context).pop(nouvelleFormation);
+        // ignore: use_build_context_synchronously
+        Navigator.of(context).pop(nouvelleFormation);
       }
     } catch (e) {
       ScaffoldMessenger.of(
@@ -213,6 +221,32 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
           "${init.dateFin.day}/${init.dateFin.month}/${init.dateFin.year}";
       _selectedFormat = _labelFromApiFormat(init.format);
       _urlController.text = (init.urlFormation ?? '');
+    }
+    _loadCentreDomaines();
+  }
+
+   Future<void> _loadCentreDomaines() async {
+    try {
+      final userIdStr = await storage.getUserId();
+      final userId = int.tryParse(userIdStr ?? '0') ?? 0;
+      if (userId == 0) return;
+      final res = await _api.get('/user-domaines/utilisateur/$userId');
+      final List data = _api.decodeJson<List<dynamic>>(res, (d) => d as List<dynamic>);
+      final options = <String>[];
+      for (final e in data) {
+        final m = e as Map<String, dynamic>;
+        final d = m['domaine'] as Map<String, dynamic>? ?? {};
+        final libelle = (d['libelle'] ?? '').toString();
+        if (libelle.isNotEmpty) options.add(libelle);
+      }
+      setState(() {
+        _domaineOptions = options;
+      });
+    } catch (e) {
+      // Optionnel: garder la zone vide sans bloquer la page
+      setState(() {
+        _domaineOptions = [];
+      });
     }
   }
 
@@ -402,18 +436,26 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
                     const SizedBox(height: 20),
 
                     // Domaine de la formation
-                    _buildLabeledTextField(
+                   _buildLabeledDropdown(
                       label: 'Domaine de la formation',
-                      hintText: 'Entrez le domaine de la formation',
-                      controller: _domainController,
+                      hintText: 'Sélectionnez le domaine de la formation',
+                      value: _selectedDomaine,
+                      items: _domaineOptions,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedDomaine = newValue;
+                          _domainController.text = newValue ?? '';
+                        });
+                      },
                       icon: Icons.category,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Veuillez entrer le domaine';
+                          return 'Veuillez sélectionner un domaine';
                         }
                         return null;
                       },
                     ),
+                    
                     const SizedBox(height: 20),
 
                     // Format (Dropdown)
@@ -641,8 +683,12 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
             elevation: 2,
             style: const TextStyle(color: Colors.black87, fontSize: 16),
             onChanged: onChanged,
+             isExpanded: true,
             items: items.map<DropdownMenuItem<String>>((String item) {
-              return DropdownMenuItem<String>(value: item, child: Text(item));
+               return DropdownMenuItem<String>(
+                value: item,
+                child: Text(item, overflow: TextOverflow.ellipsis, maxLines: 1),
+              );
             }).toList(),
           ),
         ),

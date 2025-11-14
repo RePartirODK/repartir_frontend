@@ -253,6 +253,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 5),
                         // Bouton de déconnexion
                         SizedBox(
                           width: double.infinity,

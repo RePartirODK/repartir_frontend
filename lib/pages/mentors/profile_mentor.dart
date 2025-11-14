@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/components/password_change_dialog.dart';
-import 'package:repartir_frontend/models/request/parrain_request.dart';
-import 'package:repartir_frontend/models/response/response_parrain.dart';
-import 'package:repartir_frontend/pages/parrains/editerprofiparrain.dart';
-import 'package:repartir_frontend/provider/parrain_provider.dart';
+import 'package:repartir_frontend/pages/mentors/editerprofil.dart';
+import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 import 'package:repartir_frontend/services/utilisateur_service.dart';
 
 const Color primaryBlue = Color(0xFF3EB2FF);
 const Color primaryRed = Color(0xFFF44336);
 
-class ProfilePage extends ConsumerStatefulWidget {
-  const ProfilePage({super.key});
+class ProfileMentorPage extends StatefulWidget {
+  const ProfileMentorPage({super.key});
 
   @override
-  ConsumerState<ProfilePage> createState() => _ProfilePageState();
+  State<ProfileMentorPage> createState() => _ProfileMentorPageState();
 }
 
-class _ProfilePageState extends ConsumerState<ProfilePage> {
+class _ProfileMentorPageState extends State<ProfileMentorPage> {
   final utilisateurService = UtilisateurService();
   final storage = SecureStorageService();
+  final profileService = ProfileService();
+
   bool _loading = true;
   bool _uploadingPhoto = false;
   String? _error;
+  Map<String, dynamic>? _profile;
 
   @override
   void initState() {
@@ -34,16 +34,24 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   Future<void> _loadData() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      await ref.read(parrainNotifierProvider.notifier).loadCurrentParrain();
+      final p = await profileService.getMe(); // /mentors/profile via role
+      setState(() {
+        _profile = p;
+      });
     } catch (e) {
-      _error = e.toString();
+      setState(() {
+        _error = e.toString();
+      });
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  /// --- LOGIQUE DE DÉCONNEXION ---
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -67,7 +75,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  /// --- UPLOAD PHOTO DE PROFIL ---
   Future<void> _updatePhoto() async {
     try {
       setState(() => _uploadingPhoto = true);
@@ -79,27 +86,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         return;
       }
 
-      final parrain = ref.read(parrainNotifierProvider);
-      final email = parrain?.email ?? '';
+      final utilisateur = (_profile?['utilisateur'] ?? {}) as Map<String, dynamic>;
+      final email = (utilisateur['email'] ?? '').toString();
       if (email.isEmpty) {
         // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Email utilisateur introuvable.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email utilisateur introuvable.')),
+        );
+        setState(() => _uploadingPhoto = false);
         return;
       }
 
-      final urlPhoto = await utilisateurService.uploadPhotoProfil(email, picked.path);
-
-      final updated = ParrainRequest(
-        nom: parrain?.nom ?? '',
-        prenom: parrain?.prenom ?? '',
-        email: parrain?.email ?? '',
-        telephone: parrain?.telephone ?? '',
-        motDePasse: '',
-        profession: parrain?.profession ?? '',
-        urlPhoto: urlPhoto,
-      );
-      await ref.read(parrainNotifierProvider.notifier).updateParrain(updated);
+      await utilisateurService.uploadPhotoProfil(email, picked.path);
+      await _loadData();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -108,14 +107,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       }
     } catch (e) {
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Erreur lors de la mise à jour de la photo : $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors de la mise à jour de la photo : $e")),
+      );
     } finally {
       if (mounted) setState(() => _uploadingPhoto = false);
     }
   }
 
-  /// --- SUPPRESSION DE COMPTE ---
   void _showDeleteConfirmationDialog() {
     showDialog(
       context: context,
@@ -147,7 +146,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     try {
       final email = await storage.getUserEmail();
       if (email == null) throw Exception("Email non trouvé dans le stockage sécurisé.");
-
       await utilisateurService.suppressionCompte({'email': email});
       await _handleLogout();
     } catch (e) {
@@ -158,7 +156,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     }
   }
 
-  /// --- DÉCONNEXION RÉELLE ---
   Future<void> _handleLogout() async {
     try {
       final email = await storage.getUserEmail();
@@ -176,22 +173,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final parrain = ref.watch(parrainNotifierProvider);
-
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
     if (_error != null) {
       return Scaffold(body: Center(child: Text('Erreur : $_error')));
     }
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Center(child: _buildProfileHeader(context, parrain)),
+            Center(child: _buildProfileHeader(context)),
             const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.all(20.0),
@@ -207,9 +200,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 15),
-                  _buildInfoCard(Icons.email, 'Email', parrain?.email ?? '—'),
+                  _buildInfoCard(Icons.email, 'Email',
+                      (_profile?['utilisateur']?['email'] ?? _profile?['email'] ?? '—').toString()),
                   const SizedBox(height: 10),
-                  _buildInfoCard(Icons.phone, 'Téléphone', parrain?.telephone ?? '—'),
+                  _buildInfoCard(Icons.phone, 'Téléphone',
+                      (_profile?['utilisateur']?['telephone'] ?? _profile?['telephone'] ?? '—')
+                          .toString()),
                   const SizedBox(height: 40),
                   const Text(
                     'Paramètres du compte',
@@ -263,11 +259,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
-  /// --- WIDGET HEADER DU PROFIL ---
-  Widget _buildProfileHeader(BuildContext context, ResponseParrain? parrain) {
-    final fullName = parrain != null ? '${parrain.prenom} ${parrain.nom}' : '—';
-    final roleLabel = parrain?.profession ?? (parrain?.role ?? '');
-    final photoUrl = parrain?.urlPhoto ?? parrain?.utilisateur.urlPhoto;
+  Widget _buildProfileHeader(BuildContext context) {
+    final u = (_profile?['utilisateur'] ?? {}) as Map<String, dynamic>;
+    final fullName = (_profile?['nomComplet'] ??
+            '${(_profile?['prenom'] ?? '')} ${(u['nom'] ?? _profile?['nom'] ?? '')}')
+        .toString()
+        .trim();
+    final roleLabel = (_profile?['profession'] ?? _profile?['domaine'] ?? '').toString();
+    final photoUrl = (u['urlPhoto'] ?? _profile?['urlPhoto'])?.toString();
 
     return Stack(
       children: [
@@ -282,8 +281,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   CircleAvatar(
                     radius: 60,
                     backgroundColor: Colors.grey.shade200,
-                    backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
-                    child: photoUrl == null
+                    backgroundImage:
+                        (photoUrl != null && photoUrl.isNotEmpty) ? NetworkImage(photoUrl) : null,
+                    child: (photoUrl == null || photoUrl.isEmpty)
                         ? const Icon(Icons.person, size: 80, color: Colors.blueGrey)
                         : null,
                   ),
@@ -316,18 +316,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               ),
               const SizedBox(height: 15),
               Text(
-                fullName,
+                fullName.isEmpty ? 'Mentor' : fullName,
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               if (roleLabel.isNotEmpty)
                 Text(roleLabel, style: TextStyle(color: Colors.grey.shade700, fontSize: 16)),
               const SizedBox(height: 10),
               ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  final updated = await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const EditProfilParrainPage()),
+                    MaterialPageRoute(builder: (_) => const EditProfilMentorPage()),
                   );
+                  if (updated == true) _loadData();
                 },
                 icon: const Icon(Icons.edit, size: 18),
                 label: const Text('Modifier le profil'),
@@ -365,7 +366,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           const SizedBox(width: 15),
           Expanded(
             child: Text(
-              '$title : $value',
+              '$title : ${value.isEmpty ? '—' : value}',
               style: const TextStyle(fontSize: 16),
             ),
           ),

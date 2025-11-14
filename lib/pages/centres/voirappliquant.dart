@@ -211,7 +211,8 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
         CircleAvatar(
           radius: 50,
           backgroundColor: kPrimaryColor.withValues(alpha: 0.8),
-          child: const Icon(Icons.person, color: Colors.white, size: 60),
+          backgroundImage: _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
+          child: _avatarUrl == null ? const Icon(Icons.person, color: Colors.white, size: 60) : null,
         ),
         const SizedBox(height: 8),
         Text(
@@ -279,8 +280,22 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
   }
 
   Widget _buildFormationListFromInscription(ResponseInscription? inscription) {
-    final String titre = inscription?.titreFormation ?? 'Formation';
-    if (_currentTab == 'En cours') {
+    final now = DateTime.now();
+    final ongoing = <String>[];
+    final completed = <String>[];
+
+    for (final insc in _inscriptionsJeune) {
+      final f = _formationsByTitle[insc.titreFormation];
+      if (f == null) continue;
+      final start = f.dateDebut;
+      final end = f.dateFin;
+      if (now.isAfter(end)) {
+        completed.add(f.titre);
+      } else if (now.isAfter(start) && now.isBefore(end)) {
+        ongoing.add(f.titre);
+      }
+    }
+     if (_currentTab == 'En cours') {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(
@@ -291,7 +306,10 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
-            _buildOngoingFormationCardFromInscription(titre),
+            if (ongoing.isEmpty)
+              const Text("Aucune formation en cours", style: TextStyle(color: Colors.black54))
+            else
+              ...ongoing.map(_buildOngoingFormationCardFromInscription),
           ],
         ),
       );
@@ -306,11 +324,15 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
-            _buildCompletedFormationCardFromInscription(titre),
+            if (completed.isEmpty)
+              const Text("Aucune formation terminée", style: TextStyle(color: Colors.black54))
+            else
+              ...completed.map(_buildCompletedFormationCardFromInscription),
           ],
         ),
       );
     }
+
   }
 
  Widget _buildOngoingFormationCardFromInscription(String titreFormation) {

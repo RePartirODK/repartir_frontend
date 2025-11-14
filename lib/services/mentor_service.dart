@@ -1,8 +1,20 @@
+import 'dart:convert';
+
+import 'package:repartir_frontend/models/request/mentors_request.dart';
+
 import 'api_service.dart';
 
 /// Service pour gérer les endpoints liés aux Mentors
 class MentorService {
   final ApiService _api = ApiService();
+
+  Future<Map<String, dynamic>> registerMentor(MentorsRequest request) async {
+    final res = await _api.post(
+      '/utilisateurs/register',
+      body: jsonEncode(request.toJson()),
+    );
+    return _api.decodeJson<Map<String, dynamic>>(res, (d) => d as Map<String, dynamic>);
+  }
 
   /// GET /api/mentors
   /// Récupère la liste de tous les mentors
