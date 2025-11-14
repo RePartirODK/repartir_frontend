@@ -7,6 +7,7 @@ import 'package:repartir_frontend/services/centres_service.dart';
 import 'package:repartir_frontend/services/parrainages_service.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/api_service.dart';
+import 'package:repartir_frontend/pages/jeuner/paiement_page.dart';
 
 class FormationDetailPage extends StatefulWidget {
   const FormationDetailPage({Key? key, this.formationId}) : super(key: key);
@@ -228,9 +229,10 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop();
-                    await _inscrire(payerDirectement: true);
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close this dialog
+                    // Naviguer vers la page de paiement
+                    _naviguerVersPaiement();
                   },
                   child: const Text('Payer ma formation'),
                   style: ElevatedButton.styleFrom(
@@ -563,6 +565,36 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
           const Spacer(),
           Text(value),
         ],
+      ),
+    );
+  }
+
+  void _naviguerVersPaiement() {
+    if (widget.formationId == null || _formation == null) return;
+
+    // Récupérer le montant total de la formation
+    final montantTotal = (_formation!['cout'] as num?)?.toDouble() ?? 0.0;
+    final titre = _formation!['titre']?.toString() ?? 'Formation';
+
+    if (montantTotal <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossible de récupérer le montant de la formation'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Naviguer vers la page de paiement
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaiementPage(
+          formationId: widget.formationId!,
+          formationTitre: titre,
+          montantTotal: montantTotal,
+        ),
       ),
     );
   }
