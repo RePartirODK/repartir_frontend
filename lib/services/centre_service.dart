@@ -141,4 +141,12 @@ class CentreService {
       (data) => ResponseInscription.fromJson(data),
     );
   }
+
+    Future<void> cancelFormation(int id, String motif) async {
+    final response = await _api.delete('/formations/$id/annuler', body: { 'motif': motif });
+    debugPrint(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      _api.decodeJson(response, (data) => data);
+    }
+  }
 }

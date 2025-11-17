@@ -4,7 +4,7 @@ class ResponseInscription {
   final String titreFormation;
   final DateTime dateInscription;
   final bool demandeParrainage;
-  
+  final String status;
   final bool certifie;
 
   ResponseInscription({
@@ -14,6 +14,7 @@ class ResponseInscription {
     required this.dateInscription,
     required this.demandeParrainage,
     required this.certifie,
+    required this.status
   });
 
   factory ResponseInscription.fromJson(Map<String, dynamic> json) {
@@ -32,6 +33,7 @@ class ResponseInscription {
       certifie: (json['certifie'] is bool)
           ? (json['certifie'] as bool)
           : (json['certifie']?.toString() == 'true'),
+      status: (json['status'] ?? '').toString(),
     );
   }
 }

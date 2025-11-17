@@ -230,15 +230,29 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
           ),
 
           _buildActionButton(
-            'Supprimer',
+            'Annuler',
             onPressed: () async {
+              final motifController = TextEditingController();
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Supprimer la formation'),
-                  content: Text(
-                    'Êtes-vous sûr de vouloir supprimer "${formation.titre}" ?\n'
-                    'Cette action entraînera le remboursement des inscriptions payées',
+                  title: const Text('Annuler la formation'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Veuillez fournir la raison d\'annulation pour "${formation.titre}".',
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: motifController,
+                        decoration: const InputDecoration(
+                          labelText: 'Raison (obligatoire)',
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 2,
+                      ),
+                    ],
                   ),
                   actions: [
                     TextButton(
@@ -247,17 +261,31 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Supprimer'),
+                      child: const Text('Valider'),
                     ),
                   ],
                 ),
               );
               if (confirm == true) {
-                try {
-                  await centreService.deleteFormation(formation.id);
+                final motif = motifController.text.trim();
+                if (motif.isEmpty) {
                   // ignore: use_build_context_synchronously
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Formation supprimée')),
+                    const SnackBar(
+                      content: Text('La raison d\'annulation est obligatoire'),
+                    ),
+                  );
+                  return;
+                }
+                try {
+                  await centreService.cancelFormation(formation.id, motif);
+                  // ignore: use_build_context_synchronously
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Formation annulée (ou supprimée si aucune inscription)',
+                      ),
+                    ),
                   );
                   final centreId =
                       int.tryParse(await stockage.getUserId() ?? '0') ?? 0;
@@ -295,6 +323,8 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
           ),
         ];
         break;
+      
+      
       default:
         badgeColor = Colors.grey.withAlpha(30);
         textColor = Colors.grey;
