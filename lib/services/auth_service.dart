@@ -46,6 +46,14 @@ class AuthService {
             email: loginResponse.email,
           );
 
+          // Sauvegarder l'ID utilisateur si présent dans la réponse
+          if (loginResponse.id != null) {
+            await _storage.saveId(loginResponse.id!);
+            debugPrint('✅ ID utilisateur sauvegardé: ${loginResponse.id}');
+          } else {
+            debugPrint('⚠️ Aucun ID utilisateur dans la réponse de login');
+          }
+
           return loginResponse;
 
         case 401:

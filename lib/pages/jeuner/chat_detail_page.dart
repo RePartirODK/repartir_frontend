@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../models/chat_message.dart';
 import '../../services/chat_service.dart';
 import '../../services/api_service.dart';
+import '../../services/profile_service.dart';
 
 // Page de détail d'une conversation
 class ChatDetailPage extends StatefulWidget {
@@ -52,9 +53,38 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       
       print('👤 UserId récupéré depuis storage: $_currentUserId');
       
-      // Si pas d'userId dans storage, essayer de le récupérer depuis le profil
+      // Si pas d'userId dans storage, essayer de le récupérer depuis le profil via API
       if (_currentUserId == null) {
-        print('⚠️ Pas d\'userId dans storage, impossible de déterminer qui envoie les messages');
+        print('⚠️ Pas d\'userId dans storage, tentative de récupération depuis le profil...');
+        try {
+          // Essayer de récupérer depuis le profil utilisateur via ProfileService
+          final ProfileService profileService = ProfileService();
+          final profile = await profileService.getMe();
+          
+          // Le profil peut contenir l'ID directement ou dans utilisateur
+          if (profile.containsKey('utilisateur')) {
+            final utilisateur = profile['utilisateur'] as Map<String, dynamic>?;
+            if (utilisateur != null && utilisateur.containsKey('id')) {
+              _currentUserId = utilisateur['id'] as int?;
+            }
+          } else if (profile.containsKey('id')) {
+            // Certains profils ont l'ID directement
+            _currentUserId = profile['id'] as int?;
+          }
+          
+          if (_currentUserId != null) {
+            await _storage.write(key: 'user_id', value: _currentUserId.toString());
+            print('✅ UserId récupéré depuis le profil: $_currentUserId');
+          } else {
+            print('⚠️ Profil récupéré mais aucun ID utilisateur trouvé');
+          }
+        } catch (e) {
+          print('❌ Impossible de récupérer l\'userId depuis le profil: $e');
+        }
+      }
+      
+      if (_currentUserId == null) {
+        print('❌ CRITIQUE: Aucun userId disponible. Les messages ne pourront pas être différenciés.');
       }
 
       // Récupérer l'historique des messages
@@ -76,7 +106,23 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       // S'abonner aux nouveaux messages
       _chatService.subscribeToMentoring(widget.mentoringId).listen((message) {
         setState(() {
-          _messages.add(message);
+          // Vérifier si c'est un message optimiste à remplacer
+          final optimisticIndex = _messages.indexWhere(
+            (msg) => msg.messageId == -1 && 
+                     msg.content == message.content &&
+                     msg.senderId == message.senderId
+          );
+          
+          if (optimisticIndex != -1) {
+            // Remplacer le message optimiste par le vrai message du serveur
+            _messages[optimisticIndex] = message;
+          } else {
+            // Vérifier qu'on n'ajoute pas un doublon
+            final exists = _messages.any((msg) => msg.messageId == message.messageId);
+            if (!exists) {
+              _messages.add(message);
+            }
+          }
         });
         _scrollToBottom();
         // Marquer comme lu quand un nouveau message arrive
@@ -136,10 +182,41 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
+    // Vérifier que nous avons un userId
+    if (_currentUserId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erreur: Impossible de déterminer votre identité. Veuillez vous reconnecter.')),
+        );
+      }
+      return;
+    }
+
+    // Créer un message optimiste (affiché immédiatement)
+    final optimisticMessage = ChatMessage(
+      messageId: -1, // ID temporaire négatif pour identifier les messages optimistes
+      content: text,
+      senderId: _currentUserId!,
+      senderName: 'Moi',
+      timestamp: DateTime.now(),
+    );
+
+    // Ajouter le message optimiste immédiatement
+    setState(() {
+      _messages.add(optimisticMessage);
+    });
+    _controller.clear();
+    _scrollToBottom();
+
     try {
+      // Envoyer le message via WebSocket
       await _chatService.sendMessage(widget.mentoringId, text);
-      _controller.clear();
     } catch (e) {
+      // En cas d'erreur, retirer le message optimiste
+      setState(() {
+        _messages.removeWhere((msg) => msg.messageId == -1 && msg.content == text);
+      });
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur d\'envoi: $e')),
@@ -221,7 +298,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                       itemCount: _messages.length,
                       itemBuilder: (context, index) {
                         final message = _messages[index];
-                        return _buildMessageBubble(message);
+                        return _buildMessageBubble(message, index);
                       },
                     ),
             ),
@@ -312,16 +389,26 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
   }
 
   // Widget pour une bulle de message
-  Widget _buildMessageBubble(ChatMessage message) {
+  Widget _buildMessageBubble(ChatMessage message, int index) {
     const Color kPrimaryBlue = Color(0xFF2196F3);
+    const Color kPrimaryGreen = Color(0xFF4CAF50);
 
-    final isSentByMe = _currentUserId != null && message.isMine(_currentUserId!);
+    // Déterminer si le message est envoyé par l'utilisateur actuel
+    // Pour les messages optimistes (messageId == -1), on vérifie aussi le senderId
+    final isSentByMe = _currentUserId != null && 
+                       (message.isMine(_currentUserId!) || 
+                        (message.messageId == -1 && message.senderId == _currentUserId));
     
-    // 🔍 Debug: Afficher les IDs pour comprendre le problème
-    print('💬 Message: "${message.content}"');
-    print('   senderId=${message.senderId}, senderName=${message.senderName}');
-    print('   currentUserId=$_currentUserId');
-    print('   isSentByMe=$isSentByMe');
+    // 🔍 Debug: Afficher les IDs pour comprendre le problème (seulement pour les premiers messages)
+    if (index < 3) {
+      final preview = message.content.length > 20 
+          ? '${message.content.substring(0, 20)}...' 
+          : message.content;
+      print('💬 Message[$index]: "$preview"');
+      print('   messageId=${message.messageId}, senderId=${message.senderId}, senderName=${message.senderName}');
+      print('   currentUserId=$_currentUserId');
+      print('   isSentByMe=$isSentByMe');
+    }
     
     final contactAvatar = CircleAvatar(
       backgroundColor: Colors.blue[100],
@@ -355,7 +442,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: isSentByMe ? kPrimaryBlue : Colors.grey[200],
+                      color: isSentByMe ? kPrimaryBlue : kPrimaryGreen,
                       borderRadius: BorderRadius.only(
                         topLeft: const Radius.circular(18),
                         topRight: const Radius.circular(18),
@@ -366,7 +453,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                     child: Text(
                       message.content,
                       style: TextStyle(
-                        color: isSentByMe ? Colors.white : Colors.black87,
+                        color: isSentByMe ? Colors.white : Colors.white,
                         fontSize: 15,
                       ),
                     ),

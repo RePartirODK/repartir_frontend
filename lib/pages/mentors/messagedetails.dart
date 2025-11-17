@@ -116,6 +116,7 @@ class _MentorChatDetailPageState extends State<MentorChatDetailPage> {
   // Widget pour une bulle de message
   Widget _buildMessageBubble(ChatMessage message) {
     const Color kPrimaryBlue = Color(0xFF2196F3);
+    const Color kPrimaryGreen = Color(0xFF4CAF50);
 
     final isSentByMe = message.isSentByMe;
     final contactAvatar = CircleAvatar(
@@ -140,12 +141,12 @@ class _MentorChatDetailPageState extends State<MentorChatDetailPage> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isSentByMe ? kPrimaryBlue : Colors.grey[200],
+                    color: isSentByMe ? kPrimaryBlue : kPrimaryGreen,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     message.text,
-                    style: TextStyle(color: isSentByMe ? Colors.white : Colors.black87),
+                    style: TextStyle(color: isSentByMe ? Colors.white : Colors.white),
                   ),
                 ),
                 const SizedBox(height: 4),
