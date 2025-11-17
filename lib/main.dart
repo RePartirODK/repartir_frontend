@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
@@ -9,6 +10,9 @@ import 'package:repartir_frontend/pages/mentors/navbarmentor.dart';
 import 'package:repartir_frontend/pages/onboarding/onboarding_page.dart';
 import 'package:repartir_frontend/pages/parrains/nav.dart';
 import 'package:repartir_frontend/pages/shared/splash_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+// NavigatorKey global pour la redirection automatique
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 
 // Import pages
@@ -65,8 +69,20 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey, // ← Ajouter le navigatorKey global
       title: 'RePartir',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('fr', 'FR'), // Français
+        Locale('en', 'US'), // Anglais
+      ],
+      locale: const Locale('fr', 'FR'),
+      
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2196F3)),
         useMaterial3: true,
@@ -80,6 +96,7 @@ class MyApp extends StatelessWidget {
   '/homeparrain': (context) => NavHomePage(),
   '/homejeune': (context) => AccueilPage(),
   '/homeentreprise': (context) => const AccueilEntreprisePage(),
+  
       },
     );
   }

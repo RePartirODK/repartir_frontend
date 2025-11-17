@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_inscription.dart';
 import 'package:repartir_frontend/pages/centres/voirappliquant.dart';
+import 'package:repartir_frontend/services/centre_service.dart';
 
 // Définition des constantes et modèles de données
 const Color kPrimaryColor = Color(0xFF3EB2FF);
@@ -9,7 +11,7 @@ const double kHeaderHeight = 200.0;
 class Applicant {
   final String name;
   final Color avatarColor;
-  final IconData icon; 
+  final IconData icon;
 
   Applicant({
     required this.name,
@@ -66,8 +68,11 @@ class GeneralApplicantsPage extends StatefulWidget {
 
 class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
   // L'index 1 correspond à "Appliquants" dans la BottomNavigationBar
-  int _selectedIndex = 1; 
+  int _selectedIndex = 1;
   final TextEditingController _searchController = TextEditingController();
+  final _centreService = CentreService();
+  List<ResponseInscription> _inscriptions = [];
+  List<ResponseInscription> _filtered = [];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -78,16 +83,55 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _loadApplicants();
+    _searchController.addListener(_applyFilter);
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
+    _searchController.removeListener(_applyFilter);
     super.dispose();
+  }
+
+  Future<void> _loadApplicants() async {
+    try {
+      final currentCentre = await _centreService.getCurrentCentre();
+      final centreId = currentCentre?.id ?? 0;
+      if (centreId == 0) {
+        debugPrint('Centre ID not found');
+        return;
+      }
+      final items = await _centreService.getCentreInscriptions(centreId);
+      setState(() {
+        _inscriptions = items;
+        _filtered = items;
+      });
+    } catch (e) {
+      debugPrint('Failed to load applicants: $e');
+    }
+  }
+
+  void _applyFilter() {
+    final q = _searchController.text.trim().toLowerCase();
+    setState(() {
+      if (q.isEmpty) {
+        _filtered = _inscriptions;
+      } else {
+        _filtered = _inscriptions
+            .where((i) => i.nomJeune.toLowerCase().contains(q))
+            .toList();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, 
-      
+      backgroundColor: Colors.white,
+
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -101,21 +145,27 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                 
-
                   // 3. Barre de Recherche
                   _buildSearchBar(),
 
                   const SizedBox(height: 20),
 
                   // 4. Liste des Appliquants
-                  ...dummyApplicants.map((applicant) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 15.0),
-                      child: _buildApplicantCard(applicant),
-                    );
-                  }),
-
+                  if (_filtered.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16.0),
+                      child: Text(
+                        'Aucun appliquant trouvé.',
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                    )
+                  else
+                    ..._filtered.map((insc) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 15.0),
+                        child: _buildApplicantCardFromInscription(insc),
+                      );
+                    }),
                   const SizedBox(height: 30),
                 ],
               ),
@@ -128,6 +178,47 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
 
   // --- Widgets de construction des sections ---
 
+  Widget _buildApplicantCardFromInscription(ResponseInscription insc) {
+    return Card(
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Row(
+          children: <Widget>[
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: Colors.blue.withValues(alpha: 0.2),
+              child: const Icon(Icons.person, color: Colors.blue, size: 30),
+            ),
+            const SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    insc.nomJeune,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    insc.titreFormation,
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            _buildViewButtonWithNav(insc),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
@@ -135,7 +226,7 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
         borderRadius: BorderRadius.circular(10.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha:  0.15),
+            color: Colors.grey.withValues(alpha: 0.15),
             spreadRadius: 1,
             blurRadius: 5,
             offset: const Offset(0, 3), // Ombre subtile
@@ -150,15 +241,18 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
           prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 15.0),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 15.0,
+            horizontal: 15.0,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10.0),
             borderSide: BorderSide.none, // Pas de bordure visible
           ),
         ),
-        onChanged: (value) {
+        onChanged: (_) {
           // Logique de filtrage de la liste ici
-          print("Searching for: $value");
+          _applyFilter();
         },
       ),
     );
@@ -205,7 +299,7 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
     return Container(
       width: 90, // Largeur fixe pour l'alignement
       decoration: BoxDecoration(
-        color: kPrimaryColor.withValues(alpha:0.7),
+        color: kPrimaryColor.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(5.0),
       ),
       child: Material(
@@ -214,12 +308,12 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
           onTap: () {
             /**
              * Navigation vers la page profil de l'appliquant
-             */
+             
             Navigator.push(context, 
             MaterialPageRoute(builder: (context)=>
             const ApplicantProfilePage()
             )
-            );
+            );*/
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
@@ -239,6 +333,39 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
     );
   }
 
-
+  Widget _buildViewButtonWithNav(ResponseInscription insc) {
+    return Container(
+      width: 90,
+      decoration: BoxDecoration(
+        color: kPrimaryColor.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(5.0),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ApplicantProfilePage(inscription: insc),
+              ),
+            );
+          },
+          child: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
+            child: Center(
+              child: Text(
+                'Voir',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
-

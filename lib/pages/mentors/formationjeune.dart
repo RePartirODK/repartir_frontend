@@ -22,24 +22,27 @@ class Formationjeune extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            // 1. En-tête (Profil)
-            const CustomHeader(
-              title: 'Profil',
-              showBackButton: true,
-            ),
-
-            // 2. Contenu principal (padding pour les bords)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  const SizedBox(height: 30),
-
+      body: Stack(
+        children: [
+          // Contenu principal avec bordure arrondie
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(60),
+                  topRight: Radius.circular(60),
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 30, 24, 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
                   // --- Section Identité ---
                   _buildIdentitySection(),
                   const SizedBox(height: 40),
@@ -74,11 +77,24 @@ class Formationjeune extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 30),
-                ],
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+
+          // Header
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: const CustomHeader(
+              title: 'Profil',
+              showBackButton: true,
+              height: 120,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -42,20 +42,28 @@ class _ProfilFormationMentorPageState extends State<ProfilFormationMentorPage> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      // 1. HEADER (Le bloc bleu incurvé)
-
-      // 2. CORPS DE LA PAGE
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            CustomHeader(title: "Formation",
-            showBackButton: true,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: <Widget>[
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Contenu principal avec bordure arrondie
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(60),
+                  topRight: Radius.circular(60),
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 30, 16, 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
                   const SizedBox(height: 10), // Espace sous la vague
                   // Titre de la formation
                   Text(
@@ -106,10 +114,23 @@ class _ProfilFormationMentorPageState extends State<ProfilFormationMentorPage> {
                   ),
                   const SizedBox(height: 15),
                 ],
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+
+          // Header
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              title: "Formation",
+              showBackButton: true,
+              height: 120,
+            ),
+          ),
+        ],
       ),
     );
   }

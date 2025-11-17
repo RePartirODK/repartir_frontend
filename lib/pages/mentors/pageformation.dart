@@ -71,15 +71,27 @@ class _FormationsByMentorPageState extends State<FormationsByMentorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    
-      // 2. CORPS DE LA PAGE (Liste des formations)
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            CustomHeader(
-              title: "Formation",
-              showBackButton: true,
-            ),
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Contenu principal avec bordure arrondie
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(60),
+                  topRight: Radius.circular(60),
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 30, 16, 100),
+                child: Column(
+                  children: [
             ListView.builder(
                shrinkWrap: true, //le ListView prend juste la place nécessaire
   physics: const NeverScrollableScrollPhysics(),
@@ -90,10 +102,25 @@ class _FormationsByMentorPageState extends State<FormationsByMentorPage> {
                 return FormationTile(formation: formation);
               },
             ),
-          ],
-        ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Header
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              title: "Formation",
+              showBackButton: true,
+              height: 120,
+            ),
+          ),
+        ],
       ),
-      
     );
   }
 }

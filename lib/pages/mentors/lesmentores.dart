@@ -5,6 +5,9 @@ import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/pages/mentors/formationviewbymentor.dart';
 import 'package:repartir_frontend/pages/mentors/pageformation.dart';
 import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
+import 'package:repartir_frontend/services/mentor_service.dart';
+import 'package:repartir_frontend/services/profile_service.dart';
+import 'package:repartir_frontend/pages/mentors/mentore_detail_page.dart';
 
 Color primaryBlue = Color(0xFF3EB2FF);
 
@@ -26,79 +29,254 @@ class MentoresPage extends StatefulWidget {
 }
 
 class _MentoresPageState extends State<MentoresPage> {
-  // L'index 1 (Mentorés) est sélectionné sur la nav bar selon l'image
+  final MentorService _mentorService = MentorService();
+  final ProfileService _profileService = ProfileService();
 
-  // Données statiques pour la liste (à remplacer par les données de votre backend)
-  final List<Mentore> mentores = [
-    Mentore('Ramatou Touré', 6, 0, 20),
-    Mentore('Ibrahim Diarra', 8, 15, 20),
-    Mentore('Aïcha Cissé', 3, 5, 10),
-    Mentore('Moussa Kouyaté', 12, 0, 20),
-    Mentore('Fatima Sy', 6, 8, 10),
-  ];
+  bool _loading = true;
+  List<Map<String, dynamic>> _mentoresValides = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMentores();
+  }
+
+  Future<void> _loadMentores() async {
+    setState(() => _loading = true);
+    try {
+      final me = await _profileService.getMe();
+      final mentorId = me['id'] as int;
+
+      final mentorings = await _mentorService.getMentorMentorings(mentorId);
+
+      // Filtrer uniquement les mentorings VALIDE
+      final valides = mentorings.where((m) => m['statut'] == 'VALIDE').toList();
+
+      setState(() {
+        _mentoresValides = valides;
+        _loading = false;
+      });
+    } catch (e) {
+      print('❌ Erreur chargement mentorés: $e');
+      setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 2. CORPS DE LA PAGE (Liste des mentorés)
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            CustomHeader(title: "Mentorés"),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end, // aligne à droite
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      /**
-         * Découvrir les formations du système
-         */
-                      Navigator.push(context,
-                      MaterialPageRoute(builder: 
-                      (context) => const FormationsByMentorPage()));
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: 5,
-                      ),
-                      elevation: 0,
-                    ),
-                    icon: const Icon(Icons.search, size: 20),
-                    label: const Text(
-                      'Découvrir',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                
-                ],
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Contenu principal avec bordure arrondie
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(60),
+                  topRight: Radius.circular(60),
+                ),
               ),
-            ),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      onRefresh: _loadMentores,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(16, 30, 16, 100),
+                        child: Column(
+                          children: [
+                            // Bouton Découvrir
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const FormationsByMentorPage(),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryBlue,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 30,
+                                      vertical: 5,
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  icon: const Icon(Icons.search, size: 20),
+                                  label: const Text(
+                                    'Découvrir',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 15),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-              child: ListView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: mentores.length,
-                itemBuilder: (context, index) {
-                  final mentore = mentores[index];
-                  return MentoreTile(mentore: mentore);
-                },
-              ),
+                            // Message si aucun mentoré
+                            if (_mentoresValides.isEmpty)
+                              const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Text(
+                                    'Aucun jeune mentoré',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                            // Liste des mentorés
+                            ListView.builder(
+                              physics: const NeverScrollableScrollPhysics(),
+                              shrinkWrap: true,
+                              itemCount: _mentoresValides.length,
+                              itemBuilder: (context, index) {
+                                final mentoring = _mentoresValides[index];
+                                return MentoreTileAPI(
+                                  mentoring: mentoring,
+                                  onUpdate: (updatedMentoring) async {
+                                    // ✅ Recharger toutes les données depuis le backend
+                                    print('✅ Rechargement des mentorés après notation...');
+                                    await _loadMentores();
+                                  },
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
             ),
+          ),
+
+          // Header
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              title: "Mentorés",
+              height: 120,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============ WIDGETS API ============
+
+/// Widget pour afficher un mentoré depuis l'API
+class MentoreTileAPI extends StatelessWidget {
+  final Map<String, dynamic> mentoring;
+  final Function(Map<String, dynamic>) onUpdate;
+
+  const MentoreTileAPI({
+    super.key,
+    required this.mentoring,
+    required this.onUpdate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final prenom = (mentoring['prenomJeune'] ?? '').toString().trim();
+    final nom = (mentoring['nomJeune'] ?? '').toString().trim();
+    final nomComplet = '$prenom $nom'.trim();
+    
+    // Calculer la durée (si dateDebut disponible)
+    int dureeMois = 0;
+    final dateDebutStr = mentoring['dateDebut']?.toString();
+    if (dateDebutStr != null && dateDebutStr.isNotEmpty) {
+      try {
+        final dateDebut = DateTime.parse(dateDebutStr);
+        final maintenant = DateTime.now();
+        dureeMois = ((maintenant.difference(dateDebut).inDays) / 30).round();
+      } catch (e) {
+        print('Erreur parsing date: $e');
+      }
+    }
+
+    final noteJeune = mentoring['noteJeune'] ?? 0;
+    final noteMentor = mentoring['noteMentor'] ?? 0;
+    final scoreTotal = 20; // Score max par défaut
+    final urlPhotoJeune = (mentoring['urlPhotoJeune'] ?? '').toString().trim();
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 3,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
+        // Avatar avec photo
+        leading: CircleAvatar(
+          radius: 30,
+          backgroundColor: primaryBlue.withOpacity(0.1),
+          backgroundImage: (urlPhotoJeune.isNotEmpty && urlPhotoJeune.startsWith('http'))
+              ? NetworkImage(urlPhotoJeune)
+              : null,
+          child: (urlPhotoJeune.isEmpty || !urlPhotoJeune.startsWith('http'))
+              ? const Icon(
+                  Icons.person,
+                  size: 30,
+                  color: Colors.blueGrey,
+                )
+              : null,
+        ),
+        // Nom et infos
+        title: Text(
+          nomComplet.isNotEmpty ? nomComplet : 'Jeune',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 5),
+            Text('Durée: $dureeMois mois'),
+            const SizedBox(height: 3),
+            Text('Ma note attribuée: $noteMentor/20'),
           ],
         ),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 18,
+          color: Colors.grey,
+        ),
+        onTap: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MentoreDetailPage(mentoring: mentoring),
+            ),
+          );
+          
+          // ✅ Rafraîchir la liste si changement
+          if (result == true) {
+            print('✅ Retour avec changement, rechargement liste mentorés...');
+            onUpdate(mentoring); // Signaler le changement au parent
+          }
+        },
       ),
     );
   }

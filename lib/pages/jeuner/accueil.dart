@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/models/response/response_centre.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
+import 'package:repartir_frontend/pages/jeuner/centre_detail_page.dart';
 import 'package:repartir_frontend/pages/jeuner/mes_formations_page.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_list_page.dart';
 import 'package:repartir_frontend/pages/jeuner/mentors_list_page.dart';
@@ -7,11 +10,17 @@ import 'package:repartir_frontend/pages/jeuner/centre_list_page.dart';
 import 'package:repartir_frontend/pages/jeuner/offre_list_page.dart';
 import 'package:repartir_frontend/pages/jeuner/mes_mentors_page.dart';
 import 'package:repartir_frontend/pages/jeuner/all_centres_list_page.dart';
+import 'package:repartir_frontend/pages/jeuner/notifications_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/centres_service.dart';
+import 'package:repartir_frontend/services/jeune_service.dart';
+import 'package:repartir_frontend/services/notifications_service.dart';
 
 // Définition des couleurs primaires de l'application
 const Color kPrimaryBlue = Color(0xFF3EB2FF); // Un bleu vif et moderne
-const Color kLightGreyBackground = Color(0xFFEEEEEE); // Un gris clair pour les fonds
+const Color kLightGreyBackground = Color(
+  0xFFEEEEEE,
+); // Un gris clair pour les fonds
 const Color kLogoBlue = Color(0xFF3EB2FF); // Bleu pour le logo
 const Color kLogoGreen = Color(0xFF4CAF50); // Vert pour le logo
 
@@ -29,11 +38,13 @@ class AccueilPage extends StatefulWidget {
 
 class _AccueilPageState extends State<AccueilPage> {
   int _selectedIndex = 0;
+  final GlobalKey<_HomePageContentState> _homeKey =
+      GlobalKey<_HomePageContentState>();
 
   // Liste des pages à afficher
-  static final List<Widget> _pages = <Widget>[
-    const _HomePageContent(), // Page d'accueil originale
-    const MentorsListPage(), // Page des mentors
+  List<Widget> get _pages => <Widget>[
+    _HomePageContent(key: _homeKey), // Page d'accueil originale
+    MentorsListPage(), // Page des mentors
     const ChatListPage(),
     const CentreListPage(), // Placeholder
     const ProfilePage(), // Placeholder
@@ -43,6 +54,13 @@ class _AccueilPageState extends State<AccueilPage> {
     setState(() {
       _selectedIndex = index;
     });
+
+    // Si on revient à l'accueil, recharger les notifications
+    if (index == 0) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _homeKey.currentState?._loadNotificationCount();
+      });
+    }
   }
 
   // --- 6. Barre de navigation inférieure (Standard) ---
@@ -56,10 +74,7 @@ class _AccueilPageState extends State<AccueilPage> {
       currentIndex: _selectedIndex,
       onTap: _onItemTapped,
       items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Accueil',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Accueil'),
         BottomNavigationBarItem(
           icon: Icon(Icons.people_outline), // Icône mise à jour
           label: 'Mentors',
@@ -91,8 +106,127 @@ class _AccueilPageState extends State<AccueilPage> {
 }
 
 // Widget séparé pour le contenu de la page d'accueil originale
-class _HomePageContent extends StatelessWidget {
-  const _HomePageContent();
+class _HomePageContent extends StatefulWidget {
+  const _HomePageContent({Key? key}) : super(key: key);
+
+  @override
+  State<_HomePageContent> createState() => _HomePageContentState();
+}
+
+class _HomePageContentState extends State<_HomePageContent> {
+  final NotificationsService _notifService = NotificationsService();
+  int _notifCount = 0;
+  final CentresService _centresService = CentresService();
+  final JeuneService _jeuneService = JeuneService();
+  List<Map<String, dynamic>> _domaines = [];
+  int? _selectedDomaineId;
+  String _selectedDomaineLabel = '';
+  bool _loadingRecs = false;
+  List<Map<String, dynamic>> _recommendedCentres = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationCount();
+    _loadDomaines();
+  }
+
+  @override
+  void didUpdateWidget(_HomePageContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Recharger quand le widget est mis à jour
+    _loadNotificationCount();
+  }
+
+  Future<void> _loadNotificationCount() async {
+    try {
+      print('🔄 Rechargement du compteur de notifications...');
+      final count = await _notifService.countNewNotifications();
+      print('🔔 Nouvelles notifications: $count');
+      if (mounted) {
+        setState(() {
+          _notifCount = count;
+        });
+      }
+    } catch (e) {
+      print('❌ Erreur chargement notifications: $e');
+    }
+  }
+
+  Future<void> _loadDomaines() async {
+    try {
+      final list = await _jeuneService.getDomaines();
+      setState(() {
+        _domaines = list;
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _computeRecommendations() async {
+    final label = _selectedDomaineLabel.trim().toLowerCase();
+    if (_selectedDomaineId == null) return;
+    setState(() {
+      _loadingRecs = true;
+      _recommendedCentres = [];
+    });
+    try {
+      final usersInDomain = await _jeuneService.getUtilisateursByDomaine(
+        _selectedDomaineId!,
+      );
+      final userIds = <int>{};
+      for (final u in usersInDomain) {
+        final id = (u['utilisateur']?['id'] is int)
+            ? u['utilisateur']['id'] as int
+            : int.tryParse(u['utilisateur']?['id']?.toString() ?? '') ?? 0;
+        if (id != 0) userIds.add(id);
+      }
+      final centresJson = await _centresService.listActifs();
+      final List<Map<String, dynamic>> recs = [];
+      for (final c in centresJson) {
+        final centreUserId = (c['utilisateur']?['id'] is int)
+            ? c['utilisateur']['id'] as int
+            : int.tryParse(c['utilisateur']?['id']?.toString() ?? '') ?? 0;
+        if (centreUserId != 0 && userIds.contains(centreUserId)) {
+          recs.add(c as Map<String, dynamic>);
+        }
+      }
+      // Fallback: keyword match in formations if none found via association
+      if (recs.isEmpty) {
+        final label = _selectedDomaineLabel.trim().toLowerCase();
+        if (label.isNotEmpty) {
+          for (final c in centresJson) {
+            final idCentre = c['id'] is int
+                ? c['id'] as int
+                : int.tryParse(c['id']?.toString() ?? '') ?? 0;
+            if (idCentre == 0) continue;
+            final formations = await _centresService.getFormationsByCentre(
+              idCentre,
+            );
+            final match = formations.any((fjson) {
+              final f = ResponseFormation.fromJson(fjson);
+              final t = f.titre.toLowerCase();
+              final d = f.description.toLowerCase();
+              return t.contains(label) || d.contains(label);
+            });
+            if (match) recs.add(c as Map<String, dynamic>);
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _recommendedCentres = recs;
+          _loadingRecs = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _loadingRecs = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,13 +265,14 @@ class _HomePageContent extends StatelessWidget {
           ),
         ),
 
-        // Header avec logo et notifications
+        // Header avec logo à gauche et notification à droite
         Positioned(
           top: 0,
           left: 0,
           right: 0,
           child: CustomHeader(
-            centerWidget: _buildHeaderContent(),
+            leftWidget: _buildLogo(),
+            rightWidget: _buildNotificationIcon(),
             height: 160,
           ),
         ),
@@ -150,13 +285,19 @@ class _HomePageContent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF3EB2FF).withOpacity(0.1),
+        color: const Color(0xFF3EB2FF).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF3EB2FF).withOpacity(0.2)),
+        border: Border.all(
+          color: const Color(0xFF3EB2FF).withValues(alpha: 0.2),
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.lightbulb_outline, color: Color(0xFF3EB2FF), size: 40),
+          const Icon(
+            Icons.lightbulb_outline,
+            color: Color(0xFF3EB2FF),
+            size: 40,
+          ),
           const SizedBox(width: 16),
           const Expanded(
             child: Text(
@@ -174,58 +315,70 @@ class _HomePageContent extends StatelessWidget {
     );
   }
 
-  // --- Contenu de l'en-tête ---
-  Widget _buildHeaderContent() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16.0, 25.0, 16.0, 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
+  // --- Logo à gauche ---
+  Widget _buildLogo() {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Image.asset(
+          'assets/images/logo_repartir.png',
+          fit: BoxFit.contain,
+        ),
+      ),
+    );
+  }
+
+  // --- Icône de notification ---
+  Widget _buildNotificationIcon() {
+    return GestureDetector(
+      onTap: () async {
+        // Naviguer vers la page de notifications
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const NotificationsPage()),
+        );
+        // Recharger le compteur après retour
+        _loadNotificationCount();
+      },
+      child: Stack(
         children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 3,
-                  offset: const Offset(0, 2),
+          const Icon(Icons.notifications_none, color: Colors.white, size: 28),
+          if (_notifCount > 0)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
                 ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Image.asset(
-                'assets/images/logo_repartir.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          Stack(
-            children: [
-              const Icon(
-                Icons.notifications_none,
-                color: Colors.white,
-                size: 28,
-              ),
-              Positioned(
-                top: 2,
-                right: 2,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: kLogoGreen,
-                    shape: BoxShape.circle,
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                child: Text(
+                  _notifCount > 9 ? '9+' : '$_notifCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ],
-          ),
+            ),
         ],
       ),
     );
@@ -276,7 +429,7 @@ class _HomePageContent extends StatelessWidget {
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.15),
+                        color: Colors.grey.withValues(alpha: 0.15),
                         spreadRadius: 1,
                         blurRadius: 6,
                         offset: const Offset(0, 3),
@@ -289,22 +442,30 @@ class _HomePageContent extends StatelessWidget {
                       if (index == 0) {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const AllCentresListPage()),
+                          MaterialPageRoute(
+                            builder: (context) => const AllCentresListPage(),
+                          ),
                         );
                       } else if (index == 1) {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const MesFormationsPage()),
+                          MaterialPageRoute(
+                            builder: (context) => const MesFormationsPage(),
+                          ),
                         );
                       } else if (index == 2) {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const OffreListPage()),
+                          MaterialPageRoute(
+                            builder: (context) => const OffreListPage(),
+                          ),
                         );
                       } else if (index == 3) {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const MesMentorsPage()),
+                          MaterialPageRoute(
+                            builder: (context) => const MesMentorsPage(),
+                          ),
                         );
                       }
                     },
@@ -356,24 +517,6 @@ class _HomePageContent extends StatelessWidget {
 
   // --- Recommandations ---
   Widget _buildRecommended() {
-    final Widget repartirLogoPlaceholder = Container(
-      width: 30,
-      height: 30,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(4.0),
-        child: Image.asset(
-          'assets/images/logo_repartir.png',
-          errorBuilder: (context, error, stackTrace) {
-            return const Icon(Icons.business, color: kPrimaryBlue, size: 15);
-          },
-        ),
-      ),
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -385,22 +528,62 @@ class _HomePageContent extends StatelessWidget {
             color: Colors.black87,
           ),
         ),
-        const SizedBox(height: 16), // Espace ajusté
-        Row(
-          children: [
-            _buildRecommendedCard(
-              repartirLogoPlaceholder,
-              'Orange Digital Center',
-              kPrimaryBlue,
-            ),
-            const SizedBox(width: 12),
-            _buildRecommendedCard(
-              repartirLogoPlaceholder,
-              'Kabakoo Academies',
-              kPrimaryBlue,
-            ),
-          ],
+        const SizedBox(height: 12),
+        // Domaine selection chips
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _domaines.map((d) {
+              final id = d['id'] is int
+                  ? d['id'] as int
+                  : int.tryParse(d['id']?.toString() ?? '') ?? 0;
+              final libelle = (d['libelle'] ?? '').toString();
+              final selected = _selectedDomaineId == id;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Text(libelle),
+                  selected: selected,
+                  selectedColor: kPrimaryBlue.withOpacity(0.15),
+                  onSelected: (val) {
+                    setState(() {
+                      _selectedDomaineId = val ? id : null;
+                      _selectedDomaineLabel = val ? libelle : '';
+                    });
+                    if (val) _computeRecommendations();
+                  },
+                ),
+              );
+            }).toList(),
+          ),
         ),
+        const SizedBox(height: 12),
+        if (_selectedDomaineId == null)
+          const Text(
+            'Choisissez un domaine pour voir des centres recommandés.',
+            style: TextStyle(color: Colors.black54),
+          )
+        else if (_loadingRecs)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 12.0),
+              child: CircularProgressIndicator(color: kPrimaryBlue),
+            ),
+          )
+        else if (_recommendedCentres.isEmpty)
+          const Text(
+            'Aucun centre correspondant au domaine sélectionné.',
+            style: TextStyle(color: Colors.black54),
+          )
+        else
+          Column(
+            children: _recommendedCentres.map((c) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10.0),
+                child: _buildCentreRecommendedCard(c),
+              );
+            }).toList(),
+          ),
       ],
     );
   }
@@ -441,5 +624,65 @@ class _HomePageContent extends StatelessWidget {
       ),
     );
   }
-}
 
+  Widget _buildCentreRecommendedCard(Map<String, dynamic> centreJson) {
+    return Container(
+      height: 60,
+      decoration: BoxDecoration(
+        color: kPrimaryBlue,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () {
+          final idCentre = centreJson['id'] is int
+              ? centreJson['id'] as int
+              : int.tryParse(centreJson['id']?.toString() ?? '') ?? 0;
+          if (idCentre != 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CentreDetailPage(centreId: idCentre),
+              ),
+            );
+          }
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+          child: Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.business,
+                  color: kPrimaryBlue,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  (centreJson['nom'] ??
+                          (centreJson['utilisateur']?['nom'] ?? 'Centre'))
+                      .toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart'; // Pour les constantes de couleur
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/profile_service.dart';
 
 class ModifierProfilPage extends StatefulWidget {
   const ModifierProfilPage({super.key});
@@ -10,21 +13,122 @@ class ModifierProfilPage extends StatefulWidget {
 }
 
 class _ModifierProfilPageState extends State<ModifierProfilPage> {
+  final ProfileService _profileService = ProfileService();
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
   
   // Contrôleurs pour les champs
-  final _nomController = TextEditingController(text: 'Orange Digital Center');
-  final _aproposController = TextEditingController(text: 'Développement logiciel');
-  final _adresseController = TextEditingController(text: 'Bamako, Mali');
-  final _emailController = TextEditingController(text: 'contact@techmali.ml');
-  final _telephoneController = TextEditingController(text: '+223 79 12 45 67');
+  final _nomController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _adresseController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _telephoneController = TextEditingController();
   
-  String _companyImageUrl = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop&crop=center';
+  bool _isLoading = true;
+  bool _isSaving = false;
+  String _companyImageUrl = '';
+  Uint8List? _selectedImageBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    setState(() => _isLoading = true);
+    try {
+      final profile = await _profileService.getMe();
+      
+      setState(() {
+        _nomController.text = profile['nom'] ?? '';
+        _descriptionController.text = profile['description'] ?? '';
+        _adresseController.text = profile['adresse'] ?? '';
+        _emailController.text = profile['email'] ?? '';
+        _telephoneController.text = profile['telephone'] ?? '';
+        _companyImageUrl = profile['urlPhotoEntreprise'] ?? '';
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('❌ Erreur chargement profil: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _selectedImageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      print('❌ Erreur sélection image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la sélection de l\'image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      // 1. Upload photo si une nouvelle image est sélectionnée
+      if (_selectedImageBytes != null) {
+        await _profileService.updatePhoto(_selectedImageBytes!, _emailController.text);
+      }
+
+      // 2. Mettre à jour les informations du profil
+      // Note: Le backend devra implémenter l'endpoint de mise à jour du profil entreprise
+      // Pour l'instant, on simule juste un succès
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('✅ Profil modifié avec succès'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+        Navigator.pop(context, true); // Retourner true pour indiquer le succès
+      }
+    } catch (e) {
+      print('❌ Erreur sauvegarde profil: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
     _nomController.dispose();
-    _aproposController.dispose();
+    _descriptionController.dispose();
     _adresseController.dispose();
     _emailController.dispose();
     _telephoneController.dispose();
@@ -35,14 +139,16 @@ class _ModifierProfilPageState extends State<ModifierProfilPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          // Contenu principal
-          Positioned.fill(
-            top: 120,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-        child: Form(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                // Contenu principal
+                Positioned.fill(
+                  top: 120,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Form(
           key: _formKey,
           child: Column(
             children: [
@@ -63,37 +169,73 @@ class _ModifierProfilPageState extends State<ModifierProfilPage> {
                 ),
                 child: Column(
                   children: [
-                    // Image de profil
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.grey.shade300, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: Image.network(
-                          _companyImageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.blue.shade50,
-                              child: Icon(
-                                Icons.business,
-                                size: 50,
-                                color: Colors.blue.shade400,
+                    // Image de profil avec bouton modifier
+                    Stack(
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.grey.shade300, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
                               ),
-                            );
-                          },
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: _selectedImageBytes != null
+                                ? Image.memory(_selectedImageBytes!, fit: BoxFit.cover)
+                                : (_companyImageUrl.isEmpty
+                                    ? Container(
+                                        color: Colors.blue.shade50,
+                                        child: Icon(
+                                          Icons.business,
+                                          size: 50,
+                                          color: Colors.blue.shade400,
+                                        ),
+                                      )
+                                    : Image.network(
+                                        _companyImageUrl,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Container(
+                                            color: Colors.blue.shade50,
+                                            child: Icon(
+                                              Icons.business,
+                                              size: 50,
+                                              color: Colors.blue.shade400,
+                                            ),
+                                          );
+                                        },
+                                      )),
+                          ),
                         ),
-                      ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: kPrimaryBlue,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 30),
                     
@@ -111,14 +253,9 @@ class _ModifierProfilPageState extends State<ModifierProfilPage> {
                     const SizedBox(height: 20),
                     
                     _buildFormField(
-                      label: 'A propos *',
-                      controller: _aproposController,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'La description est requise';
-                        }
-                        return null;
-                      },
+                      label: 'Description',
+                      controller: _descriptionController,
+                      maxLines: 4,
                     ),
                     const SizedBox(height: 20),
                     
@@ -231,37 +368,35 @@ class _ModifierProfilPageState extends State<ModifierProfilPage> {
                         ],
                       ),
                       child: TextButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            // TODO: Sauvegarder les modifications
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Profil modifié avec succès'),
-                                backgroundColor: Colors.green,
+                        onPressed: _isSaving ? null : _saveProfile,
+                        child: _isSaving
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Enregistrer',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            );
-                            Navigator.pop(context);
-                          }
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Enregistrer',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ),
@@ -295,6 +430,7 @@ class _ModifierProfilPageState extends State<ModifierProfilPage> {
     required String label,
     required TextEditingController controller,
     TextInputType? keyboardType,
+    int? maxLines,
     String? Function(String?)? validator,
   }) {
     return Column(
@@ -324,6 +460,7 @@ class _ModifierProfilPageState extends State<ModifierProfilPage> {
           child: TextFormField(
             controller: controller,
             keyboardType: keyboardType,
+            maxLines: maxLines ?? 1,
             validator: validator,
             decoration: InputDecoration(
               border: OutlineInputBorder(

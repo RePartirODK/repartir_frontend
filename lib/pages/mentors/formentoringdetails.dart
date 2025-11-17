@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/mentor_service.dart';
 
 // --- Constantes de Style ---
 const Color primaryBlue = Color(0xFF3EB2FF); // Bleu foncé
@@ -31,11 +32,66 @@ class DemandeDetailsPage extends StatefulWidget {
 }
 
 class _DemandeDetailsPageState extends State<DemandeDetailsPage> {
-  
+  final MentorService _mentorService = MentorService();
+  bool _loading = false;
 
   // Couleurs spécifiques pour les actions
   final Color acceptColor = const Color(0xFF66BB6A); // Vert
   final Color rejectColor = const Color(0xFFEF9A9A); // Rouge pâle
+
+  Future<void> _accepterDemande(int mentoringId) async {
+    setState(() => _loading = true);
+    try {
+      await _mentorService.accepterMentoring(mentoringId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Demande acceptée avec succès !'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true); // Retour avec succès
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _refuserDemande(int mentoringId) async {
+    setState(() => _loading = true);
+    try {
+      await _mentorService.refuserMentoring(mentoringId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Demande refusée.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        Navigator.pop(context, true); // Retour avec succès
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,22 +99,30 @@ class _DemandeDetailsPageState extends State<DemandeDetailsPage> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-     
-      // 2. CORPS DE LA PAGE
-      body: SingleChildScrollView(
-        
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            // Grande Carte des Détails (Fond bleu clair)
-            CustomHeader(
-              title: "Mentoring",
-              showBackButton: true,
-            ),
-            Padding(padding:const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                         Container(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Contenu principal avec bordure arrondie
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(60),
+                  topRight: Radius.circular(60),
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 30, 16, 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    // Grande Carte des Détails (Fond bleu clair)
+                    Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: primaryBlue.withValues(alpha:0.1), // Couleur de fond bleu très clair
@@ -72,21 +136,21 @@ class _DemandeDetailsPageState extends State<DemandeDetailsPage> {
                     children: [
                       // Avatar
                       Container(
-                        width: screenWidth * 0.2,
-                        height: screenWidth * 0.2,
+                        width: 70,
+                        height: 70,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white,
                           border: Border.all(color: primaryBlue, width: 3),
                         ),
-                        child: const Icon(Icons.person, size: 40, color: Colors.blueGrey),
+                        child: const Icon(Icons.person, size: 35, color: Colors.blueGrey),
                       ),
                       const SizedBox(width: 15),
                       // Nom
                       Text(
                         widget.demande.nom,
-                        style: TextStyle(
-                          fontSize: screenWidth * 0.06,
+                        style: const TextStyle(
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -95,12 +159,12 @@ class _DemandeDetailsPageState extends State<DemandeDetailsPage> {
                   const SizedBox(height: 30),
 
                   // Objectif (Titre)
-                  Text(
+                  const Text(
                     'Objectif',
                     style: TextStyle(
-                      fontSize: screenWidth * 0.045,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: primaryBlue.withValues(alpha:0.8),
+                      color: Color(0xFF0D47A1),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -115,8 +179,8 @@ class _DemandeDetailsPageState extends State<DemandeDetailsPage> {
                     ),
                     child: Text(
                       widget.demande.objectif,
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.04,
+                      style: const TextStyle(
+                        fontSize: 14,
                         height: 1.5,
                       ),
                     ),
@@ -124,12 +188,12 @@ class _DemandeDetailsPageState extends State<DemandeDetailsPage> {
                   const SizedBox(height: 30),
 
                   // Formations Certifiées (Titre)
-                  Text(
+                  const Text(
                     'Formation Certifié',
                     style: TextStyle(
-                      fontSize: screenWidth * 0.045,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: primaryBlue.withValues(alpha:0.8),
+                      color: Color(0xFF0D47A1),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -207,16 +271,25 @@ class _DemandeDetailsPageState extends State<DemandeDetailsPage> {
               ),
             ),
             const SizedBox(height: 20), // Espace en bas
-          
-                ],
+                  ],
+                ),
               ),
             ),
-       
-          ],
-        ),
+          ),
+
+          // Header
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              title: "Mentoring",
+              showBackButton: true,
+              height: 120,
+            ),
+          ),
+        ],
       ),
-      
-      
     );
   }
 }

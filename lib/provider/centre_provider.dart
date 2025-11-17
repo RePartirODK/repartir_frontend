@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:repartir_frontend/models/request/centre_request.dart';
 import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/services/centre_service.dart';
 
@@ -32,7 +33,7 @@ class CentreNotifier extends StateNotifier<ResponseCentre?> {
   }
 
   /// Met à jour le profil du centre sur le backend et dans l'état local
-  Future<void> updateCentre(ResponseCentre updatedCentre) async {
+  Future<void> updateCentre(CentreRequest updatedCentre) async {
     try {
       final savedCentre = await _service.updateCentre(updatedCentre);
       state = savedCentre; // met à jour partout automatiquement

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart'; // Pour les constantes de couleur
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/services/offre_emploi_service.dart';
+import 'package:repartir_frontend/models/offre_emploi.dart';
 
 class StatistiquesPage extends StatefulWidget {
   const StatistiquesPage({super.key});
@@ -11,32 +14,74 @@ class StatistiquesPage extends StatefulWidget {
 }
 
 class _StatistiquesPageState extends State<StatistiquesPage> {
-  String _companyName = "TechPartner"; // Placeholder pour le nom de l'entreprise
-  int _selectedIndex = 1; // Index pour la barre de navigation
+  final OffreEmploiService _offreService = OffreEmploiService();
+  
+  bool _isLoading = true;
+  int _totalOffres = 0;
+  int _nombreCDI = 0;
+  int _nombreCDD = 0;
+  int _nombreStage = 0;
+  List<Map<String, dynamic>> _statistiquesMensuelles = [];
+  List<Map<String, dynamic>> _graphiqueData = [];
 
-  // Données des statistiques (placeholder)
-  final List<Map<String, dynamic>> _statistiquesMensuelles = [
-    {'mois': 'Janvier 2025', 'offres': 3},
-    {'mois': 'Février 2025', 'offres': 2},
-    {'mois': 'Mars 2025', 'offres': 5},
-    {'mois': 'Avril 2025', 'offres': 4},
-    {'mois': 'Mai 2025', 'offres': 9},
-    {'mois': 'Juin 2025', 'offres': 7},
-    {'mois': 'Août 2025', 'offres': 4},
-    {'mois': 'Octobre 2025', 'offres': 10},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadStatistiques();
+  }
 
-  // Données pour le graphique
-  final List<Map<String, dynamic>> _graphiqueData = [
-    {'mois': 'Jan', 'valeur': 3},
-    {'mois': 'Fév', 'valeur': 2},
-    {'mois': 'Mar', 'valeur': 5},
-    {'mois': 'Avr', 'valeur': 4},
-    {'mois': 'Mai', 'valeur': 9},
-    {'mois': 'Juin', 'valeur': 7},
-    {'mois': 'Août', 'valeur': 4},
-    {'mois': 'Oct', 'valeur': 10},
-  ];
+  Future<void> _loadStatistiques() async {
+    setState(() => _isLoading = true);
+    try {
+      final offres = await _offreService.getMesOffres();
+      
+      // Calculer les statistiques globales
+      _totalOffres = offres.length;
+      _nombreCDI = offres.where((o) => o.typeContrat == TypeContrat.CDI).length;
+      _nombreCDD = offres.where((o) => o.typeContrat == TypeContrat.CDD).length;
+      _nombreStage = offres.where((o) => o.typeContrat == TypeContrat.STAGE).length;
+      
+      // Calculer les statistiques mensuelles
+      _calculerStatistiquesMensuelles(offres);
+      
+      setState(() => _isLoading = false);
+    } catch (e) {
+      print('❌ Erreur chargement statistiques: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _calculerStatistiquesMensuelles(List<OffreEmploi> offres) {
+    // Grouper les offres par mois de création (basé sur dateDebut)
+    Map<String, int> offresByMonth = {};
+    
+    for (var offre in offres) {
+      final moisAnnee = DateFormat('yyyy-MM').format(offre.dateDebut);
+      offresByMonth[moisAnnee] = (offresByMonth[moisAnnee] ?? 0) + 1;
+    }
+    
+    // Trier par date et prendre les 12 derniers mois (ou moins si pas assez de données)
+    final sortedKeys = offresByMonth.keys.toList()..sort((a, b) => b.compareTo(a));
+    final last12Months = sortedKeys.take(12).toList()..sort();
+    
+    // Créer les données pour le graphique et la liste
+    _graphiqueData = last12Months.map((key) {
+      final date = DateTime.parse('$key-01');
+      return {
+        'mois': DateFormat('MMM').format(date),
+        'valeur': offresByMonth[key] ?? 0,
+      };
+    }).toList();
+    
+    _statistiquesMensuelles = last12Months.reversed.map((key) {
+      final date = DateTime.parse('$key-01');
+      return {
+        'mois': DateFormat('MMMM yyyy').format(date),
+        'offres': offresByMonth[key] ?? 0,
+        'date': date,
+      };
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,20 +106,28 @@ class _StatistiquesPageState extends State<StatistiquesPage> {
                   topRight: Radius.circular(60),
                 ),
               ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Section Évolution des offres publiées
-                    _buildEvolutionSection(),
-                    const SizedBox(height: 20),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Cartes de résumé
+                          _buildSummaryCards(),
+                          const SizedBox(height: 20),
 
-                    // Section Détail mensuel
-                    _buildDetailMensuelSection(),
-                  ],
-                ),
-              ),
+                          // Section Évolution des offres publiées
+                          if (_graphiqueData.isNotEmpty) ...[
+                            _buildEvolutionSection(),
+                            const SizedBox(height: 20),
+                          ],
+
+                          // Section Détail mensuel
+                          if (_statistiquesMensuelles.isNotEmpty) _buildDetailMensuelSection(),
+                        ],
+                      ),
+                    ),
             ),
           ),
           
@@ -88,30 +141,82 @@ class _StatistiquesPageState extends State<StatistiquesPage> {
     );
   }
 
-  // Contenu de l'en-tête
-  Widget _buildHeaderContent() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Row(
-        children: [
-          // Bouton retour
-          GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
-            },
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-                size: 20,
+  // Cartes de résumé des statistiques
+  Widget _buildSummaryCards() {
+    return Column(
+      children: [
+        // Première ligne : Total
+        _buildStatCard(
+          'Total offres',
+          _totalOffres.toString(),
+          Icons.work_outline,
+          Colors.blue,
+        ),
+        const SizedBox(height: 12),
+        // Deuxième ligne : Types de contrat
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                'CDI',
+                _nombreCDI.toString(),
+                Icons.badge_outlined,
+                Colors.green,
               ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                'CDD',
+                _nombreCDD.toString(),
+                Icons.description_outlined,
+                Colors.orange,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                'Stage',
+                _nombreStage.toString(),
+                Icons.school_outlined,
+                Colors.purple,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -141,60 +246,81 @@ class _StatistiquesPageState extends State<StatistiquesPage> {
           const SizedBox(height: 20),
           
           // Graphique en barres
-          SizedBox(
-            height: 200,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: _graphiqueData.map((data) {
-                final maxValue = _graphiqueData.map((e) => e['valeur'] as int).reduce((a, b) => a > b ? a : b);
-                final height = (data['valeur'] as int) / maxValue * 150;
-                
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // Valeur au-dessus de la barre
-                    Text(
-                      '${data['valeur']}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
+          _graphiqueData.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Text(
+                      'Aucune donnée disponible',
+                      style: TextStyle(color: Colors.grey.shade600),
                     ),
-                    const SizedBox(height: 4),
-                    
-                    // Barre
-                    Container(
-                      width: 30,
-                      height: height,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [
-                            Colors.blue.shade400,
-                            Colors.green.shade400,
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+                  ),
+                )
+              : SizedBox(
+                  height: 200,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: _graphiqueData.map((data) {
+                        final maxValue = _graphiqueData
+                            .map((e) => e['valeur'] as int)
+                            .reduce((a, b) => a > b ? a : b);
+                        final height = maxValue > 0 
+                            ? (data['valeur'] as int) / maxValue * 150 
+                            : 0.0;
+                        
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              // Valeur au-dessus de la barre
+                              Text(
+                                '${data['valeur']}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              
+                              // Barre
+                              Container(
+                                width: 35,
+                                height: height < 20 ? 20 : height,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: [
+                                      Colors.blue.shade400,
+                                      Colors.green.shade400,
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              
+                              // Label du mois
+                              Text(
+                                data['mois'],
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                     ),
-                    const SizedBox(height: 8),
-                    
-                    // Label du mois
-                    Text(
-                      data['mois'],
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
-            ),
-          ),
+                  ),
+                ),
         ],
       ),
     );
@@ -223,7 +349,19 @@ class _StatistiquesPageState extends State<StatistiquesPage> {
           const SizedBox(height: 15),
           
           // Liste des mois
-          ..._statistiquesMensuelles.map((stat) => _buildMoisCard(stat)).toList(),
+          _statistiquesMensuelles.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Text(
+                      'Aucune donnée mensuelle disponible',
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                  ),
+                )
+              : Column(
+                  children: _statistiquesMensuelles.map((stat) => _buildMoisCard(stat)).toList(),
+                ),
         ],
       ),
     );
@@ -270,24 +408,18 @@ class _StatistiquesPageState extends State<StatistiquesPage> {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: () {
-              // TODO: Naviguer vers le détail du mois
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Détail de ${stat['mois']}')),
-              );
-            },
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.list_alt,
-                color: Colors.blue.shade400,
-                size: 20,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${stat['offres']}',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade700,
               ),
             ),
           ),
@@ -296,52 +428,4 @@ class _StatistiquesPageState extends State<StatistiquesPage> {
     );
   }
 
-  // Barre de navigation inférieure
-  Widget _buildBottomNavigation() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      elevation: 5,
-      selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey.shade600,
-      selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-      currentIndex: _selectedIndex,
-      onTap: (index) {
-        setState(() {
-          _selectedIndex = index;
-        });
-        
-        if (index == 0) {
-          // Retour à l'accueil entreprise
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const AccueilEntreprisePage()),
-          );
-        } else if (index == 1) {
-          // TODO: Naviguer vers la page des offres
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Page des offres')),
-          );
-        } else if (index == 2) {
-          // TODO: Naviguer vers le profil entreprise
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profil entreprise')),
-          );
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Accueil',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.work_outline),
-          label: 'Offres',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          label: 'Profil',
-        ),
-      ],
-    );
-  }
 }

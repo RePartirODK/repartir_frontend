@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart'; // Pour les constantes de couleur
 import 'package:repartir_frontend/pages/entreprise/mes_offres_page.dart';
 import 'package:repartir_frontend/pages/entreprise/statistiques_page.dart';
@@ -6,10 +7,9 @@ import 'package:repartir_frontend/pages/entreprise/profil_entreprise_page.dart';
 import 'package:repartir_frontend/pages/entreprise/detail_offre_page.dart';
 import 'package:repartir_frontend/pages/entreprise/nouvelle_offre_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-
-// Définition des constantes de couleur si non déjà définies ailleurs (par exemple dans un fichier core/constants.dart)
-// const Color kPrimaryBlue = Color(0xFF2196F3); 
-// const Color kLightGreyBackground = Color(0xFFEEEEEE);
+import 'package:repartir_frontend/services/offre_emploi_service.dart';
+import 'package:repartir_frontend/services/profile_service.dart';
+import 'package:repartir_frontend/models/offre_emploi.dart';
 
 class AccueilEntreprisePage extends StatefulWidget {
   const AccueilEntreprisePage({super.key});
@@ -19,9 +19,44 @@ class AccueilEntreprisePage extends StatefulWidget {
 }
 
 class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
+  final OffreEmploiService _offreService = OffreEmploiService();
+  final ProfileService _profileService = ProfileService();
+  
   int _selectedIndex = 0;
-  String _companyName = "TechPartner"; // Placeholder pour le nom de l'entreprise
-  String _companyImageUrl = 'https://via.placeholder.com/150'; // Image de profil de l'entreprise
+  String _companyName = "Entreprise";
+  String _companyImageUrl = 'https://via.placeholder.com/150';
+  int _nombreOffres = 0;
+  bool _isLoading = true;
+  List<OffreEmploi> _offresRecentes = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final profile = await _profileService.getMe();
+      final offres = await _offreService.getMesOffres();
+      
+      // Trier les offres par ID décroissant (les plus récentes en premier) et prendre les 2 dernières
+      final offresTriees = List<OffreEmploi>.from(offres)..sort((a, b) => b.id.compareTo(a.id));
+      final deuxDernieres = offresTriees.take(2).toList();
+      
+      setState(() {
+        _companyName = profile['nom'] ?? 'Entreprise';
+        _companyImageUrl = profile['urlPhotoEntreprise'] ?? '';
+        _nombreOffres = offres.length;
+        _offresRecentes = deuxDernieres;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('❌ Erreur chargement données: $e');
+      setState(() => _isLoading = false);
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -114,8 +149,11 @@ class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
                         ),
                         CircleAvatar(
                           radius: 30,
-                          backgroundImage: NetworkImage(_companyImageUrl),
                           backgroundColor: Colors.grey.shade200,
+                          backgroundImage: _companyImageUrl.isNotEmpty ? NetworkImage(_companyImageUrl) : null,
+                          child: _companyImageUrl.isEmpty
+                              ? Icon(Icons.business, size: 30, color: Colors.grey.shade600)
+                              : null,
                         ),
                       ],
                     ),
@@ -166,62 +204,33 @@ class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 15),
-                  _buildRecentOfferCard(
-                    'Développeur Front-End',
-                    '01-10-2023 / 31-10-2023',
-                    'assets/images/logo_repartir.png',
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DetailOffrePage(
-                            offre: {
-                              'titre': 'Développeur Front-End',
-                              'type': 'Stage',
-                              'entreprise': 'TechPartner',
-                              'lieu': 'Bamako - Zone Industrielle',
-                              'datePublication': '01-10-2023',
-                              'domaine': 'Informatique',
-                              'description': 'Nous recherchons un développeur front-end passionné pour rejoindre notre équipe et participer au développement de nos applications web modernes.',
-                              'competences': '• Maîtrise de HTML, CSS et JavaScript\n• Connaissance de React ou Vue.js\n• Expérience avec les outils de développement modernes',
-                              'duree': '3 mois',
-                              'remuneration': '150,000 FCFA/mois',
-                              'dateDebut': '01-10-2023',
-                            },
-                          ),
+                  
+                  // Afficher les offres récentes ou un message si aucune offre
+                  if (_offresRecentes.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          children: [
+                            Icon(Icons.work_off_outlined, size: 50, color: Colors.grey.shade400),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Aucune offre publiée',
+                              style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+                            ),
+                          ],
                         ),
+                      ),
+                    )
+                  else
+                    ..._offresRecentes.map((offre) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 15),
+                        child: _buildRecentOfferCardFromOffre(offre),
                       );
-                    },
-                  ),
-                  const SizedBox(height: 15),
-                  _buildRecentOfferCard(
-                    'Développeur Back-End',
-                    '15-09-2023 / 15-10-2023',
-                    'assets/images/logo_repartir.png',
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DetailOffrePage(
-                            offre: {
-                              'titre': 'Développeur Back-End',
-                              'type': 'CDI',
-                              'entreprise': 'TechPartner',
-                              'lieu': 'Bamako - Zone Industrielle',
-                              'datePublication': '15-09-2023',
-                              'domaine': 'Informatique',
-                              'description': 'Nous recherchons un développeur back-end expérimenté pour développer et maintenir nos APIs et systèmes de base de données.',
-                              'competences': '• Maîtrise de Node.js ou Python\n• Connaissance des bases de données (MongoDB, PostgreSQL)\n• Expérience avec les APIs REST',
-                              'duree': 'Contrat à durée indéterminée',
-                              'remuneration': '300,000 FCFA/mois',
-                              'dateDebut': '15-10-2023',
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                          const SizedBox(height: 16), // Padding bottom
+                    }).toList(),
+                  
+                  const SizedBox(height: 16), // Padding bottom
                 ],
                       ),
               ),
@@ -340,9 +349,19 @@ class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
     );
   }
 
-  Widget _buildRecentOfferCard(String title, String dateRange, String logoPath, VoidCallback onTap) {
+  Widget _buildRecentOfferCardFromOffre(OffreEmploi offre) {
+    final dateRange = '${DateFormat('dd/MM/yy').format(offre.dateDebut)} - ${DateFormat('dd/MM/yy').format(offre.dateFin)}';
+    final isActive = offre.isActive;
+    
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailOffrePage(offre: offre.toDetailMap()),
+          ),
+        );
+      },
       child: Container(
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
@@ -358,14 +377,14 @@ class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
         ),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                logoPath,
-                height: 50,
-                width: 50,
-                fit: BoxFit.contain,
-              ),
+            // Logo de l'entreprise
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: Colors.grey.shade200,
+              backgroundImage: _companyImageUrl.isNotEmpty ? NetworkImage(_companyImageUrl) : null,
+              child: _companyImageUrl.isEmpty
+                  ? Icon(Icons.business, size: 25, color: Colors.grey.shade600)
+                  : null,
             ),
             const SizedBox(width: 15),
             Expanded(
@@ -373,27 +392,43 @@ class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    offre.titre,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 5),
                   Row(
                     children: [
-                      Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey.shade600),
+                      Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey.shade600),
                       const SizedBox(width: 5),
                       Text(
                         dateRange,
-                        style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 4),
+                  // Badge statut
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isActive ? Colors.green.shade100 : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      isActive ? 'Active' : 'Expirée',
+                      style: TextStyle(
+                        color: isActive ? Colors.green.shade700 : Colors.grey.shade700,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            TextButton(
-              onPressed: onTap,
-              child: const Text('Voir détails', style: TextStyle(color: Colors.blue, fontSize: 13)),
-            ),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
           ],
         ),
       ),
