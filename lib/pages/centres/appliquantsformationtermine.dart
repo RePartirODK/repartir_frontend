@@ -186,12 +186,7 @@ class _ApplicantsFormationTerminePageState
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 // Badge statique (page des formations terminées)
-                _buildActionButton(
-                  'Terminé',
-                  onTap: () {},
-                  isPrimary: true,
-                ),
-                const SizedBox(height: 5),
+              
                 _buildActionButton(
                   'Voir',
                   onTap: () {
@@ -201,6 +196,32 @@ class _ApplicantsFormationTerminePageState
                         builder: (context) => ApplicantProfilePage(inscription: insc),
                       ),
                     );
+                  },
+                  isPrimary: false,
+                ),
+              
+                const SizedBox(height: 5),
+                 _buildActionButton(
+                  'Certifié',
+                  onTap: () async {
+                    try {
+                      await _centreService.certifierInscription(insc.id);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Badge attribué avec succès')),
+                        );
+                        await _loadApplicantsForFormation(); // auto-refresh
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Erreur attribution badge: ${e.toString().replaceAll('Exception: ', '')}'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
                   },
                   isPrimary: false,
                 ),

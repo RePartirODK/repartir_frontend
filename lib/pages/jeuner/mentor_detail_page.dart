@@ -43,7 +43,7 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
   bool _loading = false;
   String? _error;
   Map<String, dynamic>? _mentorDetails;
-  
+
   @override
   void initState() {
     super.initState();
@@ -57,12 +57,12 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
 
   Future<void> _fetchMentorDetails() async {
     if (widget.mentor.id == null) return;
-    
+
     setState(() {
       _loading = true;
       _error = null;
     });
-    
+
     try {
       _mentorDetails = await _mentors.getById(widget.mentor.id!);
     } catch (e) {
@@ -82,25 +82,27 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
       final u = _mentorDetails!['utilisateur'] ?? {};
       final prenom = (u['prenom'] ?? '').toString().trim();
       final nom = (u['nom'] ?? '').toString().trim();
-      final name = prenom.isNotEmpty || nom.isNotEmpty 
-          ? '$prenom $nom'.trim() 
+      final name = prenom.isNotEmpty || nom.isNotEmpty
+          ? '$prenom $nom'.trim()
           : widget.mentor.name;
-      
+
       // Récupérer l'expérience - essayer plusieurs variantes
-      dynamic anneesExp = _mentorDetails!['anneesExperience'] ?? 
-                         _mentorDetails!['anneeExperience'] ?? 
-                         _mentorDetails!['annees_experience'] ??
-                         _mentorDetails!['annee_experience'] ??
-                         _mentorDetails!['yearsOfExperience'] ??
-                         _mentorDetails!['years_of_experience'] ??
-                         _mentorDetails!['experience'] ??
-                         u['anneesExperience'] ??
-                         u['anneeExperience'];
-      
+      dynamic anneesExp =
+          _mentorDetails!['anneesExperience'] ??
+          _mentorDetails!['anneeExperience'] ??
+          _mentorDetails!['annees_experience'] ??
+          _mentorDetails!['annee_experience'] ??
+          _mentorDetails!['yearsOfExperience'] ??
+          _mentorDetails!['years_of_experience'] ??
+          _mentorDetails!['experience'] ??
+          u['anneesExperience'] ??
+          u['anneeExperience'];
+
       String experience = widget.mentor.experience;
       if (anneesExp != null) {
         if (anneesExp is int || anneesExp is double) {
-          experience = '${anneesExp.toString().split('.').first} ans d\'expérience';
+          experience =
+              '${anneesExp.toString().split('.').first} ans d\'expérience';
         } else if (anneesExp is String) {
           final expNum = int.tryParse(anneesExp);
           if (expNum != null) {
@@ -110,13 +112,27 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
           }
         }
       }
-      
+
       return Mentor(
         name: name,
-        specialty: (_mentorDetails!['specialite'] ?? _mentorDetails!['domaine'] ?? _mentorDetails!['profession'] ?? widget.mentor.specialty).toString(),
+        specialty:
+            (_mentorDetails!['specialite'] ??
+                    _mentorDetails!['domaine'] ??
+                    _mentorDetails!['profession'] ??
+                    widget.mentor.specialty)
+                .toString(),
         experience: experience,
-        imageUrl: (u['urlPhoto'] ?? _mentorDetails!['urlPhoto'] ?? widget.mentor.imageUrl).toString(),
-        about: (_mentorDetails!['description'] ?? _mentorDetails!['a_propos'] ?? _mentorDetails!['aPropos'] ?? widget.mentor.about).toString(),
+        imageUrl:
+            (u['urlPhoto'] ??
+                    _mentorDetails!['urlPhoto'] ??
+                    widget.mentor.imageUrl)
+                .toString(),
+        about:
+            (_mentorDetails!['description'] ??
+                    _mentorDetails!['a_propos'] ??
+                    _mentorDetails!['aPropos'] ??
+                    widget.mentor.about)
+                .toString(),
         id: widget.mentor.id,
       );
     }
@@ -129,12 +145,16 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
     if (widget.mentor.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Impossible d\'envoyer la demande. ID du mentor manquant.'),
+          content: Text(
+            'Impossible d\'envoyer la demande. Une erreur est survenue.',
+          ),
           backgroundColor: Colors.red,
         ),
       );
-      return;
-    }
+      
+      debugPrint("Impossible d'envoyer la demande. Id du mentor manquant.");
+      return;}
+    
 
     // Afficher le dialogue de saisie
     final result = await showDialog<Map<String, String>>(
@@ -146,16 +166,18 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
 
     // Envoyer la demande avec les données saisies
     setState(() => _loading = true);
-    
+
     try {
       // Récupérer l'ID du jeune connecté
       final me = await _profile.getMe();
       final jeuneId = me['id'] as int;
-      
-      print('📨 Création du mentoring: Mentor ${widget.mentor.id}, Jeune $jeuneId');
+
+      print(
+        '📨 Création du mentoring: Mentor ${widget.mentor.id}, Jeune $jeuneId',
+      );
       print('📨 Description: ${result['description']}');
       print('📨 Objectif: ${result['objectif']}');
-      
+
       // Créer le mentoring avec les données saisies
       final mentoringResult = await _mentorings.createMentoring(
         widget.mentor.id!,
@@ -163,9 +185,9 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
         result['description'],
         objectif: result['objectif'],
       );
-      
+
       print('✅ Mentoring créé: $mentoringResult');
-      
+
       // Afficher le dialogue de succès
       if (mounted) {
         _showSuccessDialog();
@@ -175,7 +197,9 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur: ${e.toString().replaceAll('Exception: ', '')}'),
+            content: Text(
+              'Erreur: ${e.toString().replaceAll('Exception: ', '')}',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
@@ -208,17 +232,15 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
           children: [
             const Text(
               'Décrivez votre demande',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: descriptionController,
               maxLines: 4,
               decoration: InputDecoration(
-                hintText: 'Exemple: Bonjour, je souhaiterais bénéficier de votre accompagnement pour...',
+                hintText:
+                    'Exemple: Bonjour, je souhaiterais bénéficier de votre accompagnement pour...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -229,10 +251,7 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
             const SizedBox(height: 20),
             const Text(
               'Votre objectif',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -300,7 +319,11 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle_outline, color: Colors.green, size: 60),
+              const Icon(
+                Icons.check_circle_outline,
+                color: Colors.green,
+                size: 60,
+              ),
               const SizedBox(height: 16),
               const Text(
                 'Demande envoyée',
@@ -350,100 +373,120 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _error != null
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Text(
-                            _error!,
-                            style: const TextStyle(color: Colors.red),
-                            textAlign: TextAlign.center,
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Text(
+                        _error!,
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  )
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // --- CARTE D'INFORMATION DU MENTOR ---
+                        _buildMentorInfoCard(kPrimaryBlue, mentorToDisplay),
+                        const SizedBox(height: 24),
+
+                        // --- SECTION "À PROPOS" ---
+                        const Text(
+                          'À propos du mentor',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      )
-                    : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // --- CARTE D'INFORMATION DU MENTOR ---
-                            _buildMentorInfoCard(kPrimaryBlue, mentorToDisplay),
-                  const SizedBox(height: 24),
-
-                  // --- SECTION "À PROPOS" ---
-                  const Text(
-                    'À propos du mentor',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                              mentorToDisplay.about,
-                    style: TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.5),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // --- CHAMP "OBJECTIF" ---
-                  const Text(
-                    'Objectif',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Décrivez votre objectif principal...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // --- CHAMP "DESCRIPTION" ---
-                  const Text(
-                    'Description',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Donnez plus de détails sur votre projet ou vos attentes...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    maxLines: 4,
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // --- BOUTON DE DEMANDE ---
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _demanderMentorat,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPrimaryBlue,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 8),
+                        Text(
+                          mentorToDisplay.about,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.grey[700],
+                            height: 1.5,
+                          ),
                         ),
-                      ),
-                      child: const Text(
-                        'Demander à être mentoré par ce mentor',
-                        style: TextStyle(fontSize: 16, color: Colors.white),
-                      ),
+                        const SizedBox(height: 24),
+
+                        // --- CHAMP "OBJECTIF" ---
+                        const Text(
+                          'Objectif',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Décrivez votre objectif principal...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                          maxLines: 2,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // --- CHAMP "DESCRIPTION" ---
+                        const Text(
+                          'Description',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          decoration: InputDecoration(
+                            hintText:
+                                'Donnez plus de détails sur votre projet ou vos attentes...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: 32),
+
+                        // --- BOUTON DE DEMANDE ---
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: ElevatedButton(
+                            onPressed: _loading ? null : _demanderMentorat,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrimaryBlue,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Demander à être mentoré par ce mentor',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      
+                      
+                      
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
           ),
-          
+
           // Header avec bouton retour et titre
           Positioned(
             top: 0,
@@ -465,7 +508,9 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
   Widget _buildMentorInfoCard(Color color, Mentor mentor) {
     return Container(
       width: double.infinity, // Occupe toute la largeur
-      padding: const EdgeInsets.symmetric(vertical: 24), // Ajustement du padding
+      padding: const EdgeInsets.symmetric(
+        vertical: 24,
+      ), // Ajustement du padding
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(20),
@@ -475,23 +520,33 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
           CircleAvatar(
             radius: 50,
             backgroundColor: Colors.white.withOpacity(0.9),
-            backgroundImage: mentor.imageUrl.isNotEmpty && 
-                            mentor.imageUrl != 'https://placehold.co/150/EFEFEF/333333?text=M' &&
-                            !mentor.imageUrl.contains('placeholder')
+            backgroundImage:
+                mentor.imageUrl.isNotEmpty &&
+                    mentor.imageUrl !=
+                        'https://placehold.co/150/EFEFEF/333333?text=M' &&
+                    !mentor.imageUrl.contains('placeholder')
                 ? NetworkImage(mentor.imageUrl)
                 : null,
-            onBackgroundImageError: mentor.imageUrl.isNotEmpty && 
-                                   mentor.imageUrl != 'https://placehold.co/150/EFEFEF/333333?text=M' &&
-                                   !mentor.imageUrl.contains('placeholder')
+            onBackgroundImageError:
+                mentor.imageUrl.isNotEmpty &&
+                    mentor.imageUrl !=
+                        'https://placehold.co/150/EFEFEF/333333?text=M' &&
+                    !mentor.imageUrl.contains('placeholder')
                 ? (_, __) {}
                 : null,
-            child: mentor.imageUrl.isEmpty || 
-                   mentor.imageUrl == 'https://placehold.co/150/EFEFEF/333333?text=M' ||
-                   mentor.imageUrl.contains('placeholder')
+            child:
+                mentor.imageUrl.isEmpty ||
+                    mentor.imageUrl ==
+                        'https://placehold.co/150/EFEFEF/333333?text=M' ||
+                    mentor.imageUrl.contains('placeholder')
                 ? CircleAvatar(
-              radius: 46,
+                    radius: 46,
                     backgroundColor: Colors.blue[100]!,
-                    child: const Icon(Icons.person, size: 40, color: Colors.blue),
+                    child: const Icon(
+                      Icons.person,
+                      size: 40,
+                      color: Colors.blue,
+                    ),
                   )
                 : null,
           ),
@@ -506,22 +561,22 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
           ),
           const SizedBox(height: 8),
           if (mentor.specialty.isNotEmpty && mentor.specialty != '—')
-          Text(
-            mentor.specialty,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white.withOpacity(0.9),
+            Text(
+              mentor.specialty,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white.withOpacity(0.9),
+              ),
             ),
-          ),
           if (mentor.experience.isNotEmpty && mentor.experience != '—') ...[
-          const SizedBox(height: 4),
-          Text(
-            mentor.experience,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white.withOpacity(0.8),
+            const SizedBox(height: 4),
+            Text(
+              mentor.experience,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.8),
+              ),
             ),
-          ),
           ],
         ],
       ),

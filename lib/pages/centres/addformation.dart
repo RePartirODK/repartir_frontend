@@ -108,9 +108,11 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
       },
     );
     if (picked != null) {
-      setState(() {
-        controller.text = "${picked.day}/${picked.month}/${picked.year}";
-      });
+         if (mounted) {
+        setState(() {
+          controller.text = "${picked.day}/${picked.month}/${picked.year}";
+        });
+      }
     }
   }
 
@@ -126,14 +128,14 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
     }
 
     try {
-      setState(() => _isSubmitting = true);
+       if (mounted) setState(() => _isSubmitting = true);
 
       // Vérification logique des dates
       final DateTime dateDebut = dateFormat.parse(_startDateController.text);
       final DateTime dateFin = dateFormat.parse(_endDateController.text);
 
       if (dateFin.isBefore(dateDebut)) {
-        setState(() => _isSubmitting = false);
+        if (mounted) setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -191,7 +193,7 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
         _placesController.clear();
         _domainController.clear();
         _urlController.clear();
-        setState(() => _selectedFormat = null);
+         if (mounted) setState(() => _selectedFormat = null);
         // ignore: use_build_context_synchronously
         Navigator.of(context).pop(nouvelleFormation);
       }
@@ -239,14 +241,18 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
         final libelle = (d['libelle'] ?? '').toString();
         if (libelle.isNotEmpty) options.add(libelle);
       }
-      setState(() {
-        _domaineOptions = options;
-      });
+        if (mounted) {
+        setState(() {
+          _domaineOptions = options;
+        });
+      }
     } catch (e) {
       // Optionnel: garder la zone vide sans bloquer la page
-      setState(() {
-        _domaineOptions = [];
-      });
+      if (mounted) {
+        setState(() {
+          _domaineOptions = [];
+        });
+      }
     }
   }
 
