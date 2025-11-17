@@ -47,10 +47,25 @@ class ParrainagesService {
     return data.map((e) => e as Map<String, dynamic>).toList();
   }
 
-  /// Accepter une demande de parrainage (PARRAIN uniquement)
+
+    /// Accepter une demande de parrainage (PARRAIN uniquement)
   Future<Map<String, dynamic>> accepterDemande(int idParrainage, int idParrain) async {
     final res = await _api.post('/parrainages/$idParrainage/accepter/$idParrain');
     return _api.decodeJson<Map<String, dynamic>>(res, (d) => d as Map<String, dynamic>);
+  }
+// ... existing code ...
+  /// Lister les parrainages acceptés pour le parrain connecté (PARRAIN uniquement)
+  Future<List<Map<String, dynamic>>> listerAcceptesPourMoi() async {
+    final res = await _api.get('/parrainages/me/acceptes');
+    final List data = _api.decodeJson<List<dynamic>>(res, (d) => d as List<dynamic>);
+    return data.map((e) => e as Map<String, dynamic>).toList();
+  }
+
+  /// Lister les jeunes déjà parrainés pour le parrain connecté (PARRAIN uniquement)
+  Future<List<Map<String, dynamic>>> jeunesParrainesPourMoi() async {
+    final res = await _api.get('/parrainages/me/jeunes');
+    final List data = _api.decodeJson<List<dynamic>>(res, (d) => d as List<dynamic>);
+    return data.map((e) => e as Map<String, dynamic>).toList();
   }
 }
 

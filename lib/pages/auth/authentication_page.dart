@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/reset_password_page.dart';
 import 'package:repartir_frontend/pages/auth/role_selection_page.dart';
 import 'package:repartir_frontend/pages/centres/navcentre.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
@@ -39,6 +40,7 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
       if (loginResponse != null) {
         final roles = loginResponse.roles;
         final userRole = roles.isNotEmpty ? roles.first : '';
+        debugPrint("----------role---------------$roles");
         switch (userRole) {
           case 'ROLE_ENTREPRISE':
             Navigator.pushAndRemoveUntil(
@@ -174,7 +176,10 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: () {
-                                // TODO: Implement forgot password logic
+                                Navigator.push(
+  context,
+  MaterialPageRoute(builder: (context) => const ResetPasswordPage()),
+);
                               },
                               child: const Text(
                                 'Mot de passe oublié?',

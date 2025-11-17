@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/models/request/entreprise_request.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
+import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/services/entreprise_service.dart'; // Added import for AuthenticationPage
 
 class EntrepriseSignupPage extends StatefulWidget {
@@ -13,7 +14,9 @@ class EntrepriseSignupPage extends StatefulWidget {
 class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  final Set<String> _selectedDomains = {};
+  final Set<int> _selectedDomainIds = {};
+  final List<Map<String, dynamic>> _domains = [];
+  bool _loadingDomains = false;
   TextEditingController adresseController = TextEditingController();
   TextEditingController nomController = TextEditingController();
   TextEditingController emailController = TextEditingController();
@@ -23,20 +26,6 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
   TextEditingController agrementController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final entrepriseService = EntrepriseService();
-   final GlobalKey<FormFieldState<String>> _confirmFieldKey =
-      GlobalKey<FormFieldState<String>>();
-  final List<String> _domains = [
-    'Technologie',
-    'Marketing',
-    'Finance',
-    'Vente',
-    'Ressources Humaines',
-    'Production',
-    'Logistique',
-    'Service Client',
-    'Design',
-    'Recherche & Développement',
-  ];
 
   @override
   void initState() {
@@ -46,6 +35,25 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
         _currentPage = _pageController.page?.round() ?? 0;
       });
     });
+    _loadDomaines();
+  }
+
+  Future<void> _loadDomaines() async {
+    setState(() => _loadingDomains = true);
+    try {
+      final domaines = await entrepriseService.getDomaines();
+      setState(() {
+        _domains.clear();
+        _domains.addAll(domaines);
+      });
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des domaines: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erreur lors du chargement des domaines')),
+      );
+    } finally {
+      setState(() => _loadingDomains = false);
+    }
   }
 
   @override
@@ -84,23 +92,38 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
       telephone: telephoneController.text.trim(),
       adresse: adresseController.text.trim(),
       agrement: agrementController.text.trim(),
-      // domaines: _selectedDomains.toList(),
+      domaineIds: _selectedDomainIds.toList(),
     );
     debugPrint(entrepriseRequest.toJson().toString());
     //on affiche un loader
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
     try {
       //appel de l'api
-      await entrepriseService.register(entrepriseRequest);
+      final user = await entrepriseService.register(entrepriseRequest);
       // ignore: use_build_context_synchronously
       Navigator.of(context).pop(); // enlever le loader
 
+      // Associer les domaines si l'entreprise a été créée avec succès
+      if (user != null && _selectedDomainIds.isNotEmpty) {
+        await entrepriseService.associateDomaines(
+          user.id,
+          _selectedDomainIds.toList(),
+        );
+      }
       //affichage de la modal de succes
       _showSuccessDialog();
+
+            // Redirection vers AuthenticationPage
+      Navigator.pushAndRemoveUntil(
+        // ignore: use_build_context_synchronously
+        context,
+        MaterialPageRoute(builder: (context) => AccueilPage()),
+        (Route<dynamic> route) => false,
+      );
     } catch (e) {
       // Fermer le loader
       // ignore: use_build_context_synchronously
@@ -218,28 +241,22 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
             icon: Icons.lock_reset_outlined,
             obscureText: true,
             controller: confirmeMotDePasseController,
-            
+
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Veuillez confirmer le mot de passe';
               }
-               if (value != motDePasseController.text) {
-      return 'Les mots de passe ne correspondent pas';
-    }
+              if (value != motDePasseController.text) {
+                return 'Les mots de passe ne correspondent pas';
+              }
               // Here you would typically compare with the original password
               return null;
             },
             onEditingComplete: () {
-            setState(() {
-      
-    });
-
-    
-    FocusScope.of(context).unfocus();
-               
+              setState(() {});
+              FocusScope.of(context).unfocus();
             },
           ),
-          
           const SizedBox(height: 20),
           _buildInputField(
             label: 'Numéro d\'agrément',
@@ -267,21 +284,21 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
           ),
           const SizedBox(height: 40),
           _buildNavigationButton("Suivant", () {
-             if (_formKey.currentState?.validate() == true) {
-                _pageController.nextPage(
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeInOut,
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Veuillez remplir correctement tous les champs obligatoires.",
-                    ),
-                    backgroundColor: Colors.redAccent,
+            if (_formKey.currentState?.validate() == true) {
+              _pageController.nextPage(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut,
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    "Veuillez remplir correctement tous les champs obligatoires.",
                   ),
-                );
-              }
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
+            }
           }),
         ],
       ),
@@ -295,27 +312,83 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader("Vos domaines d'activité", "Étape 2 sur 2"),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 15,
-              childAspectRatio: 1.2,
+          if (_loadingDomains)
+            const Center(child: CircularProgressIndicator())
+          else if (_domains.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: Text(
+                'Aucun domaine disponible.',
+                style: TextStyle(color: Colors.black54),
+              ),
+            )
+          else
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 15,
+                mainAxisSpacing: 15,
+                childAspectRatio: 1.2,
+              ),
+              itemCount: _domains.length,
+              itemBuilder: (context, index) {
+                final domain = _domains[index];
+                final domaineId = domain['id'] as int;
+                final libelle = domain['libelle'] as String? ?? 'Domaine';
+                final isSelected = _selectedDomainIds.contains(domaineId);
+                return _buildDomainCard(libelle, isSelected, domaineId);
+              },
             ),
-            itemCount: _domains.length,
-            itemBuilder: (context, index) {
-              final domain = _domains[index];
-              final isSelected = _selectedDomains.contains(domain);
-              return _buildDomainCard(domain, isSelected);
-            },
-          ),
           const SizedBox(height: 40),
           _buildNavigationButton("S'inscrire", () {
             _submitInscription();
           }),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDomainCard(String domain, bool isSelected, int domaineId) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (isSelected) {
+            _selectedDomainIds.remove(domaineId);
+          } else {
+            _selectedDomainIds.add(domaineId);
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue : Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey.shade200,
+          ),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: Colors.blue.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            domain,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -434,7 +507,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
       validator: validator,
       controller: controller,
       onEditingComplete: onEditingComplete,
-      autovalidateMode: AutovalidateMode.onUserInteraction, 
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.grey.shade600),
@@ -451,49 +524,6 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.blue),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDomainCard(String domain, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (isSelected) {
-            _selectedDomains.remove(domain);
-          } else {
-            _selectedDomains.add(domain);
-          }
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: isSelected ? Colors.blue : Colors.grey.shade200,
-          ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: Colors.blue.withValues(alpha: 0.3),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            domain,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black87,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
         ),
       ),
     );

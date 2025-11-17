@@ -10,7 +10,7 @@ import 'package:repartir_frontend/pages/mentors/navbarmentor.dart';
 import 'package:repartir_frontend/pages/onboarding/onboarding_page.dart';
 import 'package:repartir_frontend/pages/parrains/nav.dart';
 import 'package:repartir_frontend/pages/shared/splash_screen.dart';
-
+import 'package:flutter_localizations/flutter_localizations.dart';
 // NavigatorKey global pour la redirection automatique
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -72,8 +72,6 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey, // ← Ajouter le navigatorKey global
       title: 'RePartir',
       debugShowCheckedModeBanner: false,
-      
-      // Configuration de la localisation en français
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -98,6 +96,7 @@ class MyApp extends StatelessWidget {
   '/homeparrain': (context) => NavHomePage(),
   '/homejeune': (context) => AccueilPage(),
   '/homeentreprise': (context) => const AccueilEntreprisePage(),
+  
       },
     );
   }

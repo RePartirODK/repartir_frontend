@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:repartir_frontend/pages/centres/appliquants.dart';
 import 'package:repartir_frontend/pages/mentors/accueilmentor.dart';
 import 'package:repartir_frontend/pages/mentors/custom.dart';
 import 'package:repartir_frontend/pages/mentors/formentoring.dart';
 import 'package:repartir_frontend/pages/mentors/lesmentores.dart';
 import 'package:repartir_frontend/pages/mentors/message.dart';
-import 'package:repartir_frontend/pages/parrains/dons.dart';
-import 'package:repartir_frontend/pages/parrains/profil.dart';
+import 'package:repartir_frontend/pages/mentors/profile_mentor.dart';
 
 // Couleurs
 const Color primaryBlue = Color(0xFF2196F3);
@@ -28,7 +26,7 @@ class _NavHomeMentorPageState extends State<NavHomeMentorPage> {
   void initState() {
     super.initState();
     _pages = [MentorHomePage(), MentoresPage(), MentoringPage(), MentorChatListPage(),
-    ProfilePage()];
+    ProfileMentorPage()];
   }
 
   void _onItemTapped(int index) {

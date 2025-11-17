@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:repartir_frontend/components/password_change_dialog.dart';
+import 'package:repartir_frontend/services/utilisateur_service.dart';
 import 'edit_profil_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
@@ -15,7 +17,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final ProfileService _profile = ProfileService();
   final AuthService _auth = AuthService();
-
+  final utilisateurService = UtilisateurService();
   bool _loading = true;
   String? _error;
   String name = "";
@@ -99,143 +101,183 @@ class _ProfilePageState extends State<ProfilePage> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _error != null
-                    ? Center(child: Text(_error!))
-                    : SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Avatar avec bouton caméra pour éditer
-                  GestureDetector(
-                    onTap: () => _navigateToEditProfile(context),
-                    child: Stack(
+                ? Center(child: Text(_error!))
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.white,
-                    child: CircleAvatar(
-                      radius: 48,
-                            backgroundColor: Colors.grey[200],
-                            backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
-                                ? NetworkImage(photoUrl!)
-                                : null,
-                            onBackgroundImageError: photoUrl != null && photoUrl!.isNotEmpty
-                                ? (_, __) {}
-                                : null,
-                            child: photoUrl == null || photoUrl!.isEmpty
-                                ? const Icon(Icons.person, size: 48, color: Colors.grey)
-                                : null,
+                        // Avatar avec bouton caméra pour éditer
+                        GestureDetector(
+                          onTap: () => _navigateToEditProfile(context),
+                          child: Stack(
+                            children: [
+                              CircleAvatar(
+                                radius: 50,
+                                backgroundColor: Colors.white,
+                                child: CircleAvatar(
+                                  radius: 48,
+                                  backgroundColor: Colors.grey[200],
+                                  backgroundImage:
+                                      photoUrl != null && photoUrl!.isNotEmpty
+                                      ? NetworkImage(photoUrl!)
+                                      : null,
+                                  onBackgroundImageError:
+                                      photoUrl != null && photoUrl!.isNotEmpty
+                                      ? (_, __) {}
+                                      : null,
+                                  child: photoUrl == null || photoUrl!.isEmpty
+                                      ? const Icon(
+                                          Icons.person,
+                                          size: 48,
+                                          color: Colors.grey,
+                                        )
+                                      : null,
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: CircleAvatar(
+                                  backgroundColor: const Color(0xFF3EB2FF),
+                                  radius: 18,
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    size: 20.0,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: CircleAvatar(
-                            backgroundColor: const Color(0xFF3EB2FF),
-                            radius: 18,
-                            child: const Icon(
-                              Icons.camera_alt,
-                              size: 20.0,
-                              color: Colors.white,
+                        const SizedBox(height: 20),
+
+                        // Nom
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // À propos de moi
+                        Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "À propos de moi",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  about.isEmpty ? '—' : about,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Informations de contact
+                        Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Contact Information",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.email,
+                                    color: Color(0xFF3EB2FF),
+                                  ),
+                                  title: Text(email.isEmpty ? '—' : email),
+                                ),
+                                const Divider(),
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.phone,
+                                    color: Color(0xFF3EB2FF),
+                                  ),
+                                  title: Text(phone.isEmpty ? '—' : phone),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        //Changer son mot de passe de passe
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              debugPrint('Naviguer vers changer mot de passe');
+                              showPasswordChangeDialog(context);
+                            },
+                            icon: const Icon(Icons.logout, color: Colors.white),
+                            label: const Text(
+                              'Changer mot de passe',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white60,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        // Bouton de déconnexion
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _handleLogout,
+                            icon: const Icon(Icons.logout, color: Colors.white),
+                            label: const Text(
+                              'Déconnexion',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  
-                  // Nom
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                  const SizedBox(height: 20),
-                  
-                  // À propos de moi
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "À propos de moi",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(about.isEmpty ? '—' : about, style: const TextStyle(fontSize: 16)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // Informations de contact
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Contact Information",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          ListTile(
-                            leading: const Icon(Icons.email, color: Color(0xFF3EB2FF)),
-                            title: Text(email.isEmpty ? '—' : email),
-                          ),
-                          const Divider(),
-                          ListTile(
-                            leading: const Icon(Icons.phone, color: Color(0xFF3EB2FF)),
-                            title: Text(phone.isEmpty ? '—' : phone),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  
-                  // Bouton de déconnexion
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _handleLogout,
-                      icon: const Icon(Icons.logout, color: Colors.white),
-                      label: const Text('Déconnexion', style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
-          
+
           // Header avec titre et bouton d'édition
           Positioned(
             top: 0,
@@ -282,7 +324,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (confirm == true) {
       try {
-        await _auth.logout();
+        await utilisateurService.logout({'email': email});
         if (mounted) {
           // Rediriger vers la page d'authentification
           Navigator.pushAndRemoveUntil(
@@ -318,14 +360,24 @@ class ProfilePageClipper extends CustomClipper<Path> {
     path.lineTo(0, size.height - 50);
     var firstControlPoint = Offset(size.width / 4, size.height);
     var firstEndPoint = Offset(size.width / 2.25, size.height - 30.0);
-    path.quadraticBezierTo(firstControlPoint.dx, firstControlPoint.dy,
-        firstEndPoint.dx, firstEndPoint.dy);
+    path.quadraticBezierTo(
+      firstControlPoint.dx,
+      firstControlPoint.dy,
+      firstEndPoint.dx,
+      firstEndPoint.dy,
+    );
 
-    var secondControlPoint =
-        Offset(size.width - (size.width / 3.25), size.height - 65);
+    var secondControlPoint = Offset(
+      size.width - (size.width / 3.25),
+      size.height - 65,
+    );
     var secondEndPoint = Offset(size.width, size.height - 40);
-    path.quadraticBezierTo(secondControlPoint.dx, secondControlPoint.dy,
-        secondEndPoint.dx, secondEndPoint.dy);
+    path.quadraticBezierTo(
+      secondControlPoint.dx,
+      secondControlPoint.dy,
+      secondEndPoint.dx,
+      secondEndPoint.dy,
+    );
 
     path.lineTo(size.width, size.height - 40);
     path.lineTo(size.width, 0);

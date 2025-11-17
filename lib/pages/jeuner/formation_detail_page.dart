@@ -82,7 +82,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     final centreUtil = centreInfo['utilisateur'] ?? {};
     final dateDebut = f['date_debut']?.toString() ?? '';
     final dateFin = f['date_fin']?.toString() ?? '';
-    
+    final statut = (f['statut'] ?? '').toString();
     // Récupérer le nom du centre (essayer plusieurs chemins)
     String centerName = '';
     if (centreUtil['nom'] != null && centreUtil['nom'].toString().trim().isNotEmpty) {
@@ -156,25 +156,28 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                       const SizedBox(height: 20),
                       _buildInfoBox(formationDetails),
                       const SizedBox(height: 30),
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: _loading || widget.formationId == null
-                              ? null
-                              : () {
-                            _showInscriptionChoiceDialog(context);
-                          },
-                          child: const Text("S'inscrire"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 50, vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                      
+                      
+                  if (statut == 'EN_ATTENTE')
+                        Center(
+                          child: ElevatedButton(
+                            onPressed: _loading || widget.formationId == null
+                                ? null
+                                : () {
+                                    _showInscriptionChoiceDialog(context);
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 50, vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                             ),
+                            child: const Text("S'inscrire"),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -217,7 +220,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                     Navigator.of(context).pop(); // Close this dialog
                     _showConditionsDialog(context);
                   },
-                  child: const Text('Demander à être parrainé'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -226,6 +228,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
+                  child: const Text('Demander à être parrainé'),
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
@@ -234,7 +237,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                     // Naviguer vers la page de paiement
                     _naviguerVersPaiement();
                   },
-                  child: const Text('Payer ma formation'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
@@ -243,6 +245,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
+                  child: const Text('Payer ma formation'),
                 ),
               ],
             ),
@@ -301,7 +304,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                   },
                 ),
                 ElevatedButton(
-                  child: const Text('Oui, je confirme'),
                   onPressed: accepted
                       ? () async {
                           Navigator.of(context).pop();
@@ -312,6 +314,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
                   ),
+                  child: const Text('Oui, je confirme'),
                 ),
               ],
             );
@@ -366,11 +369,11 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: const Text('Fermer'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
                 ),
+                child: const Text('Fermer'),
               )
             ],
           ),
@@ -384,17 +387,18 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     final f = _formation ?? {};
     
     // DEBUG: Afficher toutes les clés disponibles
-    print('=== DEBUG FORMATION ===');
-    print('Formation keys: ${f.keys.toList()}');
+    debugPrint('=== DEBUG FORMATION ===');
+    debugPrint('Formation keys: ${f.keys.toList()}');
     
     // Le centre est maintenant directement dans f['centre'] (ajouté par _fetch)
     final centreInfo = f['centre'] ?? {};
-    print('Centre keys: ${centreInfo.keys.toList()}');
+    debugPrint('Centre keys: ${centreInfo.keys.toList()}');
     
     // Vérifier si le centre a un utilisateur
     final centreUtil = centreInfo['utilisateur'] ?? {};
-    print('CentreUtil keys: ${centreUtil.keys.toList()}');
-    print('=== END DEBUG ===');
+    
+    debugPrint('CentreUtil keys: ${centreUtil.keys.toList()}');
+    debugPrint('=== END DEBUG ===');
     
     // Récupérer le logo (essayer plusieurs chemins)
     String logoUrl = '';
@@ -410,14 +414,14 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     String centreName = '';
     if (centreInfo['nom'] != null && centreInfo['nom'].toString().trim().isNotEmpty) {
       centreName = centreInfo['nom'].toString().trim();
-      print('✅ Nom trouvé: $centreName');
+      debugPrint('✅ Nom trouvé: $centreName');
     } else if (centreUtil['nom'] != null && centreUtil['nom'].toString().trim().isNotEmpty) {
       centreName = centreUtil['nom'].toString().trim();
-      print('✅ Nom trouvé dans centreUtil: $centreName');
+      debugPrint('✅ Nom trouvé dans centreUtil: $centreName');
     } else {
-      print('❌ NOM PAS TROUVÉ');
-      print('centreInfo[nom]: ${centreInfo['nom']}');
-      print('centreUtil[nom]: ${centreUtil['nom']}');
+      debugPrint('❌ NOM PAS TROUVÉ');
+      debugPrint('centreInfo[nom]: ${centreInfo['nom']}');
+      debugPrint('centreUtil[nom]: ${centreUtil['nom']}');
     }
     
     // Récupérer l'email du centre
@@ -545,7 +549,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
+        color: Colors.blue.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
@@ -606,13 +610,13 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     
     try {
       // 1. S'inscrire à la formation
-      print('📝 Inscription à la formation ${widget.formationId}...');
+      debugPrint('📝 Inscription à la formation ${widget.formationId}...');
       await _inscriptions.sInscrire(widget.formationId!, payerDirectement: payerDirectement);
-      print('✅ Inscription réussie');
+      debugPrint('✅ Inscription réussie');
       
       // 2. Si demande de parrainage, créer la demande
       if (demanderParrainage) {
-        print('💰 Création de la demande de parrainage...');
+        debugPrint('💰 Création de la demande de parrainage...');
         final me = await _profile.getMe();
         final jeuneId = me['id'] as int;
         
@@ -621,17 +625,17 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
           idFormation: widget.formationId!,
           idParrain: null, // Null = le jeune ne choisit pas de parrain spécifique
         );
-        print('✅ Demande de parrainage créée');
+        debugPrint('✅ Demande de parrainage créée');
       }
       
       if (mounted) _showSuccessDialog(context, demanderParrainage);
     } on Exception catch (e) {
       final errorMsg = e.toString();
-      print('❌ Erreur inscription: $errorMsg');
+      debugPrint('❌ Erreur inscription: $errorMsg');
       
       // Si l'erreur est "déjà inscrit" (409) ET qu'on veut faire une demande de parrainage
       if (errorMsg.contains('409') && errorMsg.contains('déjà inscrit') && demanderParrainage) {
-        print('ℹ️ Déjà inscrit - Tentative de création du parrainage uniquement...');
+        debugPrint('ℹ️ Déjà inscrit - Tentative de création du parrainage uniquement...');
         try {
           final me = await _profile.getMe();
           final jeuneId = me['id'] as int;
@@ -641,12 +645,12 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
             idFormation: widget.formationId!,
             idParrain: null,
           );
-          print('✅ Demande de parrainage créée pour inscription existante');
+          debugPrint('✅ Demande de parrainage créée pour inscription existante');
           
           if (mounted) _showSuccessDialog(context, true);
           return;
         } catch (parrainageError) {
-          print('❌ Erreur création parrainage: $parrainageError');
+          debugPrint('❌ Erreur création parrainage: $parrainageError');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

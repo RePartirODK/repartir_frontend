@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/parrains/pagepaiement.dart';
+import 'package:repartir_frontend/services/centre_service.dart';
+import 'package:repartir_frontend/services/centres_service.dart';
+import 'package:repartir_frontend/services/formations_service.dart';
+import 'package:repartir_frontend/services/jeune_service.dart';
 
 // Assurez-vous d'avoir CustomBottomNavBar, CustomShapeClipper, primaryBlue, et primaryGreen définis
 // Si vous utilisez des fichiers séparés, n'oubliez pas d'importer :
@@ -16,7 +21,15 @@ const Color lightRed = Color(0xFFFDD8D8); // Couleur pour le badge "En attente"
 
 // --- PAGE PRINCIPALE ---
 class DetailPage extends StatefulWidget {
-  const DetailPage({super.key});
+  const DetailPage({
+    super.key,
+    required this.idJeune,
+    required this.idFormation,
+    required this.idParrainage,
+  });
+  final int idJeune;
+  final int idFormation;
+  final int idParrainage;
 
   @override
   State<DetailPage> createState() => _DetailPageState();
@@ -24,14 +37,80 @@ class DetailPage extends StatefulWidget {
 
 class _DetailPageState extends State<DetailPage> {
   // Données factices pour l'exemple
-  final String jeuneName = "Kadiatou Tall";
-  final String formationType = "Couture";
-  final String startDate = "12/03/2025";
-  final String endDate = "12/05/2025";
-  final String certification = "Oui";
-  final String inscriptionStatus = "En attente";
-  final String trainingCenter = "Centre de formations Sabatiso";
-  final String situation = "Attbougou 1008 logements en face de la boulangerie";
+
+  //pour les données réelles
+  final _jeuneService = JeuneService();
+  final _formationsService = FormationsService();
+  final _centresService = CentresService();
+
+  bool _loading = true;
+  String? _error;
+
+  // Fetched data
+  String _jeuneName = '—';
+  String _centreSituation = '—';
+  String _centreName = '—';
+  String _email = '—';
+  String _telephone = '—';
+  ResponseFormation? _formation;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDetails();
+  }
+
+  Future<void> _loadDetails() async {
+    try {
+      // Fetch all jeunes and find the one with the given id
+      final jeunes = await _jeuneService.listAll();
+      final jeune = jeunes.firstWhere(
+        (j) =>
+            (j['id'] is int
+                ? j['id'] as int
+                : int.tryParse(j['id']?.toString() ?? '') ?? 0) ==
+            widget.idJeune,
+        orElse: () => {},
+      );
+      final utilisateur = jeune['utilisateur'] as Map<String, dynamic>? ?? {};
+      final prenom = (jeune['prenom'] ?? '').toString();
+      final nom = (utilisateur['nom'] ?? '').toString();
+      _jeuneName = (prenom.isNotEmpty || nom.isNotEmpty)
+          ? '$prenom $nom'.trim()
+          : 'Jeune #${widget.idJeune}';
+
+      // Fetch formation details by id
+      final f = await _formationsService.details(widget.idFormation);
+      _formation = ResponseFormation.fromJson(f);
+      final centreId = _formation?.idCentre ?? 0;
+      if (centreId != 0) {
+        final centreJson = await _centresService.getById(centreId);
+        final nomCentre =
+            (centreJson['nom'] ?? (centreJson['utilisateur']?['nom'] ?? ''))
+                .toString();
+        final adresseCentre = (centreJson['adresse'] ?? '').toString();
+        _centreName = nomCentre.isNotEmpty ? nomCentre : 'Centre #$centreId';
+        _centreSituation = adresseCentre.isNotEmpty ? adresseCentre : '—';
+        final emailCentre =
+            (centreJson['email'] ?? (centreJson['utilisateur']?['email'] ?? ''))
+                .toString();
+        final telCentre =
+            (centreJson['telephone'] ??
+                    (centreJson['utilisateur']?['telephone'] ?? ''))
+                .toString();
+        _email = emailCentre.isNotEmpty ? emailCentre : '—';
+        _telephone = telCentre.isNotEmpty ? telCentre : '—';
+      }
+      setState(() {
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,65 +119,87 @@ class _DetailPageState extends State<DetailPage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            // --- 1. Header (Fond bleu 'blob') ---
-            CustomHeader(title: "Détails",
-            showBackButton: true,),
-            // --- 4. Contenu Principal Scrollable ---
-            Padding(
-              padding: EdgeInsets.only(
-               top: 4.0
-              ), // Démarre le contenu sous le header visible
-              child: SingleChildScrollView(
-                padding:
-                    EdgeInsets.zero, // Padding géré par les éléments internes
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    // --- Avatar et Nom du Jeune ---
-                    _buildProfileSection(jeuneName),
-                    const SizedBox(height: 30),
-        
-                    // --- Bloc de Détails de la Formation ---
-                    _buildFormationDetailsBlock(
-                      formationType: formationType,
-                      startDate: startDate,
-                      endDate: endDate,
-                      certification: certification,
-                    ),
-                    const SizedBox(height: 30),
-        
-                    // --- Bloc d'Inscription et Situation ---
-                    _buildInscriptionBlock(
-                      status: inscriptionStatus,
-                      centre: trainingCenter,
-                      situation: situation,
-                    ),
-                    const SizedBox(height: 40),
-        
-                    // --- Bouton d'Action ---
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: _buildGradientButton(
-                        text: 'Procéder au payement',
-                        onPressed: () {
-                          //navigation vers la page de paiement
-                          Navigator.push(context,
-                          MaterialPageRoute(builder: 
-                          (context)=> PaymentPage()));
-                        },
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? Center(child: Text('Erreur: $_error'))
+          : SingleChildScrollView(
+              child: Column(
+                children: <Widget>[
+                  // --- 1. Header (Fond bleu 'blob') ---
+                  CustomHeader(title: "Détails", showBackButton: true),
+                  // --- 4. Contenu Principal Scrollable ---
+                  Padding(
+                    padding: EdgeInsets.only(
+                      top: 4.0,
+                    ), // Démarre le contenu sous le header visible
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets
+                          .zero, // Padding géré par les éléments internes
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          // --- Avatar et Nom du Jeune ---
+                          _buildProfileSection(_jeuneName),
+                          const SizedBox(height: 30),
+
+                          // --- Bloc de Détails de la Formation ---
+                          _buildFormationDetailsBlock(
+                            formationType:
+                                _formation?.titre ??
+                                'Formation #${widget.idFormation}',
+                            startDate: _formatDate(_formation?.dateDebut),
+                            endDate: _formatDate(_formation?.dateFin),
+                            certification:
+                                _formation != null &&
+                                    (_formation!.duree.isNotEmpty)
+                                ? 'Oui'
+                                : '—',
+                          ),
+
+                          const SizedBox(height: 30),
+
+                          // --- Bloc d'Inscription et Situation ---
+                          _buildInscriptionBlock(
+                            status: _formation?.statut ?? '—',
+                            centre: _centreName,
+                            situation: _centreSituation,
+                            email: _email,
+                            telephone: _telephone,
+                          ),
+                          const SizedBox(height: 40),
+
+                          // --- Bouton d'Action ---
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0,
+                            ),
+                            child: _buildGradientButton(
+                              text: 'Procéder au payement',
+                              onPressed: () {
+                                //navigation vers la page de paiement
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PaymentPage(
+                                      idJeune: widget.idJeune,
+                                      idFormation: widget.idFormation,
+                                      idParrainage: widget.idParrainage,
+                                      jeuneName: _jeuneName,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 80), // Espace pour la NavBar
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 80), // Espace pour la NavBar
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -128,6 +229,11 @@ class _DetailPageState extends State<DetailPage> {
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime? d) {
+    if (d == null) return '—';
+    return '${d.day}/${d.month}/${d.year}';
   }
 
   /// Bloc de Détails de la Formation
@@ -194,6 +300,8 @@ class _DetailPageState extends State<DetailPage> {
     required String status,
     required String centre,
     required String situation,
+    required String email,
+    required String telephone,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -238,6 +346,51 @@ class _DetailPageState extends State<DetailPage> {
                   ),
                   const SizedBox(height: 8),
                   Center(child: Text(centre)),
+                  const SizedBox(height: 8),
+
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 10.0),
+                        child: const Text(
+                          "Email",
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          email,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 10.0),
+                        child: const Text(
+                          "Téléphone",
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          telephone,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,7 +451,7 @@ class _DetailPageState extends State<DetailPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: Color(0xFFF82020).withOpacity(0.35), // Couleur rose pâle
+        color: Color(0xFFF82020).withValues(alpha: 0.35), // Couleur rose pâle
         borderRadius: BorderRadius.circular(20),
       ),
       width: 150,
@@ -332,7 +485,7 @@ class _DetailPageState extends State<DetailPage> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.grey.withValues(alpha: 0.3),
             spreadRadius: 2,
             blurRadius: 5,
             offset: const Offset(0, 3),

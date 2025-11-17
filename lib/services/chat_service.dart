@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import '../models/chat_message.dart';
@@ -58,32 +59,32 @@ class ChatService {
 
       _stompClient!.activate();
     } catch (e) {
-      print('❌ Erreur lors de la connexion WebSocket: $e');
+      debugPrint('❌ Erreur lors de la connexion WebSocket: $e');
       rethrow;
     }
   }
 
   void _onConnectCallback(StompFrame frame) {
     _isConnected = true;
-    print('✅ Connecté au WebSocket');
+    debugPrint('✅ Connecté au WebSocket');
   }
 
   void _onDisconnectCallback(StompFrame frame) {
     _isConnected = false;
-    print('🔌 Déconnecté du WebSocket');
+    debugPrint('🔌 Déconnecté du WebSocket');
   }
 
   void _onStompError(StompFrame frame) {
-    print('❌ Erreur STOMP: ${frame.body}');
+    debugPrint('❌ Erreur STOMP: ${frame.body}');
   }
 
   void _onWebSocketError(dynamic error) {
-    print('❌ Erreur WebSocket: $error');
+    debugPrint('❌ Erreur WebSocket: $error');
   }
 
   void _onWebSocketDone() {
     _isConnected = false;
-    print('🔌 WebSocket fermé');
+    debugPrint('🔌 WebSocket fermé');
   }
 
   /// S'abonner aux messages d'un mentoring
@@ -110,7 +111,7 @@ class ChatService {
   }
 
   void _subscribeToTopic(int mentoringId) {
-    print('📡 Abonnement au topic /topic/chat/$mentoringId');
+    debugPrint('📡 Abonnement au topic /topic/chat/$mentoringId');
     
     _stompClient!.subscribe(
       destination: '/topic/chat/$mentoringId',
@@ -121,21 +122,21 @@ class ChatService {
             
             // Vérifier si c'est une notification de suppression
             if (data['type'] == 'message_deleted') {
-              print('🗑️ Message ${data['messageId']} supprimé');
+              debugPrint('🗑️ Message ${data['messageId']} supprimé');
               if (_deletionControllers.containsKey(mentoringId)) {
                 _deletionControllers[mentoringId]!.add(data);
               }
             } else {
               // C'est un message normal
               final message = ChatMessage.fromJson(data);
-              print('📩 Message reçu: ${message.content}');
+              debugPrint('📩 Message reçu: ${message.content}');
               if (_messageControllers.containsKey(mentoringId)) {
                 _messageControllers[mentoringId]!.add(message);
               }
             }
           }
         } catch (e) {
-          print('❌ Erreur de parsing du message: $e');
+          debugPrint('❌ Erreur de parsing du message: $e');
         }
       },
     );
@@ -158,7 +159,7 @@ class ChatService {
       throw Exception('WebSocket non connecté');
     }
 
-    print('📤 Envoi du message: $content');
+    debugPrint('📤 Envoi du message: $content');
 
     _stompClient!.send(
       destination: '/app/chat/$mentoringId',
@@ -171,17 +172,17 @@ class ChatService {
   /// Supprimer un message (via REST API)
   Future<void> deleteMessage(int messageId) async {
     try {
-      print('🗑️ Suppression du message $messageId...');
+      debugPrint('🗑️ Suppression du message $messageId...');
       
       final response = await _api.delete('/messages/$messageId');
       
       if (response.statusCode == 200) {
-        print('✅ Message $messageId supprimé');
+        debugPrint('✅ Message $messageId supprimé');
       } else {
         throw Exception('Échec de la suppression: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ Erreur suppression message: $e');
+      debugPrint('❌ Erreur suppression message: $e');
       rethrow;
     }
   }
@@ -189,7 +190,7 @@ class ChatService {
   /// Récupérer l'historique des messages (REST API)
   Future<List<ChatMessage>> getMessageHistory(int mentoringId) async {
     try {
-      print('📜 Récupération historique chat pour mentoring $mentoringId');
+      debugPrint('📜 Récupération historique chat pour mentoring $mentoringId');
       
       final response = await _api.get('/mentorings/$mentoringId/messages');
       final data = _api.decodeJson<List<dynamic>>(response, (d) => d as List<dynamic>);
@@ -198,10 +199,10 @@ class ChatService {
           .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
           .toList();
       
-      print('✅ ${messages.length} messages récupérés');
+      debugPrint('✅ ${messages.length} messages récupérés');
       return messages;
     } catch (e) {
-      print('❌ Erreur récupération historique: $e');
+      debugPrint('❌ Erreur récupération historique: $e');
       return [];
     }
   }
@@ -222,7 +223,7 @@ class ChatService {
     _messageControllers.clear();
     _deletionControllers.clear();
     
-    print('🔌 WebSocket déconnecté');
+    debugPrint('🔌 WebSocket déconnecté');
   }
 
   void dispose() {

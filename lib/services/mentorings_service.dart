@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:repartir_frontend/services/api_service.dart';
 
 /// Service pour gérer les relations de mentorat
@@ -19,8 +20,8 @@ class MentoringsService {
       'objectif': objectif ?? 'Développement de compétences professionnelles',
     };
     
-    print('📨 POST /mentorings/create/$idMentor/$idJeune');
-    print('📨 Body: $bodyData');
+    debugPrint('📨 POST /mentorings/create/$idMentor/$idJeune');
+    debugPrint('📨 Body: $bodyData');
     
     final res = await _api.post(
       '/mentorings/create/$idMentor/$idJeune',
@@ -28,8 +29,8 @@ class MentoringsService {
       extraHeaders: {'Content-Type': 'application/json'},
     );
     
-    print('📨 Réponse: ${res.statusCode}');
-    print('📨 Body: ${res.body}');
+    debugPrint('📨 Réponse: ${res.statusCode}');
+    debugPrint('📨 Body: ${res.body}');
     return _api.decodeJson<Map<String, dynamic>>(res, (d) => d as Map<String, dynamic>);
   }
 

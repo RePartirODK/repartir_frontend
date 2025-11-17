@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/pages/parrains/dons.dart';
+import 'package:repartir_frontend/models/response/response_parrain.dart';
 import 'package:repartir_frontend/pages/parrains/jeunesparraines.dart';
+import 'package:repartir_frontend/services/parrain_service.dart';
+import 'package:repartir_frontend/services/parrainages_service.dart';
 // Importez le composant de barre de navigation si dans un fichier séparé
 // import 'custom_bottom_nav_bar.dart';
 
@@ -19,131 +21,181 @@ class ParrainHomePage extends StatefulWidget {
 
 class _ParrainHomePageState extends State<ParrainHomePage> {
   // État pour la barre de navigation inférieure
+  
+  final ParrainService _parrainService = ParrainService();
+  final ParrainagesService _parrainagesService = ParrainagesService();
 
-  // ignore: non_constant_identifier_names
+  ResponseParrain? _parrain;
+  bool _loading = true;
+  String? _error;
+
+  int _pendingDemands = 0;
+  int _jeunesParraines = 0; // TODO: requires backend endpoint filtered by parrain
+  String _donationsTotalLabel = '—'; // TODO: requires backend endpoint per parrain
+
   @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+ Future<void> _loadData() async {
+    try {
+      final p = await _parrainService.getCurrentParrain();
+      // Load pending parrainage demands for current parrain
+      int pending = 0;
+      try {
+        final demandes = await _parrainagesService.demandesEnAttente();
+        pending = demandes.length;
+      } catch (_) {
+        // ignore if endpoint is role-protected or user not PARRAIN yet
+      }
+
+      // Load accepted parrainages count for current parrain
+      int acceptedCount = 0;
+      try {
+        final accepted = await _parrainagesService.listerAcceptesPourMoi();
+        acceptedCount = accepted.length;
+      } catch (_) {
+        // keep default if unauthorized or not a parrain yet
+      }
+
+      // Load donations total for current parrain
+      String donationsLabel = '—';
+      try {
+        final total = await _parrainService.getTotalDonationsForMe();
+        // format simply as integer or keep one decimal if needed
+        donationsLabel = total.toStringAsFixed(0);
+      } catch (_) {
+        // keep default on error
+      }
+
+      setState(() {
+        _parrain = p;
+        _pendingDemands = pending;
+        _jeunesParraines = acceptedCount;
+        _donationsTotalLabel = donationsLabel;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+    @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       // Le corps de la page avec SingleChildScrollView pour le défilement
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Stack(
-              children: [
-                 // --- Zone de Tête (Header) ---
-            CustomHeader(
-              title: 'Accueil', 
-            ),
-            // --- 2. Logo (Positionné en haut à gauche) ---
-          Positioned(
-            height: 80,
-            width: 80,
-            top: 30,
-            left: 20,
-            child: CircleAvatar(
-              radius: 25,
-              backgroundColor: Colors.white,
-              child: 
-              Image.asset('assets/images/logo_repartir.png', 
-              height: 300,
-              width: 300,),
-            ),
-          ),
-            // Padding pour le reste du contenu
-           
-              ],
-            ),
-           
-           
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  // --- Titre d'accueil et Informations de Profil ---
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Text(
-                      'Bienvenu parrain',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(child: Text('Erreur: $_error'))
+              : SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Stack(
+                        children: [
+                          // --- Zone de Tête (Header) ---
+                          CustomHeader(
+                            title: 'Accueil',
+                          ),
+                          // --- 2. Logo (Positionné en haut à gauche) ---
+                          Positioned(
+                            height: 80,
+                            width: 80,
+                            top: 30,
+                            left: 20,
+                            child: CircleAvatar(
+                              radius: 25,
+                              backgroundColor: Colors.white,
+                              child: Image.asset(
+                                'assets/images/logo_repartir.png',
+                                height: 300,
+                                width: 300,
+                              ),
+                            ),
+                          ),
+                          // Padding pour le reste du contenu
+                        ],
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  _buildProfileSection(),
-
-                  const SizedBox(height: 40),
-
-                  // --- Cartes de Statistiques (Jeunes parrainés et Donations) ---
-                  _buildStatsCards(),
-
-                  const SizedBox(height: 40),
-
-                  // --- Section Actions ---
-                  const Text(
-                    'Actions',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Bouton Donations
-                  _buildActionButton(
-                    text: 'Donations',
-                    color: primaryBlue.withValues(alpha: 0.2),
-                    textColor: Colors.black,
-                    onPressed: () {
-                      widget.onNavigate(1);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Bouton Jeunes déjà parrainés
-                  _buildActionButton(
-                    text: 'Jeunes déjà parrainés',
-                    color: primaryBlue.withValues(
-                      alpha: 0.2,
-                    ), // Bleu très clair
-                    textColor: Colors.black, // Texte en noir
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SponsoredYouthPage(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            const SizedBox(height: 20),
+                            Center(
+                              child: Text(
+                                'Bienvenu parrain',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                            _buildProfileSection(),
+                            const SizedBox(height: 40),
+                            _buildStatsCards(),
+                            const SizedBox(height: 40),
+                            const Text(
+                              'Actions',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _buildActionButton(
+                              text: 'Donations',
+                              color: primaryBlue.withValues(alpha: 0.2),
+                              textColor: Colors.black,
+                              onPressed: () {
+                                widget.onNavigate(1);
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            _buildActionButton(
+                              text: 'Jeunes déjà parrainés',
+                              color: primaryBlue.withValues(alpha: 0.2),
+                              textColor: Colors.black,
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const SponsoredYouthPage(),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 40),
+                          ],
                         ),
-                      );
-                    },
+                      ),
+                    ],
                   ),
-                 
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+                ),
     );
   }
-
   /// -------------------------------------------
   /// WIDGETS DE COMPOSANTS DÉTAILLÉS
   /// -------------------------------------------
 
-  /// Construit la section du profil (image, nom, statut).
+  
+   /// Construit la section du profil (image, nom, statut).
   Widget _buildProfileSection() {
+    final name = _parrain != null ? '${_parrain!.prenom} ${_parrain!.nom}' : '—';
+    final sinceLabel = _parrain?.dateInscription != null
+        ? 'Parrain depuis ${_parrain!.dateInscription!.year}'
+        : 'Parrain';
     return Center(
       child: Column(
         children: <Widget>[
-          // Placeholder pour l'image de profil
           const CircleAvatar(
             radius: 50,
             backgroundColor: primaryBlue,
@@ -151,26 +203,22 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
               Icons.person,
               size: 70,
               color: Colors.white,
-            ), // Icône pour l'exemple
-            // Ou utilisez un Image.asset ou NetworkImage
-            // child: Image.asset('assets/profile_pic.png'),
+            ),
           ),
           const SizedBox(height: 10),
-          // Nom (à remplacer par les données du backend)
-          const Text(
-            'Ousmane Diallo',
-            style: TextStyle(
+          Text(
+            name,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
           ),
-          // Statut (à remplacer par les données du backend)
-          const Text(
-            'Parrain depuis 2024',
-            style: TextStyle(
+          Text(
+            sinceLabel,
+            style: const TextStyle(
               fontSize: 14,
-              color: primaryGreen, // Couleur verte spécifiée
+              color: primaryGreen,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -178,28 +226,24 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
       ),
     );
   }
-
-  /// Construit les cartes de statistiques (Responsif avec Flexible).
+   /// Construit les cartes de statistiques (Responsif avec Flexible).
   Widget _buildStatsCards() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: <Widget>[
-        // Carte Jeunes parrainés
         Flexible(
-          child: _buildStatCard(title: 'Jeune parrainés', value: '20'),
+          child: _buildStatCard(title: 'Jeune parrainés', value: '$_jeunesParraines'),
         ),
         const SizedBox(width: 16),
-        // Carte Donations totales
         Flexible(
           child: _buildStatCard(
             title: 'Donations totales',
-            value: '25000 fcfa',
+            value: _donationsTotalLabel,
           ),
         ),
       ],
     );
   }
-
   /// Widget pour une carte de statistique individuelle.
   Widget _buildStatCard({required String title, required String value}) {
     return Container(

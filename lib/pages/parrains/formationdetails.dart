@@ -1,39 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/models/response/response_centre.dart';
+import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/parrains/voirdetailformation.dart';
+import 'package:repartir_frontend/services/centres_service.dart';
+import 'package:repartir_frontend/services/formations_service.dart';
 
 // Définition des couleurs (doivent correspondre à celles utilisées dans detail_page.dart)
 const Color primaryBlue = Color(0xFF3EB2FF);
 const Color primaryGreen = Color(0xFF4CAF50);
 const Color primaryOrange = Color(0xFFFF9800);
 const Color primaryRed = Color(0xFFF44336);
-
-// --- MODÈLE DE DONNÉES ---
-class Formation {
-  final String id;
-  final String centerName;
-  final String centerLocation;
-  final String title;
-  final String description;
-  final String startDate;
-  final String endDate;
-  final String link;
-  final int placesAvailable;
-  final bool needsFunding;
-
-  Formation({
-    required this.id,
-    required this.centerName,
-    required this.centerLocation,
-    required this.title,
-    required this.description,
-    required this.startDate,
-    required this.endDate,
-    required this.link,
-    required this.placesAvailable,
-    required this.needsFunding,
-  });
-}
 
 // --- COMPOSANTS RÉUTILISABLES (Clipper et NavBar) ---
 
@@ -43,7 +20,7 @@ class Formation {
 
 // --- PAGE PRINCIPALE : FORMATIONS ---
 class FormationPage extends StatefulWidget {
-  const FormationPage({Key? key}) : super(key: key);
+  const FormationPage({super.key});
 
   @override
   State<FormationPage> createState() => _FormationPageState();
@@ -52,11 +29,14 @@ class FormationPage extends StatefulWidget {
 class _FormationPageState extends State<FormationPage>
     with SingleTickerProviderStateMixin {
   bool _isLoading = true;
-  List<Formation> _formations = [];
-
+  List<ResponseFormation> _formations = [];
+  final CentresService _centresService = CentresService();
+  final Map<int, ResponseCentre> _centresById = {};
+  final FormationsService _formationService = FormationsService();
   // Contrôleur pour les onglets 'Toutes' et 'Nouvelles'
   late TabController _tabController;
-
+  List<ResponseFormation> _filteredFormations = [];
+  final TextEditingController _searchController = TextEditingController();
   @override
   void initState() {
     super.initState();
@@ -67,63 +47,61 @@ class _FormationPageState extends State<FormationPage>
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   // LOGIQUE FUTURE POUR LE BACKEND : Récupération des formations
   void _fetchFormations() async {
-    // Simuler un appel API pour récupérer la liste des formations
-    await Future.delayed(const Duration(seconds: 1));
-
-    List<Formation> loadedFormations = [
-      Formation(
-        id: 'f1',
-        centerName: 'ODC_MALI',
-        centerLocation: 'Bamako, Mali',
-        title: 'Formation Développeur Web',
-        description:
-            'Apprenez les bases du développement web avec HTML, CSS et JavaScript',
-        startDate: '15 Sept 2023',
-        endDate: '15 Mars 2024',
-        link: 'www.formation-dev.com/web',
-        placesAvailable: 5,
-        needsFunding: true,
-      ),
-      Formation(
-        id: 'f2',
-        centerName: 'Kabakoo Academies',
-        centerLocation: 'En ligne / Régional',
-        title: 'Design Thinking et Innovation',
-        description:
-            'Découvrez les méthodes d\'innovation centrées sur l\'utilisateur.',
-        startDate: '01 Jan 2024',
-        endDate: '30 Juin 2024',
-        link: 'www.kabakoo.com',
-        placesAvailable: 12,
-        needsFunding: false,
-      ),
-      // Ajouter une autre formation pour un défilement visible
-      Formation(
-        id: 'f3',
-        centerName: 'ODC_MALI',
-        centerLocation: 'Bamako, Mali',
-        title: 'Initiation à la Data Science',
-        description:
-            'Premiers pas dans l\'analyse de données avec Python et R.',
-        startDate: '01 Oct 2024',
-        endDate: '01 Avr 2025',
-        link: 'www.odc-data.com',
-        placesAvailable: 3,
-        needsFunding: true,
-      ),
-    ];
-
-    if (mounted) {
-      setState(() {
-        _formations = loadedFormations;
-        _isLoading = false;
-      });
+    try {
+      // 1) Fetch active centres
+      final centres = await _centresService.listActifs();
+      // 2) Cache centre details for quick lookup
+      for (final c in centres) {
+        final centre = ResponseCentre.fromJson(c);
+        _centresById[centre.id] = centre;
+      }
+      // 3) Aggregate formations across centres
+      final List<ResponseFormation> agg = [];
+      for (final c in centres) {
+        final idCentre = c['id'] is int
+            ? c['id'] as int
+            : int.tryParse(c['id']?.toString() ?? '') ?? 0;
+        if (idCentre == 0) continue;
+        final list = await _formationService.listByCentre(idCentre);
+        for (final f in list) {
+          agg.add(ResponseFormation.fromJson(f));
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _formations = agg;
+          _filteredFormations = List<ResponseFormation>.from(agg);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _formations = [];
+          _filteredFormations = [];
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  Widget _buildFormationList(List<ResponseFormation> list) {
+    if (list.isEmpty) {
+      return const Center(child: Text('Aucune formation trouvée.'));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 10, left: 10, right: 10),
+      itemCount: list.length,
+      itemBuilder: (context, index) {
+        return _buildFormationCard(context, list[index]);
+      },
+    );
   }
 
   @override
@@ -159,12 +137,12 @@ class _FormationPageState extends State<FormationPage>
                 controller: _tabController,
                 children: [
                   // Onglet 1: Toutes les formations
-                  _buildFormationList(_formations),
-
+                  _buildFormationList(_filteredFormations),
+                 
                   // Onglet 2: Nouvelles formations (simplement les 2 dernières)
-                  _buildFormationList(
-                    _formations.sublist(
-                      _formations.length > 2 ? _formations.length - 2 : 0,
+                   _buildFormationList(
+                    _filteredFormations.sublist(
+                      _filteredFormations.length > 2 ? _filteredFormations.length - 2 : 0,
                     ),
                   ),
                 ],
@@ -191,8 +169,12 @@ class _FormationPageState extends State<FormationPage>
           ),
         ],
       ),
-      child: const TextField(
-        decoration: InputDecoration(
+
+
+       child: TextField(
+        controller: _searchController,
+        onChanged: _applyFilter,
+        decoration: const InputDecoration(
           hintText: 'Rechercher une formation',
           hintStyle: TextStyle(color: Colors.grey),
           prefixIcon: Icon(Icons.search, color: Colors.grey),
@@ -201,6 +183,20 @@ class _FormationPageState extends State<FormationPage>
         ),
       ),
     );
+  }
+
+   void _applyFilter(String q) {
+    final query = q.trim().toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredFormations = List<ResponseFormation>.from(_formations);
+        return;
+      }
+      _filteredFormations = _formations.where((f) {
+        final titre = (f.titre).toString().toLowerCase();
+        return titre.contains(query);
+      }).toList();
+    });
   }
 
   // Onglets "Toutes" et "Nouvelles"
@@ -230,22 +226,24 @@ class _FormationPageState extends State<FormationPage>
     );
   }
 
-  // Liste des formations
-  Widget _buildFormationList(List<Formation> list) {
-    if (list.isEmpty) {
-      return const Center(child: Text('Aucune formation trouvée.'));
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 10, left: 10, right: 10),
-      itemCount: list.length,
-      itemBuilder: (context, index) {
-        return _buildFormationCard(context, list[index]);
-      },
-    );
-  }
-
   // Fiche de Formation individuelle
-  Widget _buildFormationCard(BuildContext context, Formation formation) {
+  Widget _buildFormationCard(
+    BuildContext context,
+    ResponseFormation formation,
+  ) {
+    final centre = _centresById[formation.idCentre];
+    final centreName = centre?.nom ?? 'Centre inconnu';
+    final centreLocation = centre?.adresse ?? 'Adresse indisponible';
+    final start = formation.dateDebut;
+    final end = formation.dateFin;
+    final datesLabel =
+        'Du ${start.day}/${start.month}/${start.year} au ${end.day}/${end.month}/${end.year}';
+    final linkLabel =
+        (formation.urlFormation == null || formation.urlFormation!.isEmpty)
+        ? 'N/A'
+        : formation.urlFormation!;
+    final needsFunding = formation.cout > 0;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       elevation: 2,
@@ -256,13 +254,11 @@ class _FormationPageState extends State<FormationPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Logo et Nom du Centre
             Row(
               children: [
                 CircleAvatar(
                   backgroundColor: Colors.black,
                   radius: 20,
-                  // Icône temporaire pour le logo ODC
                   child: Text(
                     'ODC',
                     style: TextStyle(
@@ -277,7 +273,7 @@ class _FormationPageState extends State<FormationPage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      formation.centerName,
+                      centreName,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -292,7 +288,7 @@ class _FormationPageState extends State<FormationPage>
                         ),
                         const SizedBox(width: 5),
                         Text(
-                          formation.centerLocation,
+                          centreLocation,
                           style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 13,
@@ -305,41 +301,28 @@ class _FormationPageState extends State<FormationPage>
               ],
             ),
             const SizedBox(height: 15),
-
-            // Titre de la Formation
             Text(
-              formation.title,
+              formation.titre,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-
-            // Description
             Text(
               formation.description,
               style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
             const SizedBox(height: 15),
-
-            // Détails (Dates, Lien, Places, Financement)
-            _buildDetailRow(
-              Icons.calendar_today,
-              'Du ${formation.startDate} au ${formation.endDate}',
-            ),
-            _buildDetailRow(Icons.link, formation.link, color: primaryBlue),
+            _buildDetailRow(Icons.calendar_today, datesLabel),
+            _buildDetailRow(Icons.link, linkLabel, color: primaryBlue),
             _buildDetailRow(
               Icons.person,
-              '${formation.placesAvailable} places disponibles',
+              '${formation.nbrePlace} places disponibles',
             ),
             _buildDetailRow(
               Icons.attach_money,
-              'Besoin de financement : ${formation.needsFunding ? 'Oui' : 'Non'}',
-              color: formation.needsFunding ? primaryRed : primaryGreen,
+              'Besoin de financement : ${needsFunding ? 'Oui' : 'Non'}',
+              color: needsFunding ? primaryRed : primaryGreen,
             ),
-
             const SizedBox(height: 10),
-
-            // Bouton Voir détails
-            // Bouton Voir détails
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
@@ -347,19 +330,21 @@ class _FormationPageState extends State<FormationPage>
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const FormationDetailsPage(),
+                      builder: (context) => FormationDetailsPage(
+                        formation: formation,
+                        centre: centre,
+                      ),
                     ),
                   );
                 },
-
                 label: const Text(
                   'Voir détails',
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 style: ElevatedButton.styleFrom(
                   shadowColor: Colors.black45,
-                  backgroundColor: Colors.white, //
-                  foregroundColor: primaryBlue, // 🩶 texte et icône blancs
+                  backgroundColor: Colors.white,
+                  foregroundColor: primaryBlue,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 8,
@@ -367,7 +352,7 @@ class _FormationPageState extends State<FormationPage>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  elevation: 3, // ou 2 si tu veux un petit effet d'ombre
+                  elevation: 3,
                 ),
               ),
             ),
