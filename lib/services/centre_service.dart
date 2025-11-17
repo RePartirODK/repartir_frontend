@@ -101,14 +101,19 @@ class CentreService {
     }
   }
 
-
-   /// --- METTRE À JOUR UNE FORMATION ---
-  Future<ResponseFormation?> updateFormation(int id, RequestFormation request) async {
+  /// --- METTRE À JOUR UNE FORMATION ---
+  Future<ResponseFormation?> updateFormation(
+    int id,
+    RequestFormation request,
+  ) async {
     final response = await _api.put(
       '/formations/$id',
       body: jsonEncode(request.toJson()),
     );
-    return _api.decodeJson(response, (data) => ResponseFormation.fromJson(data));
+    return _api.decodeJson(
+      response,
+      (data) => ResponseFormation.fromJson(data),
+    );
   }
 
   //suppression d'une formation
@@ -128,4 +133,12 @@ class CentreService {
     });
   }
 
+  /// --- CERTIFIER UNE INSCRIPTION ---
+  Future<ResponseInscription?> certifierInscription(int inscriptionId) async {
+    final response = await _api.patch('/inscriptions/$inscriptionId/certifier');
+    return _api.decodeJson(
+      response,
+      (data) => ResponseInscription.fromJson(data),
+    );
+  }
 }

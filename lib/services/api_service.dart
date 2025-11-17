@@ -67,7 +67,7 @@ class ApiService {
      final uri = Uri.parse('$apiBaseUrl$path');
     return _executeWithAutoRefresh(() async {
       final headers = await _authHeaders();
-      return _client.patch(uri, headers: headers, body: body);
+      return _client.put(uri, headers: headers, body: body);
     });
   
   }
