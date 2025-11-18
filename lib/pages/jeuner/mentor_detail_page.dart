@@ -153,8 +153,73 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
       );
       
       debugPrint("Impossible d'envoyer la demande. Id du mentor manquant.");
-      return;}
-    
+      return;
+    }
+
+    // Vérifier si un mentoring existe déjà avec ce mentor
+    setState(() => _loading = true);
+    try {
+      final me = await _profile.getMe();
+      final jeuneId = me['id'] as int;
+
+      // Récupérer tous les mentorings du jeune
+      final mentorings = await _mentorings.getJeuneMentorings(jeuneId);
+      
+      // Vérifier s'il existe déjà un mentoring avec ce mentor
+      final mentoringExistant = mentorings.firstWhere(
+        (m) {
+          // Essayer différentes clés possibles pour l'ID du mentor
+          final mentorId = m['idMentor'] ?? 
+                          m['mentor']?['id'] ?? 
+                          m['mentorId'];
+          return mentorId != null && mentorId == widget.mentor.id;
+        },
+        orElse: () => <String, dynamic>{},
+      );
+
+      if (mentoringExistant.isNotEmpty) {
+        final statut = mentoringExistant['statut'] ?? 
+                      mentoringExistant['etat'] ?? 
+                      'EN_ATTENTE';
+        
+        if (statut == 'VALIDE') {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Vous avez déjà un mentorat actif avec ce mentor.',
+                ),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 5),
+              ),
+            );
+          }
+          setState(() => _loading = false);
+          return;
+        } else if (statut == 'EN_ATTENTE') {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Vous avez déjà une demande en attente avec ce mentor.',
+                ),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 5),
+              ),
+            );
+          }
+          setState(() => _loading = false);
+          return;
+        }
+        // Si le statut est REFUSE, on permet de redemander
+      }
+    } catch (e) {
+      // Si erreur lors de la vérification, on continue quand même
+      // (le backend devrait gérer la vérification)
+      debugPrint('⚠️ Erreur lors de la vérification: $e');
+    } finally {
+      setState(() => _loading = false);
+    }
 
     // Afficher le dialogue de saisie
     final result = await showDialog<Map<String, String>>(
@@ -408,53 +473,6 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
                             color: Colors.grey[700],
                             height: 1.5,
                           ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // --- CHAMP "OBJECTIF" ---
-                        const Text(
-                          'Objectif',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Décrivez votre objectif principal...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                          ),
-                          maxLines: 2,
-                        ),
-                        const SizedBox(height: 24),
-
-                        // --- CHAMP "DESCRIPTION" ---
-                        const Text(
-                          'Description',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          decoration: InputDecoration(
-                            hintText:
-                                'Donnez plus de détails sur votre projet ou vos attentes...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(color: Colors.grey[300]!),
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                          ),
-                          maxLines: 4,
                         ),
                         const SizedBox(height: 32),
 
