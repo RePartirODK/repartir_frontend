@@ -49,6 +49,17 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       
       _formation = await _formations.details(widget.formationId!);
       
+      // If canceled, do not display the page
+      if (_formation != null && (_formation!['statut']?.toString().toUpperCase() == 'ANNULER')) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cette formation a été annulée.')),
+          );
+        }
+        return;
+      }
+      
       // Si la formation a un idCentre, récupérer les détails du centre
       if (_formation != null && _formation!['idCentre'] != null) {
         try {

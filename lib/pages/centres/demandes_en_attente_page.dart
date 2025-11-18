@@ -40,8 +40,12 @@ class _DemandesEnAttentePageState extends State<DemandesEnAttentePage> {
       if (centreId == 0) throw Exception('Centre introuvable');
       final items = await _centreService.getCentreInscriptions(centreId);
 
-      final pending = items.where((e) => e.status.toUpperCase() == 'EN_ATTENTE').toList();
-
+      // Only inscriptions in EN_ATTENTE AND formation not ANNULER
+      final pending = items.where((e) {
+        final isPending = (e.status.toUpperCase() == 'EN_ATTENTE');
+        final notCancelled = ((e.formationStatut ?? '').toUpperCase() != 'ANNULER');
+        return isPending && notCancelled;
+      }).toList();
       setState(() {
         _all = items;
         _pending = pending;

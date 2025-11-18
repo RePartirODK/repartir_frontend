@@ -9,9 +9,10 @@ import 'package:repartir_frontend/services/profile_service.dart';
 class EditProfilePage extends StatefulWidget {
   final Map<String, String> userData;
 
-  const EditProfilePage({Key? key, required this.userData}) : super(key: key);
+  const EditProfilePage({super.key, required this.userData});
 
   @override
+  // ignore: library_private_types_in_public_api
   _EditProfilePageState createState() => _EditProfilePageState();
 }
 
@@ -273,11 +274,11 @@ extension on _EditProfilePageState {
 
   Future<List<int>> _getImageBytes() async {
     if (_selectedImageBytes != null) {
-      print('📷 Image depuis bytes (taille: ${_selectedImageBytes!.length} bytes)');
+      debugPrint('📷 Image depuis bytes (taille: ${_selectedImageBytes!.length} bytes)');
       return _selectedImageBytes!;
     } else if (_selectedImage != null && !kIsWeb) {
       final bytes = await _selectedImage!.readAsBytes();
-      print('📷 Image depuis fichier (taille: ${bytes.length} bytes)');
+      debugPrint('📷 Image depuis fichier (taille: ${bytes.length} bytes)');
       return bytes;
     } else {
       throw Exception('Aucune image sélectionnée');
@@ -318,21 +319,21 @@ extension on _EditProfilePageState {
               ? _emailController.text 
               : (utilisateur['email'] ?? '');
           
-          print('📷 Upload de la photo...');
+          debugPrint('📷 Upload de la photo...');
           final uploadResult = await _profile.updatePhoto(imageBytes, email);
-          print('✅ Photo uploadée avec succès: $uploadResult');
+          debugPrint('✅ Photo uploadée avec succès: $uploadResult');
           
           // Recharger pour avoir la nouvelle URL
-          print('🔄 Rechargement du profil pour obtenir la nouvelle URL...');
+          debugPrint('🔄 Rechargement du profil pour obtenir la nouvelle URL...');
           await _loadCurrentPhoto();
-          print('🔄 Profil rechargé');
+          debugPrint('🔄 Profil rechargé');
           
           setState(() {
             _selectedImage = null;
             _selectedImageBytes = null;
           });
         } catch (e) {
-          print('❌ ERREUR lors de l\'upload de la photo: $e');
+          debugPrint('❌ ERREUR lors de l\'upload de la photo: $e');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -349,9 +350,9 @@ extension on _EditProfilePageState {
         }
       }
 
-      print('📤 Envoi du profil au backend...');
+      debugPrint('📤 Envoi du profil au backend...');
       await _profile.updateMe(payload);
-      print('✅ Profil mis à jour avec succès');
+      debugPrint('✅ Profil mis à jour avec succès');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

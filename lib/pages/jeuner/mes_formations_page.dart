@@ -42,6 +42,12 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
         throw Exception('Vous devez être connecté pour voir vos formations.');
       }
       _formations = await _inscriptions.mesInscriptions();
+    
+      //cacher les formation annulées
+       _formations = _formations.where((f) {
+        final statut = (f['formation']?['statut'] ?? '').toString().toUpperCase();
+        return statut != 'ANNULER';
+      }).toList();
     } catch (e) {
       _error = '$e';
     } finally {

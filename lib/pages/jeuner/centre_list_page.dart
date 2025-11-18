@@ -6,7 +6,7 @@ import 'package:repartir_frontend/services/centres_service.dart';
 import 'package:repartir_frontend/services/api_service.dart';
 
 class CentreListPage extends StatefulWidget {
-  const CentreListPage({Key? key}) : super(key: key);
+  const CentreListPage({super.key});
 
   @override
   State<CentreListPage> createState() => _CentreListPageState();
@@ -49,22 +49,28 @@ class _CentreListPageState extends State<CentreListPage> {
       for (final centre in centresActifs) {
         try {
           final formations = await _centres.getFormationsByCentre(centre['id']);
-          // Pour chaque formation, ajouter les infos du centre
-          for (final formation in formations) {
-            // Vérifier que la formation appartient bien à ce centre
-            final centreFormationId = formation['centreFormation']?['id'] ?? 
-                                     formation['centre']?['id'];
-            if (centreFormationId == centre['id'] || centreFormationId == null) {
-              // Ajouter les infos du centre à la formation
-              formation['centreInfo'] = {
-                'id': centre['id'],
-                'nom': centre['utilisateur']?['nom'] ?? '',
-                'logo': centre['utilisateur']?['urlPhoto'] ?? '',
-                'adresse': centre['adresse'] ?? '',
-              };
-              toutesFormations.add(formation);
-            }
-          }
+          // Exclude canceled formations (statut or status == ANNULER)
+          final activeFormations = formations.where((f) {
+            final raw = f['statut'] ?? f['status'];
+            final s = (raw ?? '').toString().toUpperCase();
+            return s != 'ANNULER';
+          }).toList();
+           // Pour chaque formation, ajouter les infos du centre
+          for (final formation in activeFormations) {
+             // Vérifier que la formation appartient bien à ce centre
+             final centreFormationId = formation['centreFormation']?['id'] ?? 
+                                      formation['centre']?['id'];
+             if (centreFormationId == centre['id'] || centreFormationId == null) {
+               // Ajouter les infos du centre à la formation
+               formation['centreInfo'] = {
+                 'id': centre['id'],
+                 'nom': centre['utilisateur']?['nom'] ?? '',
+                 'logo': centre['utilisateur']?['urlPhoto'] ?? '',
+                 'adresse': centre['adresse'] ?? '',
+               };
+               toutesFormations.add(formation);
+             }
+           }
         } catch (e) {
           // Ignorer les erreurs pour ce centre et continuer
         }
@@ -230,14 +236,15 @@ class CentreCard extends StatelessWidget {
                     );
                     }
                   },
-                  child: const Text('Voir détails'),
-                  style: ElevatedButton.styleFrom(
+                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3EB2FF),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
+                  child: const Text('Voir détails'),
+                 
                 ),
               )
             ],

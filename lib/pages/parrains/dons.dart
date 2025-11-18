@@ -6,6 +6,9 @@ import 'package:repartir_frontend/services/formations_service.dart';
 import 'package:repartir_frontend/services/jeune_service.dart';
 import 'package:repartir_frontend/services/parrainages_service.dart';
 
+// Add: import inscriptions service
+import 'package:repartir_frontend/services/inscriptions_service.dart';
+
 // Définition des couleurs
 const Color primaryBlue = Color(0xFF3EB2FF);
 const Color primaryGreen = Color(0xFF4CAF50);
@@ -21,12 +24,16 @@ class _DonationsPageState extends State<DonationsPage> {
   final ParrainagesService _parrainagesService = ParrainagesService();
   final JeuneService _jeuneService = JeuneService();
   final FormationsService _formationsService = FormationsService();
+  // Add: inscriptions service and cache
+  final InscriptionsService _inscriptionsService = InscriptionsService();
   final _searchController = TextEditingController();
   bool _loading = true;
   String? _error;
   List<Map<String, dynamic>> _pending = [];
   final Map<int, Map<String, dynamic>> _jeunesById = {};
   final Map<int, ResponseFormation> _formationsById = {};
+  // Add: cache inscriptions per formation
+  final Map<int, List<Map<String, dynamic>>> _inscriptionsByFormation = {};
   List<Map<String, dynamic>> _filtered = [];
   @override
   void initState() {
@@ -52,11 +59,42 @@ class _DonationsPageState extends State<DonationsPage> {
       }
       // 3) Hydrate formations (title mapping)
       await _hydrateFormations(demandes);
+      await _hydrateInscriptions(demandes);
+
+      // 4) Filter out demandes where the jeune's inscription is already VALIDE
+      final filteredDemandes = <Map<String, dynamic>>[];
+      for (final p in demandes) {
+        final idFormation = _asInt(p['idFormation']);
+        final idJeune = _asInt(p['idJeune']);
+        final jeune = _jeunesById[idJeune] ?? {};
+        final util = jeune['utilisateur'] as Map<String, dynamic>? ?? {};
+        final prenom = (jeune['prenom'] ?? '').toString();
+        final nom = (util['nom'] ?? '').toString();
+        final jeuneName = (prenom.isNotEmpty || nom.isNotEmpty) ? '$prenom $nom'.trim() : '';
+
+        final inscs = _inscriptionsByFormation[idFormation] ?? const [];
+        final alreadyValidated = inscs.any((i) {
+          final nomJeune = (i['nomJeune'] ?? '').toString();
+          final status = (i['status'] ?? '').toString().toUpperCase();
+          return nomJeune == jeuneName && status == 'VALIDE';
+        });
+
+        if (!alreadyValidated) {
+          filteredDemandes.add(p);
+        }
+      }
 
       setState(() {
-        _pending = demandes;
-        _loading = false;
-        _filtered = List<Map<String, dynamic>>.from(demandes);
+        // Exclude demandes for canceled formations
+        _pending = demandes.where((p) {
+          final idFormation = _asInt(p['idFormation']);
+          final rf = _formationsById[idFormation];
+          // If formation details not loaded, keep it; once loaded and canceled, exclude
+          if (rf == null) return true;
+          return rf.statut.toUpperCase() != 'ANNULER';
+        }).toList();
+         _loading = false;
+        _filtered = List<Map<String, dynamic>>.from(_pending);
       });
     } catch (e) {
       setState(() {
@@ -73,13 +111,11 @@ class _DonationsPageState extends State<DonationsPage> {
 
   Future<void> _hydrateFormations(List<Map<String, dynamic>> demandes) async {
     try {
-      // collect unique formation IDs from pending requests
       final ids = <int>{};
-      for (final p in _pending) {
+      for (final p in demandes) {
         final idFormation = _asInt(p['idFormation']);
         if (idFormation != 0) ids.add(idFormation);
       }
-      // fetch each formation detail
       for (final id in ids) {
         final f = await _formationsService.details(id);
         final rf = ResponseFormation.fromJson(f);
@@ -87,6 +123,23 @@ class _DonationsPageState extends State<DonationsPage> {
       }
     } catch (_) {
       // leave map empty; UI will fallback to "Formation #id"
+    }
+  }
+
+  // Add: hydrate inscriptions per formation to check validation status
+  Future<void> _hydrateInscriptions(List<Map<String, dynamic>> demandes) async {
+    try {
+      final ids = <int>{};
+      for (final p in demandes) {
+        final idFormation = _asInt(p['idFormation']);
+        if (idFormation != 0) ids.add(idFormation);
+      }
+      for (final id in ids) {
+        final list = await _inscriptionsService.listByFormation(id);
+        _inscriptionsByFormation[id] = list;
+      }
+    } catch (_) {
+      // silently ignore
     }
   }
 

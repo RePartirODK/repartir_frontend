@@ -51,6 +51,14 @@ class _PaymentPageState extends State<PaymentPage> {
   int? _idInscription;
   double get amountRemaining => _costTotal - _amountPaid;
 
+    // Sum of payments currently pending validation
+  double _amountPending = 0.0;
+  // Remaining contributions to reach the total (includes pending)
+  double get amountRemainingForContrib {
+    final r = _costTotal - (_amountPaid + _amountPending);
+    return r <= 0 ? 0.0 : r;
+  }
+  
   @override
   void initState() {
     super.initState();
@@ -70,12 +78,29 @@ class _PaymentPageState extends State<PaymentPage> {
       _certification = (d['duree'] ?? '').toString().isNotEmpty ? 'Oui' : '—';
       _costTotal = (d['cout'] as num?)?.toDouble() ?? 0.0;
 
+      // Do not allow payment page for a canceled formation
+      if ((d['statut'] ?? '').toString().toUpperCase() == 'ANNULER') {
+        setState(() {
+          _error = 'Cette formation a été annulée.';
+          _loading = false;
+        });
+        return;
+      }
+
       // Inscriptions for formation → find the jeune’s inscription by name
       final inscs = await _inscriptionsService.listByFormation(
         widget.idFormation,
       );
+      debugPrint('----------${inscs.length.toString()}----------');
       final found = inscs.firstWhere(
-        (i) => (i['nomJeune'] ?? '') == widget.jeuneName,
+        (i) {
+          final jid = (i['idJeune'] is int)
+              ? i['idJeune'] as int
+              : int.tryParse(i['idJeune']?.toString() ?? '') ?? -1;
+          if (jid == widget.idJeune) return true;
+          // Fallback by name if idJeune not present (backward compatibility)
+          return (i['nomJeune'] ?? '') == widget.jeuneName;
+        },
         orElse: () => {},
       );
       _idInscription = (found['id'] is int)
@@ -89,10 +114,15 @@ class _PaymentPageState extends State<PaymentPage> {
           res,
           (d) => d as List<dynamic>,
         );
-        _amountPaid = data.fold<double>(0.0, (sum, p) {
+         _amountPaid = data.fold<double>(0.0, (sum, p) {
           final status = (p['status'] ?? '').toString();
           final montant = (p['montant'] as num?)?.toDouble() ?? 0.0;
           return status == 'VALIDE' ? sum + montant : sum;
+        });
+               _amountPending = data.fold<double>(0.0, (sum, p) {
+          final status = (p['status'] ?? '').toString();
+          final montant = (p['montant'] as num?)?.toDouble() ?? 0.0;
+          return status == 'EN_ATTENTE' ? sum + montant : sum;
         });
       }
 
@@ -266,7 +296,7 @@ class _PaymentPageState extends State<PaymentPage> {
   Widget _buildFinancialSummary() {
     // Formatter les montants en FCFA (ou autre devise)
     String formatCurrency(double amount) {
-      return '${amount.toInt().toStringAsFixed(0)}.00';
+      return '${amount.toStringAsFixed(0)}.00';
     }
 
     return Column(
@@ -280,16 +310,24 @@ class _PaymentPageState extends State<PaymentPage> {
         const SizedBox(height: 10),
         // Montant payé (vert)
         _buildSummaryRow(
-          'Montant payé',
+          'Montant payé(validé)',
           formatCurrency(_amountPaid),
           primaryGreen,
           isBold: true,
         ),
+         // Contributions en attente (orange/rouge)
+        _buildSummaryRow(
+          'Contributions en attente',
+          formatCurrency(_amountPending),
+          Colors.deepOrange,
+          isBold: true,
+        ),
+        const SizedBox(height: 10),
         const SizedBox(height: 10),
         // Montant restant (rouge)
         _buildSummaryRow(
           'Montant restant',
-          formatCurrency(amountRemaining),
+          formatCurrency(amountRemainingForContrib),
           primaryRed,
           isBold: true,
         ),
@@ -374,6 +412,12 @@ class _PaymentPageState extends State<PaymentPage> {
                 );
                 return;
               }
+                 if (montant > amountRemainingForContrib) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Le montant dépasse le restant à payer: ${amountRemainingForContrib.toInt()}.00')),
+                );
+                return;
+              }
               if (phone.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Veuillez saisir un numéro de téléphone.')),
@@ -402,6 +446,8 @@ class _PaymentPageState extends State<PaymentPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Paiement créé. En attente de validation.')),
                 );
+                 // Refresh sums after creating payment
+                await _loadData();
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Erreur de paiement: $e')),
@@ -422,7 +468,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   ),
                 ],
               ),
-              // Icône qui ressemble à l'icône de transaction/paiement de l'image
+              // Icône qui ressemble à l’icône de transaction/paiement de l'image
               child: const Icon(
                 Icons.south_west_outlined,
                 color: Colors.black,

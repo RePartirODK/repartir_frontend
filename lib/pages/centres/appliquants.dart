@@ -105,9 +105,15 @@ class _GeneralApplicantsPageState extends State<GeneralApplicantsPage> {
         return;
       }
       final items = await _centreService.getCentreInscriptions(centreId);
+      final validated = items.where((i) {
+        final isValide = i.status.toUpperCase() == 'VALIDE';
+        final notCancelled = ((i.formationStatut ?? '').toUpperCase() != 'ANNULER');
+        return isValide && notCancelled;
+      }).toList();
+      
       setState(() {
-        _inscriptions = items;
-        _filtered = items;
+        _inscriptions = validated;
+        _filtered = validated;
       });
     } catch (e) {
       debugPrint('Failed to load applicants: $e');

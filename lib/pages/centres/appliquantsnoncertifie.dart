@@ -73,6 +73,16 @@ class _ApplicantsFormationNonTerminePageState
  @override
   void initState() {
     super.initState();
+    // Block page if formation is canceled
+    if (widget.formation.statut.toUpperCase() == 'ANNULER') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Formation annulée. Page indisponible.')),
+        );
+        Navigator.pop(context);
+      });
+      return;
+    }
     _loadApplicantsForFormation();
   }
 
