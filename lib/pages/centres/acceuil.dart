@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
+import 'package:repartir_frontend/pages/centres/demandes_en_attente_page.dart';
 import 'package:repartir_frontend/pages/centres/formation.dart';
 import 'package:repartir_frontend/provider/centre_provider.dart';
 import 'package:repartir_frontend/provider/formation_provider.dart';
@@ -238,9 +238,13 @@ int getNombreFormationsEnCours(List<ResponseFormation> formations) =>
             child: _buildActionButton(
               context,
               text: "Demande",
-              onPressed: () {
-                //navigation vers la page demande
-                //print("click");
+                  onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DemandesEnAttentePage(),
+                  ),
+                );
               },
             ),
           ),

@@ -100,6 +100,25 @@ class ApiService {
   
   }
 
+  Future<http.Response> deleteV2(String path, {Object? body, Map<String, dynamic>? query}) async {
+    return _executeWithAutoRefresh(() async {
+      final uri = Uri.parse('$apiBaseUrl$path').replace(queryParameters: _encodeQuery(query));
+      final headers = await _authHeaders();
+      if (body != null) {
+        return _client
+            .send(
+              http.Request('DELETE', uri)
+                ..headers.addAll(headers)
+                ..body = body is String ? body : jsonEncode(body),
+            )
+            .then(http.Response.fromStream);
+      }
+      return _client.delete(uri, headers: headers);
+    });
+  }
+
+  
+
   /// --- MULTIPART pour upload de fichiers ---
   Future<http.StreamedResponse> multipart(
     String path,

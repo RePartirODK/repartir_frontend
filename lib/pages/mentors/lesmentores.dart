@@ -2,9 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/pages/mentors/formationviewbymentor.dart';
-import 'package:repartir_frontend/pages/mentors/pageformation.dart';
-import 'package:repartir_frontend/pages/parrains/formationdetails.dart';
 import 'package:repartir_frontend/services/mentor_service.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/pages/mentors/mentore_detail_page.dart';
@@ -90,44 +87,6 @@ class _MentoresPageState extends State<MentoresPage> {
                         padding: const EdgeInsets.fromLTRB(16, 30, 16, 100),
                         child: Column(
                           children: [
-                            // Bouton Découvrir
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const FormationsByMentorPage(),
-                                      ),
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: primaryBlue,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 30,
-                                      vertical: 5,
-                                    ),
-                                    elevation: 0,
-                                  ),
-                                  icon: const Icon(Icons.search, size: 20),
-                                  label: const Text(
-                                    'Découvrir',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 15),
-
                             // Message si aucun mentoré
                             if (_mentoresValides.isEmpty)
                               const Center(

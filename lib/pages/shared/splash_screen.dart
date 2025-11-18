@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
-import 'package:repartir_frontend/pages/auth/role_selection_page.dart';
 import 'package:repartir_frontend/pages/centres/navcentre.dart';
 import 'package:repartir_frontend/pages/entreprise/accueil_entreprise_page.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';

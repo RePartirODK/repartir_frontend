@@ -73,10 +73,12 @@ class _FormationPageState extends State<FormationPage>
           agg.add(ResponseFormation.fromJson(f));
         }
       }
+      // Filter out cancelled formations
+      final nonCancelled = agg.where((f) => (f.statut).toString().trim().toUpperCase() != 'ANNULER').toList();
       if (mounted) {
         setState(() {
-          _formations = agg;
-          _filteredFormations = List<ResponseFormation>.from(agg);
+          _formations = nonCancelled;
+          _filteredFormations = List<ResponseFormation>.from(nonCancelled);
           _isLoading = false;
         });
       }
@@ -90,6 +92,8 @@ class _FormationPageState extends State<FormationPage>
       }
     }
   }
+
+
 
   Widget _buildFormationList(List<ResponseFormation> list) {
     if (list.isEmpty) {
