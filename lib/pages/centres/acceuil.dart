@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
-import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/centres/demandes_en_attente_page.dart';
 import 'package:repartir_frontend/pages/centres/formation.dart';

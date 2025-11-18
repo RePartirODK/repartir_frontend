@@ -110,11 +110,15 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
   }
 
   Widget _buildFormationList(final List<ResponseFormation> formations) {
-    // ... (Reste inchangé)
+    final visible = formations.where((f) {
+      debugPrint("Statut formation: ${f.statut} trouvé ${f.id}");
+      final s = (f.statut).toString().trim().toUpperCase();
+      return s != 'ANNULER';
+    }).toList();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
-        children: formations.map((formation) {
+        children: visible.map((formation) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 20.0),
             child: _buildFormationCard(formation),
@@ -323,8 +327,7 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
           ),
         ];
         break;
-      
-      
+
       default:
         badgeColor = Colors.grey.withAlpha(30);
         textColor = Colors.grey;

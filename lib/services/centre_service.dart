@@ -142,9 +142,9 @@ class CentreService {
     );
   }
 
-    Future<void> cancelFormation(int id, String motif) async {
-    final response = await _api.delete('/formations/$id/annuler', body: { 'motif': motif });
-    debugPrint(response.body);
+  /// Annuler ou supprimer une formation selon présence d’inscriptions (motif requis)
+  Future<void> cancelFormation(int id, String motif) async {
+    final response = await _api.deleteV2('/formations/$id/annuler', query: { 'motif': motif });
     if (response.statusCode < 200 || response.statusCode >= 300) {
       _api.decodeJson(response, (data) => data);
     }
