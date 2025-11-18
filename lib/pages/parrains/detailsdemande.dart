@@ -82,6 +82,16 @@ class _DetailPageState extends State<DetailPage> {
       // Fetch formation details by id
       final f = await _formationsService.details(widget.idFormation);
       _formation = ResponseFormation.fromJson(f);
+      // If canceled, do not display
+      if (_formation?.statut.toUpperCase() == 'ANNULER') {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cette formation a été annulée.')),
+          );
+          Navigator.pop(context);
+        }
+        return;
+      }
       final centreId = _formation?.idCentre ?? 0;
       if (centreId != 0) {
         final centreJson = await _centresService.getById(centreId);

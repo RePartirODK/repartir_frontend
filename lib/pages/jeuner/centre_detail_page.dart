@@ -38,6 +38,8 @@ class _CentreDetailPageState extends State<CentreDetailPage> {
         _formations = [];
       }
       // Pas d'erreur si pas de formations, on affiche juste les infos du centre
+      //Filter pour enlever les formations annuler
+      _formations = _formations.where((f) => f['statut'] != 'ANNULER').toList();
     } catch (e) {
       _error = '$e';
     } finally {

@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import '../models/chat_message.dart';
 import 'api_service.dart';
+import 'package:repartir_frontend/network/api_config.dart';
 
 class ChatService {
   final ApiService _api = ApiService();
@@ -38,9 +39,17 @@ class ChatService {
 
       print('💬 Connexion WebSocket en cours...');
       
+      // Build WS endpoint from base origin (handles Android emulator / iOS / web)
+      final origin = ApiConfig.baseOrigin;
+      final wsOrigin = origin.startsWith('https')
+          ? origin.replaceFirst('https', 'wss')
+          : origin.replaceFirst('http', 'ws');
+      final wsUrl = '$wsOrigin/ws';
+      print('💬 WS URL: $wsUrl');
+
       _stompClient = StompClient(
         config: StompConfig(
-          url: 'ws://localhost:8183/ws',
+          url: wsUrl,
           onConnect: _onConnectCallback,
           onDisconnect: _onDisconnectCallback,
           onStompError: _onStompError,
