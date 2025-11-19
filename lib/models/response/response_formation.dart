@@ -12,6 +12,7 @@ class ResponseFormation {
   final String? urlFormation;
   final String? urlCertificat;
   final int idCentre;
+  final bool? gratuit;
 
   ResponseFormation({
     required this.id,
@@ -27,6 +28,7 @@ class ResponseFormation {
     this.urlFormation,
     this.urlCertificat,
     required this.idCentre,
+    this.gratuit,
   });
 
   /// Factory constructor pour créer un objet à partir d’un JSON
@@ -47,7 +49,8 @@ class ResponseFormation {
       urlFormation: json['urlFormation'] ?? '',
       urlCertificat: json['urlCertificat'] ?? '',
       idCentre: json['idCentre']is int ? json['idCentre'] as int :
-      int.tryParse(json['idCentre']?.toString() ?? '0') ?? 0
+      int.tryParse(json['idCentre']?.toString() ?? '0') ?? 0,
+      gratuit: json['gratuit'] as bool?,
     );
   }
  

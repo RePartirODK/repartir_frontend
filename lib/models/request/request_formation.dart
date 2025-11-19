@@ -10,6 +10,7 @@ class RequestFormation {
   final String duree;
   final String? urlFormation;
   final String? urlCertificat;
+  final bool? gratuit;
 
   // 🔹 Constructeur
   RequestFormation({
@@ -24,6 +25,7 @@ class RequestFormation {
     required this.duree,
     this.urlFormation,
     this.urlCertificat,
+    this.gratuit,
   });
 
   // Conversion d’un JSON vers un objet Dart
@@ -40,6 +42,7 @@ class RequestFormation {
       duree: json['duree'],
       urlFormation: json['urlFormation'],
       urlCertificat: json['urlCertificat'],
+      gratuit: json['gratuit'] as bool?,
     );
   }
 
@@ -57,6 +60,7 @@ class RequestFormation {
       'duree': duree,
       'urlFormation': urlFormation,
       'urlCertificat': urlCertificat,
+      'gratuit': gratuit,
     };
   }
 }
