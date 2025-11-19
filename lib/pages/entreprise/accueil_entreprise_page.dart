@@ -53,7 +53,7 @@ class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
         _isLoading = false;
       });
     } catch (e) {
-      print('❌ Erreur chargement données: $e');
+      debugPrint('❌ Erreur chargement données: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -265,7 +265,7 @@ class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   spreadRadius: 1,
                   blurRadius: 3,
                   offset: const Offset(0, 2),
@@ -320,7 +320,7 @@ class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha:0.1),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -332,7 +332,7 @@ class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: Colors.blue, size: 30),
@@ -369,7 +369,7 @@ class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),

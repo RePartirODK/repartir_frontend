@@ -4,7 +4,7 @@ import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/services/offers_service.dart';
 
 class OffreListPage extends StatefulWidget {
-  const OffreListPage({Key? key}) : super(key: key);
+  const OffreListPage({super.key});
 
   @override
   State<OffreListPage> createState() => _OffreListPageState();
@@ -39,7 +39,7 @@ class _OffreListPageState extends State<OffreListPage> {
           'datePublication': '',
           'description': m['description'] ?? '',
           'lien_postuler': m['lienPostuler'] ?? '',
-        'logo': 'https://via.placeholder.com/150',
+          'logo': 'https://via.placeholder.com/150',
           'date_debut': m['dateDebut']?.toString(),
           'date_fin': m['dateFin']?.toString(),
           'competence': m['competence']?.toString() ?? '',
@@ -62,6 +62,7 @@ class _OffreListPageState extends State<OffreListPage> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
+          //------------LISTE DES OFFRES-------------------------
           Positioned(
             top: 120,
             left: 0,
@@ -78,19 +79,25 @@ class _OffreListPageState extends State<OffreListPage> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
-                      ? Center(child: Text(_error!))
-                      : RefreshIndicator(
-                          onRefresh: _fetch,
-              child: ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
-                            itemCount: _items.length,
-                itemBuilder: (context, index) {
-                              return OffreCard(offre: _items[index]);
-                },
-              ),
+                  ? Center(child: Text(_error!))
+                  : RefreshIndicator(
+                      onRefresh: _fetch,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(
+                          16.0,
+                          24.0,
+                          16.0,
+                          16.0,
+                        ),
+                        itemCount: _items.length,
+                        itemBuilder: (context, index) {
+                          return OffreCard(offre: _items[index]);
+                        },
+                      ),
+                    ),
             ),
           ),
-          ),
+          //------------HEADER---------------------------
           Positioned(
             top: 0,
             left: 0,
@@ -99,7 +106,7 @@ class _OffreListPageState extends State<OffreListPage> {
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
               title: 'Offres d\'emploi',
-              height: 120,
+              height: 150,
             ),
           ),
         ],
@@ -110,7 +117,7 @@ class _OffreListPageState extends State<OffreListPage> {
 
 class OffreCard extends StatelessWidget {
   final Map<String, dynamic> offre;
-  const OffreCard({Key? key, required this.offre}) : super(key: key);
+  const OffreCard({super.key, required this.offre});
 
   @override
   Widget build(BuildContext context) {
@@ -133,13 +140,26 @@ class OffreCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(offre['entreprise'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(
+                      offre['entreprise'],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                        const Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(width: 4),
-                        Text(offre['lieu'], style: const TextStyle(color: Colors.grey)),
+                        Text(
+                          offre['lieu'],
+                          style: const TextStyle(color: Colors.grey),
+                        ),
                       ],
                     ),
                   ],
@@ -147,11 +167,20 @@ class OffreCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Text(offre['titre'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+            Text(
+              offre['titre'],
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ),
             const SizedBox(height: 8),
-            Text(offre['description'], style: TextStyle(color: Colors.grey[700])),
+            Text(
+              offre['description'],
+              style: TextStyle(color: Colors.grey[700]),
+            ),
             const SizedBox(height: 12),
-            _buildInfoRow(Icons.date_range, 'Du ${_formatDate(offre['date_debut'])} au ${_formatDate(offre['date_fin'])}'),
+            _buildInfoRow(
+              Icons.date_range,
+              'Du ${_formatDate(offre['date_debut'])} au ${_formatDate(offre['date_fin'])}',
+            ),
             _buildInfoRow(Icons.work_outline, offre['type_contrat']),
             const SizedBox(height: 15),
             Align(
@@ -161,21 +190,26 @@ class OffreCard extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => DetailOffreCommunePage(offre: offre),
+                      builder: (context) =>
+                          DetailOffreCommunePage(offre: offre),
                     ),
                   );
                 },
-                child: const Text('Voir détails'),
+                
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 12)
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 50,
+                    vertical: 12,
+                  ),
                 ),
+                child: const Text('Voir détails'),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -190,10 +224,7 @@ class OffreCard extends StatelessWidget {
           Icon(icon, color: Colors.grey, size: 16),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              text,
-              style: TextStyle(color: Colors.grey[700]),
-            ),
+            child: Text(text, style: TextStyle(color: Colors.grey[700])),
           ),
         ],
       ),
@@ -202,7 +233,7 @@ class OffreCard extends StatelessWidget {
 
   String? _formatDate(String? dateString) {
     if (dateString == null || dateString.isEmpty) return null;
-    
+
     try {
       // Parse la date au format "2025-12-01 21:00:00.000000"
       final DateTime date = DateTime.parse(dateString);

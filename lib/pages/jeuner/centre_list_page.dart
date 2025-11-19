@@ -151,7 +151,7 @@ class _CentreListPageState extends State<CentreListPage> {
             right: 0,
             child: CustomHeader(
               title: 'Centres de formation',
-              height: 120,
+              height: 150,
             ),
           ),
         ],
@@ -163,7 +163,7 @@ class _CentreListPageState extends State<CentreListPage> {
 class CentreCard extends StatelessWidget {
   final Map<String, dynamic> centre;
 
-  const CentreCard({Key? key, required this.centre}) : super(key: key);
+  const CentreCard({super.key, required this.centre});
 
   @override
   Widget build(BuildContext context) {

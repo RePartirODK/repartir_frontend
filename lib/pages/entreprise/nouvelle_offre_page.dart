@@ -80,7 +80,7 @@ class _NouvelleOffrePageState extends State<NouvelleOffrePage> {
             child: CustomHeader(
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
-              height: 120,
+              height: 150,
             ),
           ),
         ],

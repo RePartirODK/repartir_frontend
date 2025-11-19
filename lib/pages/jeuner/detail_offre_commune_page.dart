@@ -105,7 +105,7 @@ class _DetailOffreCommunePageState extends State<DetailOffreCommunePage> {
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
               title: 'Détail de l\'offre',
-              height: 120,
+              height: 150,
             ),
           ),
         ],

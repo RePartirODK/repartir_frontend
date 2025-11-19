@@ -121,7 +121,7 @@ class _MentorHomePageState extends State<MentorHomePage> {
         _loading = false;
       });
     } catch (e) {
-      print('❌ Erreur chargement données mentor: $e');
+      debugPrint('❌ Erreur chargement données mentor: $e');
       setState(() => _loading = false);
     }
   }
@@ -212,7 +212,7 @@ class _MentorHomePageState extends State<MentorHomePage> {
             child: CustomHeader(
               title: "Accueil",
               leftWidget: _buildLogo(),
-              height: 120,
+              height: 150,
             ),
           ),
         ],

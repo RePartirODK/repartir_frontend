@@ -104,7 +104,7 @@ class _DetailOffrePageState extends State<DetailOffrePage> {
             child: CustomHeader(
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
-              height: 120,
+              height: 150,
             ),
           ),
         ],

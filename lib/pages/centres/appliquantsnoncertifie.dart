@@ -67,7 +67,6 @@ class _ApplicantsFormationNonTerminePageState
     extends State<ApplicantsFormationNonTerminePage> {
 
         final _centreService = CentreService();
-  List<ResponseInscription> _inscriptions = [];
   List<ResponseInscription> _filtered = [];
 
  @override
@@ -90,7 +89,6 @@ class _ApplicantsFormationNonTerminePageState
     try {
       final items = await _centreService.getInscriptionsByFormation(widget.formation.id);
       setState(() {
-        _inscriptions = items;
         _filtered = items;
       });
     } catch (e) {
@@ -119,13 +117,20 @@ class _ApplicantsFormationNonTerminePageState
                   // 2.2. Compteur d'Appliquants
                   Padding(
                     padding: const EdgeInsets.only(bottom: 20.0),
-                    child: Text(
-                      "${_filtered.length} Appliquants",
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: kSecondary, // Couleur verte pour le compteur
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.group, color: kSecondary, size: 26),
+                        const SizedBox(width: 8),
+                        Text(
+                          "${_filtered.length} Appliquants",
+                          style: const TextStyle(
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                            color: kSecondary, // Couleur verte pour le compteur
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
@@ -240,96 +245,6 @@ class _ApplicantsFormationNonTerminePageState
       ),
     );
   }
-  Widget _buildApplicantCard(Applicant applicant) {
-    return Card(
-      elevation: 2.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(15.0),
-        child: Row(
-          children: <Widget>[
-            // Avatar de l'applicant
-            CircleAvatar(
-              radius: 25,
-              backgroundColor: applicant.avatarColor.withValues(alpha: 0.8),
-              child: Icon(applicant.icon, color: Colors.white, size: 30),
-            ),
-            const SizedBox(width: 15),
 
-            // Nom de l'applicant
-            Expanded(
-              child: Text(
-                applicant.name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-
-            // Boutons d'action/Statut (Alignés à droite)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                const SizedBox(height: 5),
-                _buildActionButton('Voir', isPrimary: false),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton(String text, {required bool isPrimary}) {
-    // Le style des boutons (Certifié et Voir)
-    return Container(
-      width: 90, // Largeur fixe pour l'alignement
-      decoration: BoxDecoration(
-        color: kPrimaryColor.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(5.0),
-        // Pour "Certifié", on peut simuler un badge plus voyant
-        boxShadow: isPrimary
-            ? [
-                BoxShadow(
-                  color: kPrimaryColor.withValues(alpha: 0.3),
-                  blurRadius: 3,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            /**
-             * Navigation vers la page profil de l'appliquant
-             */
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ApplicantProfilePage(),
-              ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
-            child: Center(
-              child: Text(
-                text,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 

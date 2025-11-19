@@ -70,216 +70,101 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
       bottomNavigationBar: _buildBottomNavigation(),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                // Contenu principal
-                SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // Espace pour l'en-tête
-                      const SizedBox(height: 130),
-                
-                // En-tête avec image de profil
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.only(top: 20, bottom: 30),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-              ),
+          : SingleChildScrollView(
               child: Column(
                 children: [
-                  // Image de profil
+                  // Header stylé comme mentors/profile_mentor.dart
+                  Center(child: _buildProfileHeader(context)),
+                  const SizedBox(height: 20),
+                  // Informations de contact (carte)
                   Container(
-                    width: 120,
-                    height: 120,
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey.shade300, width: 3),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.grey.shade200),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
+                          color: Colors.grey.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-                    child: ClipOval(
-                      child: _companyImageUrl.isEmpty
-                          ? Container(
-                              color: Colors.blue.shade50,
-                              child: Icon(
-                                Icons.business,
-                                size: 60,
-                                color: Colors.blue.shade400,
-                              ),
-                            )
-                          : Image.network(
-                              '$_companyImageUrl?v=$_imageRefreshKey', // Cache-busting
-                              key: ValueKey('company_avatar_$_imageRefreshKey'), // Force rebuild
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.blue.shade50,
-                                  child: Icon(
-                                    Icons.business,
-                                    size: 60,
-                                    color: Colors.blue.shade400,
-                                  ),
-                                );
-                              },
-                            ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_location.isNotEmpty) ...[
+                          _buildContactInfo(Icons.location_on, _location),
+                          const SizedBox(height: 15),
+                        ],
+                        if (_email.isNotEmpty) ...[
+                          _buildContactInfo(Icons.email, _email),
+                          const SizedBox(height: 15),
+                        ],
+                        if (_phone.isNotEmpty) _buildContactInfo(Icons.phone, _phone),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  
-                  // Nom de l'entreprise
-                  Text(
-                    _companyName,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  // Catégorie
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      _companyCategory,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.blue.shade700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Description
+                  const SizedBox(height: 30),
+                  // Boutons d'action (garde vos boutons)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Text(
-                      _companyDescription,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey.shade600,
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildActionButton(
+                                Icons.edit,
+                                'Modifier le profil',
+                                Colors.blue,
+                                () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => const ModifierProfilPage()),
+                                  );
+                                  if (result == true) {
+                                    _loadProfile();
+                                  }
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: _buildActionButton(
+                                Icons.add_circle_outline,
+                                'Ajouter une offre',
+                                Colors.green,
+                                () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => const NouvelleOffrePage()),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 15),
+                        _buildActionButton(
+                          Icons.logout,
+                          'Se déconnecter',
+                          Colors.red,
+                          () {
+                            _showLogoutDialog();
+                          },
+                        ),
+                      ],
                     ),
                   ),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
-            
-            // Section informations de contact
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withValues(alpha:0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_location.isNotEmpty) ...[
-                    _buildContactInfo(Icons.location_on, _location),
-                    const SizedBox(height: 15),
-                  ],
-                  if (_email.isNotEmpty) ...[
-                    _buildContactInfo(Icons.email, _email),
-                    const SizedBox(height: 15),
-                  ],
-                  if (_phone.isNotEmpty)
-                    _buildContactInfo(Icons.phone, _phone),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 30),
-            
-            // Section boutons d'action
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  // Boutons principaux
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildActionButton(
-                          Icons.edit,
-                          'Modifier le profil',
-                          Colors.blue,
-                          () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const ModifierProfilPage()),
-                            );
-                            if (result == true) {
-                              _loadProfile(); // Recharger le profil après modification
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: _buildActionButton(
-                          Icons.add_circle_outline,
-                          'Ajouter une offre',
-                          Colors.green,
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const NouvelleOffrePage()),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 15),
-                  
-                  // Bouton de déconnexion
-                  _buildActionButton(
-                    Icons.logout,
-                    'Se déconnecter',
-                    Colors.red,
-                    () {
-                      _showLogoutDialog();
-                    },
-                  ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 30),
-              ],
-            ),
-          ),
-          
-          // En-tête bleu avec forme ondulée (au-dessus du contenu)
-          CustomHeader(
-            title: 'Profil Entreprise',
-          ),
-        ],
-      ),
     );
   }
 
@@ -525,6 +410,113 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
         BottomNavigationBarItem(
           icon: Icon(Icons.person_outline),
           label: 'Profil',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileHeader(BuildContext context) {
+    return Stack(
+      children: [
+        const CustomHeader(title: 'Profil Entreprise'),
+        Align(
+          child: Column(
+            children: [
+              const SizedBox(height: 100),
+              // Avatar entreprise (avec cache-busting)
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.blue.shade200, width: 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: (_companyImageUrl.isEmpty)
+                      ? Container(
+                          color: Colors.blue.shade50,
+                          child: Icon(Icons.business, size: 60, color: Colors.blue.shade400),
+                        )
+                      : Image.network(
+                          '$_companyImageUrl?v=$_imageRefreshKey',
+                          key: ValueKey('company_avatar_$_imageRefreshKey'),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.blue.shade50,
+                              child:
+                                  Icon(Icons.business, size: 60, color: Colors.blue.shade400),
+                            );
+                          },
+                        ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _companyName,
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              if (_companyCategory.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _companyCategory,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue.shade700,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 12),
+              if (_companyDescription.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  child: Text(
+                    _companyDescription,
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade700, height: 1.5),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              const SizedBox(height: 12),
+              // Bouton Modifier le profil (style mentor)
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ModifierProfilPage()),
+                  );
+                  if (result == true) {
+                    _loadProfile();
+                  }
+                },
+                icon: const Icon(Icons.edit, size: 18, color: Colors.white),
+                label: const Text(
+                  'Modifier le profil',
+                  style: TextStyle(color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  elevation: 0,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

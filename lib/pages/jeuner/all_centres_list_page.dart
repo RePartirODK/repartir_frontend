@@ -4,7 +4,7 @@ import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/services/centres_service.dart';
 
 class AllCentresListPage extends StatefulWidget {
-  const AllCentresListPage({Key? key}) : super(key: key);
+  const AllCentresListPage({super.key});
 
   @override
   State<AllCentresListPage> createState() => _AllCentresListPageState();
@@ -73,6 +73,7 @@ class _AllCentresListPageState extends State<AllCentresListPage> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
+          //-----------------------CONTENU PRINCIPAL--------------------------
           Positioned(
             top: 120,
             left: 0,
@@ -111,6 +112,7 @@ class _AllCentresListPageState extends State<AllCentresListPage> {
                         ),
             ),
           ),
+          //-----------------------HEADER-------------------------------------
           Positioned(
             top: 0,
             left: 0,
@@ -119,7 +121,7 @@ class _AllCentresListPageState extends State<AllCentresListPage> {
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
               title: 'Tous les centres',
-              height: 120,
+              height: 150,
             ),
           ),
         ],

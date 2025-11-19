@@ -25,8 +25,13 @@ class _NavHomeMentorPageState extends State<NavHomeMentorPage> {
   @override
   void initState() {
     super.initState();
-    _pages = [MentorHomePage(), MentoresPage(), MentoringPage(), MentorChatListPage(),
-    ProfileMentorPage()];
+    _pages = [
+      MentorHomePage(),
+      MentoresPage(),
+      MentoringPage(),
+      MentorChatListPage(),
+      ProfileMentorPage(),
+    ];
   }
 
   void _onItemTapped(int index) {

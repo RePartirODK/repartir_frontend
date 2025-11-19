@@ -93,7 +93,7 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      print("Navigating to index: $_selectedIndex");
+      debugPrint("Navigating to index: $_selectedIndex");
     });
   }
 
@@ -120,6 +120,9 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
       final formations = await _centreService.getAllFormations(centreId);
       final map = <String, ResponseFormation>{};
       for (final f in formations) {
+        // Exclude canceled formations
+        final s = (f.statut).toString().toUpperCase();
+        if (s == 'ANNULER') continue;
         map[f.titre] = f;
       }
 

@@ -21,7 +21,6 @@ class _MesOffresPageState extends State<MesOffresPage> {
   final OffreEmploiService _offreService = OffreEmploiService();
   final ProfileService _profileService = ProfileService();
   
-  String _companyName = "TechPartner";
   String _companyImageUrl = '';
   int _selectedIndex = 1;
   List<OffreEmploi> _offres = [];
@@ -40,13 +39,12 @@ class _MesOffresPageState extends State<MesOffresPage> {
       final offres = await _offreService.getMesOffres();
       
       setState(() {
-        _companyName = profile['nom'] ?? 'Entreprise';
         _companyImageUrl = profile['urlPhotoEntreprise'] ?? '';
         _offres = offres;
         _isLoading = false;
       });
     } catch (e) {
-      print('❌ Erreur chargement données: $e');
+      debugPrint('❌ Erreur chargement données: $e');
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

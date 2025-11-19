@@ -221,7 +221,7 @@ class _DemandeDetailsPageState extends State<DemandeDetailsPage> {
             ElevatedButton(
               onPressed: () {
                 // Logique pour accepter la demande (appel API, navigation)
-                print('Demande acceptée de ${widget.demande.nom}');
+                debugPrint('Demande acceptée de ${widget.demande.nom}');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: acceptColor,
