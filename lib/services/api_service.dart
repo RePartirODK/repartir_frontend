@@ -239,8 +239,8 @@ class ApiService {
     );
     if (res.statusCode >= 200 && res.statusCode < 300) {
       final data = jsonDecode(utf8.decode(res.bodyBytes));
-      final newAccess = data['access_token']?.toString();
-      final newRefresh = (data['refresh_token'] ?? refreshToken).toString();
+      final newAccess = (data['access_token'] ?? data['accessToken'])?.toString();
+      final newRefresh = (data['refresh_token'] ?? data['refreshToken'] ?? refreshToken).toString();
       if (newAccess == null || newAccess.isEmpty) {
         // Réponse inattendue → considérer comme échec transitoire
         throw Exception('REFRESH_FAILED');

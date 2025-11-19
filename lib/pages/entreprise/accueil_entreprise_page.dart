@@ -241,8 +241,25 @@ class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
           ),
           
           // En-tête bleu avec forme ondulée (au-dessus du contenu)
-          CustomHeader(
-            centerWidget: _buildHeaderContent(),
+          Stack(
+            children: [
+              CustomHeader(title: 'Accueil'),
+              Positioned(
+                height: 80,
+                width: 80,
+                top: 30,
+                left: 20,
+                child: CircleAvatar(
+                  radius: 25,
+                  backgroundColor: Colors.white,
+                  child: Image.asset(
+                    'assets/images/logo_repartir.png',
+                    height: 300,
+                    width: 300,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

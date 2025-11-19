@@ -29,15 +29,15 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
   final storage = SecureStorageService();
   final utilisateurService = UtilisateurService();
 
-  // Fonction de déconnexion 
+  // Fonction de déconnexion
   Future<void> _handleLogout(String email) async {
     try {
       debugPrint("Déconnexion de l'utilisateur...");
-    // Logique de déconnexion réelle
-    await utilisateurService.logout({'email': email});
-    //redirection vers la page de login
-    // ignore: use_build_context_synchronously
-    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      // Logique de déconnexion réelle
+      await utilisateurService.logout({'email': email});
+      //redirection vers la page de login
+      // ignore: use_build_context_synchronously
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
     } catch (e) {
       debugPrint("Erreur lors de la deconnexion : $e");
       // ignore: use_build_context_synchronously
@@ -45,14 +45,14 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
         SnackBar(content: Text("Impossible de se deconnecter le compte $e")),
       );
     }
-    
   }
 
   // Fonction d'édition simulée
   void _handleEditProfile() {
     debugPrint("Naviguer vers le formulaire d'édition de profil...");
     // Logique de navigation vers la page d'édition
-    Navigator.push(context, 
+    Navigator.push(
+      context,
       MaterialPageRoute(builder: (context) => const EditProfilCentrePage()),
     );
   }
@@ -114,6 +114,49 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
     }
   }
 
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Déconnexion'),
+        content: const Text('Voulez-vous vraiment vous déconnecter ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _handleLogout2(); // Changed from centre.email
+            },
+            child: const Text(
+              'Se déconnecter',
+              style: TextStyle(color: kDangerColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleLogout2() async {
+    try {
+      final email = await storage.getUserEmail();
+      if (email != null) await utilisateurService.logout({'email': email});
+      await storage.clearTokens();
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      }
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
+        context,
+      ).showSnackBar(SnackBar(content: Text("Erreur de déconnexion : $e")));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final centre = ref.watch(centreNotifierProvider);
@@ -166,31 +209,32 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
     return Column(
       children: [
         // Photo de profil / Bannière
-      ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: FadeInImage.assetNetwork(
-          height: 150,
-          width: double.infinity,
-          fit: BoxFit.cover,
-          placeholder: 'assets/center_banner.jpg', // image locale pendant le chargement
-          image: centre.urlPhoto != null && centre.urlPhoto!.isNotEmpty
-              ? centre.urlPhoto!
-              : '', // si pas d'URL, on laissera le placeholder
-          imageErrorBuilder: (context, error, stackTrace) {
-            // Si erreur réseau ou URL invalide
-            return Container(
-              height: 150,
-              width: double.infinity,
-              color: Colors.grey[300],
-              child: const Center(
-                child: Icon(Icons.business, size: 60, color: Colors.black54),
-              ),
-            );
-          },
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: FadeInImage.assetNetwork(
+            height: 150,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            placeholder:
+                'assets/center_banner.jpg', // image locale pendant le chargement
+            image: centre.urlPhoto != null && centre.urlPhoto!.isNotEmpty
+                ? centre.urlPhoto!
+                : '', // si pas d'URL, on laissera le placeholder
+            imageErrorBuilder: (context, error, stackTrace) {
+              // Si erreur réseau ou URL invalide
+              return Container(
+                height: 150,
+                width: double.infinity,
+                color: Colors.grey[300],
+                child: const Center(
+                  child: Icon(Icons.business, size: 60, color: Colors.black54),
+                ),
+              );
+            },
+          ),
         ),
-      ),
         const SizedBox(height: 15),
-        
+
         //Bouton Edition
         Align(
           alignment: AlignmentGeometry.centerRight,
@@ -291,9 +335,10 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
           textColor: Colors.black87,
           onTap: () async {
             //on recupère l'email du centre depuis le stockage sécurisé
-            String? email = await storage.getUserEmail() ;
+            String? email = await storage.getUserEmail();
             debugPrint("Email du centre pour déconnexion : $email");
-            _handleLogout(email!);
+            // ignore: use_build_context_synchronously
+            _showLogoutDialog(context);
           },
         ),
 
@@ -335,5 +380,4 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
       ),
     );
   }
-
 }

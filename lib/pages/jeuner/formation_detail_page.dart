@@ -10,7 +10,7 @@ import 'package:repartir_frontend/services/api_service.dart';
 import 'package:repartir_frontend/pages/jeuner/paiement_page.dart';
 
 class FormationDetailPage extends StatefulWidget {
-  const FormationDetailPage({Key? key, this.formationId}) : super(key: key);
+  const FormationDetailPage({super.key, this.formationId});
   final int? formationId;
 
   @override
@@ -68,9 +68,9 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
           
           // Ajouter les détails du centre à la formation
           _formation!['centre'] = centreDetails;
-          print('Centre récupéré avec succès: ${centreDetails['nom']}');
+          debugPrint('Centre récupéré avec succès: ${centreDetails['nom']}');
         } catch (e) {
-          print('Erreur lors de la récupération du centre: $e');
+          debugPrint('Erreur lors de la récupération du centre: $e');
         }
       }
     } catch (e) {
@@ -215,7 +215,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
               title: 'Détail Formation',
-              height: 120,
+              height: 150,
             ),
           ),
         ],
@@ -302,16 +302,34 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                       RadioGroup<bool>(
-                      groupValue: accepted,
-                      onChanged: (bool? value) {
-                      setState(() {
-                        accepted = value ?? false;
-                      });
-                    },
-                     child: const Text('J\'accepte les conditions'),
-                  ),
-                     
+
+                        
+                        // Radio<bool>(
+                        //   value: true,
+                        //   groupValue: accepted,
+                        //   onChanged: (bool? value) {
+                        //     setState(() {
+                        //       accepted = value ?? false;
+                        //     });
+                        //   },
+                        // ),
+                        //const Expanded(child: Text('J\'accepte les conditions')),
+                        RadioGroup<bool>(
+                          
+                          groupValue: accepted,
+                          onChanged: (bool? value) {
+                            setState(() {
+                              accepted = value ?? false;
+                            });
+                          },
+                          child: Row(
+                            children: <Widget>[
+                              Radio<bool>(value: true),
+                              Text('J\'accepte les conditions'),
+                            ],
+                          ),
+                        ),
+
                       ],
                     ),
                   ],

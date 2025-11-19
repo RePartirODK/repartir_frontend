@@ -73,44 +73,50 @@ int getNombreFormationsEnCours(List<ResponseFormation> formations) =>
     //il va être en écoute des changements du provider
     final formations = ref.watch(formationProvider);
     
-
     return Scaffold(
-      backgroundColor: Colors
-          .grey[50], // Fond très légèrement gris pour faire ressortir les cards
-
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            // 1. Le Header Incurvé avec le logo (importé de l'autre page)
-            CustomHeader(),
-
-            // 2. Titre de bienvenue (placé sous le header)
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
-                vertical: 20.0,
+      backgroundColor: Colors.grey[50],
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Stack(
+                    children: [
+                      CustomHeader(title: 'Accueil'),
+                      Positioned(
+                        height: 80,
+                        width: 80,
+                        top: 30,
+                        left: 20,
+                        child: CircleAvatar(
+                          radius: 25,
+                          backgroundColor: Colors.white,
+                          child: Image.asset(
+                            'assets/images/logo_repartir.png',
+                            height: 300,
+                            width: 300,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 20.0,
+                    ),
+                    child: _buildWelcomeTitle(),
+                  ),
+                  _buildStatCards(context, formations),
+                  const SizedBox(height: 40),
+                  _buildQuickActionsTitle(),
+                  const SizedBox(height: 15),
+                  _buildQuickActionButtons(context),
+                  const SizedBox(height: 30),
+                ],
               ),
-              child: _buildWelcomeTitle(),
             ),
-
-            // Cartes de statistiques améliorées
-            _buildStatCards(context, formations),
-
-            const SizedBox(height: 40),
-
-            // Titre "Actions Rapides"
-            _buildQuickActionsTitle(),
-
-            const SizedBox(height: 15),
-
-            // Boutons d'actions rapides
-            _buildQuickActionButtons(context),
-
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
     );
   }
 

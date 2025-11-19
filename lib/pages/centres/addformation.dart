@@ -426,6 +426,8 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
                                 }
                                 if (double.tryParse(value) == null) {
                                   return 'Coût invalide';
+                                }if (double.tryParse(value)! <= 0) {
+                                  return 'Coût doit être sup à 0';
                                 }
                               }
                               return null;
