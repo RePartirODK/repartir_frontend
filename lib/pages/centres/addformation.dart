@@ -45,6 +45,9 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
   // Pour le Dropdown (Format)
   String? _selectedFormat;
   final List<String> _formats = ['Presentiel', 'En ligne', 'Hybride'];
+  
+  // Pour le choix gratuit/payant
+  bool _isGratuit = false;
   String _formatFromString(String value) {
     switch (value.toLowerCase()) {
       case 'présentiel':
@@ -146,19 +149,20 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
         return;
       }
 
-      // Création de l’objet formation
+      // Création de l'objet formation
       final formation = RequestFormation(
         titre: _titleController.text,
         description: _descriptionController.text,
         dateDebut: dateDebut,
         dateFin: dateFin,
         statut: 'EN_ATTENTE',
-        cout: double.tryParse(_costController.text),
+        cout: _isGratuit ? 0.0 : double.tryParse(_costController.text),
         nbrePlace: int.tryParse(_placesController.text),
         format: _formatFromString(_selectedFormat!),
         duree: _durationController.text,
         urlFormation: _urlController.text.isEmpty ? null : _urlController.text,
         urlCertificat: _urlController.text.isEmpty ? null : _urlController.text,
+        gratuit: _isGratuit,
       );
 
       int centreId = int.tryParse(await storage.getUserId() ?? '0') ?? 0;
@@ -223,6 +227,8 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
           "${init.dateFin.day}/${init.dateFin.month}/${init.dateFin.year}";
       _selectedFormat = _labelFromApiFormat(init.format);
       _urlController.text = (init.urlFormation ?? '');
+      // Initialiser le type de formation (gratuit/payant)
+      _isGratuit = init.gratuit ?? (init.cout == 0.0);
     }
     _loadCentreDomaines();
   }
@@ -321,6 +327,70 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
                       },
                     ),
                     const SizedBox(height: 20),
+                    // Type de formation (Gratuit/Payant)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withValues(alpha: 0.15),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Type de formation',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: RadioListTile<bool>(
+                                  title: const Text('Gratuit'),
+                                  value: true,
+                                  groupValue: _isGratuit,
+                                  onChanged: (bool? value) {
+                                    setState(() {
+                                      _isGratuit = value ?? false;
+                                      if (_isGratuit) {
+                                        _costController.clear();
+                                      }
+                                    });
+                                  },
+                                  activeColor: kPrimaryColor,
+                                ),
+                              ),
+                              Expanded(
+                                child: RadioListTile<bool>(
+                                  title: const Text('Payant'),
+                                  value: false,
+                                  groupValue: _isGratuit,
+                                  onChanged: (bool? value) {
+                                    setState(() {
+                                      _isGratuit = value ?? false;
+                                    });
+                                  },
+                                  activeColor: kPrimaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     // Durée & Coût
                     Row(
                       children: <Widget>[
@@ -344,16 +414,19 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
                         Expanded(
                           child: _buildLabeledTextField(
                             label: 'Coût',
-                            hintText: '',
+                            hintText: _isGratuit ? 'Non applicable' : '',
                             controller: _costController,
                             keyboardType: TextInputType.number,
                             icon: Icons.attach_money,
+                            enabled: !_isGratuit,
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Veuillez entrer le coût';
-                              }
-                              if (double.tryParse(value) == null) {
-                                return 'Coût invalide';
+                              if (!_isGratuit) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Veuillez entrer le coût';
+                                }
+                                if (double.tryParse(value) == null) {
+                                  return 'Coût invalide';
+                                }
                               }
                               return null;
                             },
@@ -574,6 +647,7 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
     TextInputType keyboardType = TextInputType.text,
     VoidCallback? onTap,
     bool readOnly = false,
+    bool enabled = true,
     IconData? icon,
   }) {
     return Column(
@@ -607,6 +681,7 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
             keyboardType: keyboardType,
             onTap: onTap,
             readOnly: readOnly,
+            enabled: enabled,
             validator: validator,
             decoration: InputDecoration(
               hintText: hintText,

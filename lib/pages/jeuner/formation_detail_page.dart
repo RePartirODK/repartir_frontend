@@ -175,7 +175,17 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                             onPressed: _loading || widget.formationId == null
                                 ? null
                                 : () {
-                                    _showInscriptionChoiceDialog(context);
+                                    // Vérifier si la formation est gratuite
+                                    final isGratuit = _formation?['gratuit'] == true || 
+                                                      (_formation?['cout'] as num?)?.toDouble() == 0.0;
+                                    
+                                    if (isGratuit) {
+                                      // Inscription directe pour les formations gratuites
+                                      _inscrire(payerDirectement: false, demanderParrainage: false);
+                                    } else {
+                                      // Afficher le dialogue de choix pour les formations payantes
+                                      _showInscriptionChoiceDialog(context);
+                                    }
                                   },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
@@ -335,62 +345,196 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     );
   }
 
-  void _showSuccessDialog(BuildContext context, bool avecParrainage) {
+  void _showSuccessDialog(BuildContext context, bool avecParrainage, {bool isGratuit = false}) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.0),
+            borderRadius: BorderRadius.circular(20.0),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 20),
-              const CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.green,
-                child: Icon(Icons.check, color: Colors.white, size: 40),
+          child: Container(
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isGratuit
+                    ? [Colors.green.shade50, Colors.green.shade100]
+                    : [Colors.blue.shade50, Colors.blue.shade100],
               ),
-              const SizedBox(height: 20),
-              Text(
-                avecParrainage ? 'Demande envoyée' : 'Inscription réussie',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.blue,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icône animée
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isGratuit ? Colors.green : Colors.blue,
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isGratuit ? Colors.green : Colors.blue).withValues(alpha: 0.3),
+                        spreadRadius: 5,
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    isGratuit ? Icons.celebration : Icons.check_circle,
+                    color: Colors.white,
+                    size: 60,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                avecParrainage
-                    ? 'Votre demande de parrainage a bien été prise en compte.'
-                    : 'Vous êtes maintenant inscrit à cette formation.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                avecParrainage
-                    ? 'Nous vous contacterons très bientôt pour la suite du processus.'
-                    : 'Vous recevrez une confirmation par email.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
+                const SizedBox(height: 25),
+                // Titre
+                Text(
+                  isGratuit
+                      ? '🎉 Inscription confirmée !'
+                      : avecParrainage
+                          ? 'Demande envoyée'
+                          : 'Inscription réussie',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    color: isGratuit ? Colors.green.shade800 : Colors.blue.shade800,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                child: const Text('Fermer'),
-              )
-            ],
+                const SizedBox(height: 15),
+                // Message principal
+                Text(
+                  isGratuit
+                      ? 'Félicitations ! Vous êtes maintenant inscrit à cette formation gratuite.'
+                      : avecParrainage
+                          ? 'Votre demande de parrainage a bien été prise en compte.'
+                          : 'Vous êtes maintenant inscrit à cette formation.',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    height: 1.5,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                // Message secondaire
+                Text(
+                  isGratuit
+                      ? 'Vous recevrez bientôt tous les détails par email. Bonne formation !'
+                      : avecParrainage
+                          ? 'Nous vous contacterons très bientôt pour la suite du processus.'
+                          : 'Vous recevrez une confirmation par email.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[700],
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 30),
+                // Bouton de fermeture
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isGratuit ? Colors.green : Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 3,
+                    ),
+                    child: const Text(
+                      'Parfait !',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
     );
+  }
+
+  // Popup d'erreur en haut de l'écran
+  void _showErrorPopup(BuildContext context, String message) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+    
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 50,
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.red.shade600,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.red.withValues(alpha: 0.3),
+                  spreadRadius: 2,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.info_outline,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                  onPressed: () {
+                    overlayEntry.remove();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+
+    // Retirer automatiquement après 4 secondes
+    Future.delayed(const Duration(seconds: 4), () {
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
+    });
   }
 
   Widget _buildHeader(Map<String, dynamic> details) {
@@ -542,9 +686,16 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     
     rows.add(_buildInfoBoxRow('Places disponibles', (details['places'] ?? '—').toString(), Icons.group));
     
-    if (details['cout'] != null) {
+    // Afficher le coût seulement si la formation n'est pas gratuite
+    final isGratuit = _formation?['gratuit'] == true || 
+                      (details['cout'] as num?)?.toDouble() == 0.0;
+    
+    if (!isGratuit && details['cout'] != null) {
       rows.add(const Divider());
       rows.add(_buildInfoBoxRow('Coût', (details['cout'] ?? '—').toString(), Icons.attach_money));
+    } else if (isGratuit) {
+      rows.add(const Divider());
+      rows.add(_buildInfoBoxRow('Coût', 'Gratuit', Icons.attach_money));
     }
     
     if (details['type'] != null && details['type'] != '—') {
@@ -619,6 +770,10 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     
     setState(() => _loading = true);
     
+    // Vérifier si la formation est gratuite
+    final isGratuit = _formation?['gratuit'] == true || 
+                      (_formation?['cout'] as num?)?.toDouble() == 0.0;
+    
     try {
       // 1. S'inscrire à la formation
       debugPrint('📝 Inscription à la formation ${widget.formationId}...');
@@ -639,10 +794,27 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
         debugPrint('✅ Demande de parrainage créée');
       }
       
-      if (mounted) _showSuccessDialog(context, demanderParrainage);
+      if (mounted) {
+        _showSuccessDialog(context, demanderParrainage, isGratuit: isGratuit);
+      }
     } on Exception catch (e) {
       final errorMsg = e.toString();
       debugPrint('❌ Erreur inscription: $errorMsg');
+      
+      // Vérifier si c'est une erreur "déjà inscrit"
+      if (errorMsg.contains('409') || 
+          errorMsg.contains('déjà inscrit') || 
+          errorMsg.toLowerCase().contains('already') ||
+          errorMsg.toLowerCase().contains('déjà')) {
+        // Afficher un popup en haut au lieu d'un SnackBar
+        if (mounted) {
+          _showErrorPopup(
+            context,
+            'Vous êtes déjà inscrit à cette formation.',
+          );
+        }
+        return;
+      }
       
       // Si l'erreur est "déjà inscrit" (409) ET qu'on veut faire une demande de parrainage
       if (errorMsg.contains('409') && errorMsg.contains('déjà inscrit') && demanderParrainage) {
@@ -663,23 +835,21 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
         } catch (parrainageError) {
           debugPrint('❌ Erreur création parrainage: $parrainageError');
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Erreur lors de la demande de parrainage: ${parrainageError.toString().replaceAll('Exception: ', '')}'),
-                backgroundColor: Colors.red,
-              ),
+            _showErrorPopup(
+              context,
+              'Erreur lors de la demande de parrainage: ${parrainageError.toString().replaceAll('Exception: ', '')}',
             );
           }
         }
       } else {
-        // Autre erreur
+        // Autre erreur - afficher en popup en haut
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erreur: ${errorMsg.replaceAll('Exception: ', '')}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          String cleanError = errorMsg
+              .replaceAll('Exception: ', '')
+              .replaceAll('HttpException: ', '')
+              .replaceAll('FormatException: ', '');
+          
+          _showErrorPopup(context, cleanError);
         }
       }
     } finally {
