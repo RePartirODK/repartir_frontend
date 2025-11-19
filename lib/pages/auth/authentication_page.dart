@@ -92,10 +92,18 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
       }
     } catch (e) {
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(
-        // ignore: use_build_context_synchronously
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      String message = 'Email ou mot de passe incorrect';
+      if (e.toString().contains('Email ou mot de passe incorrect') ||
+          e.toString().contains('401') ||
+          e.toString().contains('403')) {
+        message = 'Email ou mot de passe incorrect';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       setState(() => isLoading = false);
     }
