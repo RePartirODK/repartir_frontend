@@ -14,6 +14,8 @@ class FormationNotifier extends StateNotifier<List<ResponseFormation>> {
 
   Future<void> loadFormations(int centreId) async {
     final formations = await centreService.getAllFormations(centreId);
+    // Trier par ID décroissant (les plus récentes en premier - ID plus élevé = plus récent)
+    formations.sort((a, b) => b.id.compareTo(a.id));
     state = formations;
   }
 

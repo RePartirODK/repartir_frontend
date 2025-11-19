@@ -75,6 +75,10 @@ class _FormationPageState extends State<FormationPage>
       }
       // Filter out cancelled formations
       final nonCancelled = agg.where((f) => (f.statut).toString().trim().toUpperCase() != 'ANNULER').toList();
+      
+      // Trier par ID décroissant (les plus récentes en premier - ID plus élevé = plus récent)
+      nonCancelled.sort((a, b) => b.id.compareTo(a.id));
+      
       if (mounted) {
         setState(() {
           _formations = nonCancelled;
@@ -193,13 +197,19 @@ class _FormationPageState extends State<FormationPage>
     final query = q.trim().toLowerCase();
     setState(() {
       if (query.isEmpty) {
-        _filteredFormations = List<ResponseFormation>.from(_formations);
+        // Trier par ID décroissant (les plus récentes en premier)
+        final sorted = List<ResponseFormation>.from(_formations);
+        sorted.sort((a, b) => b.id.compareTo(a.id));
+        _filteredFormations = sorted;
         return;
       }
-      _filteredFormations = _formations.where((f) {
+      final filtered = _formations.where((f) {
         final titre = (f.titre).toString().toLowerCase();
         return titre.contains(query);
       }).toList();
+      // Trier les résultats filtrés par ID décroissant
+      filtered.sort((a, b) => b.id.compareTo(a.id));
+      _filteredFormations = filtered;
     });
   }
 

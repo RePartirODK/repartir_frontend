@@ -7,6 +7,7 @@ import 'package:repartir_frontend/services/centres_service.dart';
 import 'package:repartir_frontend/services/parrainages_service.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/api_service.dart';
+import 'package:repartir_frontend/services/paiement_service.dart';
 import 'package:repartir_frontend/pages/jeuner/paiement_page.dart';
 
 class FormationDetailPage extends StatefulWidget {
@@ -175,17 +176,8 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                             onPressed: _loading || widget.formationId == null
                                 ? null
                                 : () {
-                                    // Vérifier si la formation est gratuite
-                                    final isGratuit = _formation?['gratuit'] == true || 
-                                                      (_formation?['cout'] as num?)?.toDouble() == 0.0;
-                                    
-                                    if (isGratuit) {
-                                      // Inscription directe pour les formations gratuites
-                                      _inscrire(payerDirectement: false, demanderParrainage: false);
-                                    } else {
-                                      // Afficher le dialogue de choix pour les formations payantes
-                                      _showInscriptionChoiceDialog(context);
-                                    }
+                                    // Vérifier d'abord si l'utilisateur a déjà une inscription
+                                    _verifierEtInscrire();
                                   },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
@@ -765,6 +757,76 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     );
   }
 
+  // Vérifier l'inscription existante avant d'afficher le dialogue de choix
+  Future<void> _verifierEtInscrire() async {
+    if (widget.formationId == null) return;
+    
+    setState(() => _loading = true);
+    
+    // Vérifier si la formation est gratuite
+    final isGratuit = _formation?['gratuit'] == true || 
+                      (_formation?['cout'] as num?)?.toDouble() == 0.0;
+    
+    // Vérifier TOUJOURS si l'utilisateur a déjà une inscription (gratuite ou payante)
+    try {
+      debugPrint('🔍 Vérification des inscriptions existantes avant affichage du dialogue...');
+      final mesInscriptions = await _inscriptions.mesInscriptions();
+      final inscriptionExistante = mesInscriptions.firstWhere(
+        (insc) => insc['formation']?['id'] == widget.formationId,
+        orElse: () => <String, dynamic>{},
+      );
+      
+      if (inscriptionExistante.isNotEmpty) {
+        // L'utilisateur a déjà une inscription
+        final statut = inscriptionExistante['statut']?.toString() ?? 'INCONNU';
+        final statutLibelle = _getStatutLibelle(statut);
+        final demandeParrainage = inscriptionExistante['demandeParrainage'] == true;
+        final idInscription = inscriptionExistante['id'];
+        
+        debugPrint('ℹ️ Inscription existante trouvée avec statut: $statut');
+        
+        // Vérifier s'il y a des paiements pour cette inscription
+        bool aDesPaiements = false;
+        try {
+          final PaiementService paiementService = PaiementService();
+          final paiements = await paiementService.getPaiementsByInscription(idInscription);
+          aDesPaiements = paiements.isNotEmpty;
+          debugPrint('💰 Paiements trouvés: ${paiements.length}');
+        } catch (e) {
+          debugPrint('⚠️ Erreur lors de la vérification des paiements: $e');
+        }
+        
+        if (mounted) {
+          setState(() => _loading = false);
+          _showInscriptionExistanteDialog(
+            statutLibelle, 
+            statut, 
+            aDesPaiements: aDesPaiements,
+            demandeParrainage: demandeParrainage,
+            isGratuit: isGratuit,
+          );
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('⚠️ Erreur lors de la vérification des inscriptions: $e');
+      // Continuer avec l'inscription normale si la vérification échoue
+    }
+    
+    // Si pas d'inscription existante, continuer avec le processus normal
+    if (mounted) {
+      setState(() => _loading = false);
+      
+      if (isGratuit) {
+        // Inscription directe pour les formations gratuites
+        _inscrire(payerDirectement: false, demanderParrainage: false);
+      } else {
+        // Afficher le dialogue de choix pour les formations payantes
+        _showInscriptionChoiceDialog(context);
+      }
+    }
+  }
+
   Future<void> _inscrire({required bool payerDirectement, bool demanderParrainage = false}) async {
     if (widget.formationId == null) return;
     
@@ -773,6 +835,52 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     // Vérifier si la formation est gratuite
     final isGratuit = _formation?['gratuit'] == true || 
                       (_formation?['cout'] as num?)?.toDouble() == 0.0;
+    
+    // Vérifier TOUJOURS si l'utilisateur a déjà une inscription (gratuite ou payante)
+    try {
+      debugPrint('🔍 Vérification des inscriptions existantes...');
+      final mesInscriptions = await _inscriptions.mesInscriptions();
+      final inscriptionExistante = mesInscriptions.firstWhere(
+        (insc) => insc['formation']?['id'] == widget.formationId,
+        orElse: () => <String, dynamic>{},
+      );
+      
+      if (inscriptionExistante.isNotEmpty) {
+        // L'utilisateur a déjà une inscription
+        final statut = inscriptionExistante['statut']?.toString() ?? 'INCONNU';
+        final statutLibelle = _getStatutLibelle(statut);
+        final demandeParrainage = inscriptionExistante['demandeParrainage'] == true;
+        final idInscription = inscriptionExistante['id'];
+        
+        debugPrint('ℹ️ Inscription existante trouvée avec statut: $statut');
+        
+        // Vérifier s'il y a des paiements pour cette inscription
+        bool aDesPaiements = false;
+        try {
+          final PaiementService paiementService = PaiementService();
+          final paiements = await paiementService.getPaiementsByInscription(idInscription);
+          aDesPaiements = paiements.isNotEmpty;
+          debugPrint('💰 Paiements trouvés: ${paiements.length}');
+        } catch (e) {
+          debugPrint('⚠️ Erreur lors de la vérification des paiements: $e');
+        }
+        
+        if (mounted) {
+          setState(() => _loading = false);
+          _showInscriptionExistanteDialog(
+            statutLibelle, 
+            statut, 
+            aDesPaiements: aDesPaiements,
+            demandeParrainage: demandeParrainage,
+            isGratuit: isGratuit,
+          );
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('⚠️ Erreur lors de la vérification des inscriptions: $e');
+      // Continuer avec l'inscription normale si la vérification échoue
+    }
     
     try {
       // 1. S'inscrire à la formation
@@ -806,8 +914,27 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
           errorMsg.contains('déjà inscrit') || 
           errorMsg.toLowerCase().contains('already') ||
           errorMsg.toLowerCase().contains('déjà')) {
-        // Afficher un popup en haut au lieu d'un SnackBar
+        // Pour les formations payantes, on a déjà vérifié avant, mais si on arrive ici,
+        // c'est que le backend a aussi détecté l'inscription
         if (mounted) {
+          // Essayer de récupérer le statut de l'inscription existante
+          try {
+            final mesInscriptions = await _inscriptions.mesInscriptions();
+            final inscriptionExistante = mesInscriptions.firstWhere(
+              (insc) => insc['formation']?['id'] == widget.formationId,
+              orElse: () => <String, dynamic>{},
+            );
+            
+            if (inscriptionExistante.isNotEmpty) {
+              final statut = inscriptionExistante['statut']?.toString() ?? 'INCONNU';
+              final statutLibelle = _getStatutLibelle(statut);
+              _showInscriptionExistanteDialog(statutLibelle, statut);
+              return;
+            }
+          } catch (_) {
+            // Si on ne peut pas récupérer le statut, afficher le message générique
+          }
+          
           _showErrorPopup(
             context,
             'Vous êtes déjà inscrit à cette formation.',
@@ -855,5 +982,312 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  // Convertir le statut en libellé lisible
+  String _getStatutLibelle(String statut) {
+    switch (statut.toUpperCase()) {
+      case 'EN_ATTENTE':
+        return 'En attente';
+      case 'VALIDE':
+        return 'Validée';
+      case 'REFUSE':
+        return 'Refusée';
+      case 'TERMINE':
+        return 'Terminée';
+      case 'ANNULER':
+        return 'Annulée';
+      default:
+        return statut;
+    }
+  }
+
+  // Popup informatif pour inscription existante - Version améliorée et personnalisée
+  void _showInscriptionExistanteDialog(
+    String statutLibelle, 
+    String statut, {
+    bool aDesPaiements = false,
+    bool demandeParrainage = false,
+    bool isGratuit = false,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        // Déterminer la couleur et l'icône selon le statut
+        Color couleurStatut;
+        Color couleurStatutFoncee;
+        IconData iconeStatut;
+        String titre;
+        String message;
+        List<Widget> badges = [];
+        
+        switch (statut.toUpperCase()) {
+          case 'VALIDE':
+            couleurStatut = Colors.green;
+            couleurStatutFoncee = Colors.green[800]!;
+            iconeStatut = Icons.check_circle;
+            titre = '🎉 Inscription validée !';
+            if (isGratuit) {
+              message = 'Félicitations ! Votre inscription à cette formation gratuite a été validée. Vous pouvez maintenant suivre votre formation.';
+            } else if (aDesPaiements) {
+              message = 'Excellent ! Votre inscription a été validée après confirmation de votre paiement. Vous pouvez maintenant suivre votre formation.';
+            } else if (demandeParrainage) {
+              message = 'Parfait ! Votre inscription a été validée grâce à votre demande de parrainage. Vous pouvez maintenant suivre votre formation.';
+            } else {
+              message = 'Votre inscription à cette formation a été validée. Vous pouvez suivre votre formation.';
+            }
+            break;
+          case 'EN_ATTENTE':
+            couleurStatut = Colors.orange;
+            couleurStatutFoncee = Colors.orange[800]!;
+            iconeStatut = Icons.hourglass_empty;
+            titre = '⏳ Inscription en attente';
+            if (isGratuit) {
+              message = 'Votre inscription à cette formation gratuite est en cours de traitement. Vous serez notifié une fois qu\'elle sera validée.';
+            } else if (aDesPaiements) {
+              message = 'Votre paiement a été enregistré et votre inscription est en attente de validation par l\'administration. Vous recevrez une notification une fois validée.';
+            } else if (demandeParrainage) {
+              message = 'Votre demande de parrainage a été prise en compte. Votre inscription est en attente de validation. Vous serez notifié une fois qu\'elle sera traitée.';
+            } else {
+              message = 'Votre inscription est en attente de validation. Vous serez notifié une fois qu\'elle sera traitée.';
+            }
+            break;
+          case 'REFUSE':
+            couleurStatut = Colors.red;
+            couleurStatutFoncee = Colors.red[800]!;
+            iconeStatut = Icons.cancel;
+            titre = '❌ Inscription refusée';
+            message = 'Votre inscription à cette formation a été refusée. Si vous pensez qu\'il s\'agit d\'une erreur, veuillez contacter le support.';
+            break;
+          default:
+            couleurStatut = Colors.blue;
+            couleurStatutFoncee = Colors.blue[800]!;
+            iconeStatut = Icons.info;
+            titre = 'ℹ️ Inscription existante';
+            message = 'Vous avez déjà une inscription à cette formation.';
+        }
+        
+        // Ajouter des badges selon le contexte
+        if (aDesPaiements) {
+          badges.add(
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.payment, color: Colors.blue, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Paiement effectué',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        
+        if (demandeParrainage) {
+          badges.add(
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.purple.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.purple.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.favorite, color: Colors.purple, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Parrainage demandé',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.purple[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        
+        if (isGratuit) {
+          badges.add(
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.celebration, color: Colors.green, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Formation gratuite',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25.0),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(25),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  couleurStatut.withValues(alpha: 0.05),
+                  couleurStatut.withValues(alpha: 0.1),
+                ],
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icône de statut avec animation
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: couleurStatut,
+                    boxShadow: [
+                      BoxShadow(
+                        color: couleurStatut.withValues(alpha: 0.3),
+                        spreadRadius: 5,
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    iconeStatut,
+                    color: Colors.white,
+                    size: 60,
+                  ),
+                ),
+                const SizedBox(height: 25),
+                
+                // Titre
+                Text(
+                  titre,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    color: couleurStatutFoncee,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 15),
+                
+                // Message personnalisé
+                Text(
+                  message,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    height: 1.6,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                
+                // Badges contextuels
+                if (badges.isNotEmpty) ...[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: badges,
+                  ),
+                  const SizedBox(height: 15),
+                ],
+                
+                // Badge de statut principal
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: couleurStatut.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: couleurStatut.withValues(alpha: 0.4), width: 2),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(iconeStatut, color: couleurStatut, size: 22),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Statut: $statutLibelle',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: couleurStatutFoncee,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 30),
+                
+                // Bouton de fermeture
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: couleurStatut,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      elevation: 4,
+                    ),
+                    child: const Text(
+                      'Compris, merci !',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }

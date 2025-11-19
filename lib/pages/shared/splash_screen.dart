@@ -94,11 +94,61 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        //mettre logo de l'application ici
-        child: CircularProgressIndicator(), // simple loader
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Logo RePartir
+            Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    spreadRadius: 2,
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Image.asset(
+                  'assets/images/logo_repartir.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    // Si le logo n'est pas trouvé, afficher un placeholder
+                    return const Icon(
+                      Icons.school,
+                      size: 80,
+                      color: Color(0xFF3EB2FF),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            // Indicateur de chargement
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3EB2FF)),
+            ),
+            const SizedBox(height: 20),
+            // Texte de chargement
+            const Text(
+              'RePartir',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF3EB2FF),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

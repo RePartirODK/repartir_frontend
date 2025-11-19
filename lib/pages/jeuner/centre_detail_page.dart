@@ -40,6 +40,13 @@ class _CentreDetailPageState extends State<CentreDetailPage> {
       // Pas d'erreur si pas de formations, on affiche juste les infos du centre
       //Filter pour enlever les formations annuler
       _formations = _formations.where((f) => f['statut'] != 'ANNULER').toList();
+      
+      // Trier par ID décroissant (les plus récentes en premier - ID plus élevé = plus récent)
+      _formations.sort((a, b) {
+        final idA = (a['id'] is int) ? a['id'] as int : int.tryParse(a['id']?.toString() ?? '0') ?? 0;
+        final idB = (b['id'] is int) ? b['id'] as int : int.tryParse(b['id']?.toString() ?? '0') ?? 0;
+        return idB.compareTo(idA);
+      });
     } catch (e) {
       _error = '$e';
     } finally {

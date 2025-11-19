@@ -76,6 +76,13 @@ class _CentreListPageState extends State<CentreListPage> {
         }
       }
       
+      // Trier les formations par ID décroissant (les plus récentes en premier)
+      toutesFormations.sort((a, b) {
+        final idA = (a['id'] is int) ? a['id'] as int : int.tryParse(a['id']?.toString() ?? '0') ?? 0;
+        final idB = (b['id'] is int) ? b['id'] as int : int.tryParse(b['id']?.toString() ?? '0') ?? 0;
+        return idB.compareTo(idA);
+      });
+      
       _items = toutesFormations;
     } catch (e) {
       _error = '$e';
