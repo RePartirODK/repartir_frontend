@@ -102,7 +102,7 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
         });
       }
     } catch (e) {
-      print('Erreur sélection image: $e');
+      debugPrint('Erreur sélection image: $e');
     }
   }
 
@@ -133,7 +133,7 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
 
       setState(() => _loading = false);
     } catch (e) {
-      print('❌ Erreur chargement profil: $e');
+      debugPrint('❌ Erreur chargement profil: $e');
       setState(() => _loading = false);
     }
   }
@@ -151,9 +151,9 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
           final imageBytes = await _getImageBytes();
           final email = _emailController.text;
 
-          print('📷 Upload de la photo...');
+          debugPrint('📷 Upload de la photo...');
           await _profileService.updatePhoto(imageBytes, email);
-          print('✅ Photo uploadée avec succès');
+          debugPrint('✅ Photo uploadée avec succès');
 
           // Réinitialiser la sélection d'image
           setState(() {
@@ -161,7 +161,7 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
             _selectedImageBytes = null;
           });
         } catch (e) {
-          print('❌ Erreur upload photo: $e');
+          debugPrint('❌ Erreur upload photo: $e');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -185,7 +185,7 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
         'profession': _domaineController.text,
       };
 
-      print('📤 Mise à jour profil mentor: $payload');
+      debugPrint('📤 Mise à jour profil mentor: $payload');
       final res = await _api.put('/mentors/$_mentorId', body: jsonEncode(payload));
       _api.decodeJson(res, (d) => d);
 
@@ -199,7 +199,7 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
         Navigator.pop(context, true); // Retour avec succès
       }
     } catch (e) {
-      print('❌ Erreur sauvegarde: $e');
+      debugPrint('❌ Erreur sauvegarde: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -362,7 +362,7 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
             child: CustomHeader(
               title: "Éditer profil",
               showBackButton: true,
-              height: 120,
+              height: 150,
             ),
           ),
         ],
@@ -478,7 +478,7 @@ class ProfileEditableAvatar extends StatelessWidget {
             height: avatarRadius * 2,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: primaryBlue.withOpacity(0.2), // Fond de l'avatar
+              color: primaryBlue.withValues(alpha:0.2), // Fond de l'avatar
               border: Border.all(color: Colors.grey.shade300, width: 2),
             ),
             child: const Icon(Icons.person, size: 80, color: Colors.blueGrey), // Placeholder
@@ -491,7 +491,7 @@ class ProfileEditableAvatar extends StatelessWidget {
             child: GestureDetector(
               onTap: () {
                 // Logique pour ouvrir la galerie/caméra
-                print('Modifier la photo de profil');
+                debugPrint('Modifier la photo de profil');
               },
               child: Container(
                 width: 40,

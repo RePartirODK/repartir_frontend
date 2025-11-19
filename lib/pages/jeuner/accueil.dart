@@ -45,9 +45,9 @@ class _AccueilPageState extends State<AccueilPage> {
   List<Widget> get _pages => <Widget>[
     _HomePageContent(key: _homeKey), // Page d'accueil originale
     MentorsListPage(), // Page des mentors
-    const ChatListPage(),
-    const CentreListPage(), // Placeholder
-    const ProfilePage(), // Placeholder
+    ChatListPage(),
+    CentreListPage(), // Placeholder
+    ProfilePage(), // Placeholder
   ];
 
   void _onItemTapped(int index) {
@@ -187,7 +187,7 @@ class _HomePageContentState extends State<_HomePageContent> {
             ? c['utilisateur']['id'] as int
             : int.tryParse(c['utilisateur']?['id']?.toString() ?? '') ?? 0;
         if (centreUserId != 0 && userIds.contains(centreUserId)) {
-          recs.add(c as Map<String, dynamic>);
+          recs.add(c);
         }
       }
       // Fallback: keyword match in formations if none found via association

@@ -57,7 +57,7 @@ class _MentoringPageState extends State<MentoringPage> {
         _loading = false;
       });
     } catch (e) {
-      print('❌ Erreur chargement demandes: $e');
+      debugPrint('❌ Erreur chargement demandes: $e');
       setState(() => _loading = false);
     }
   }
@@ -122,7 +122,7 @@ class _MentoringPageState extends State<MentoringPage> {
                                       );
                                       // ✅ Rafraîchir si changement
                                       if (result == true) {
-                                        print('✅ Retour avec changement, rechargement...');
+                                        debugPrint('✅ Retour avec changement, rechargement...');
                                         await _loadDemandes();
                                       }
                                     },
@@ -141,7 +141,7 @@ class _MentoringPageState extends State<MentoringPage> {
             right: 0,
             child: CustomHeader(
               title: "Mentoring",
-              height: 120,
+              height: 150,
             ),
           ),
         ],
@@ -193,50 +193,8 @@ class DemandeTile extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Bouton "Voir"
-            Container(
-              margin: const EdgeInsets.only(right: 10),
-              child: ElevatedButton(
-                onPressed: () {
-                  // Logique de navigation vers la page de détail de la demande
-                  /**
-                   * On navigue vers la page qui affiche les détals de la démande
-                   */
-                  final detail = DetailDemande(
-                    nom: demande.nom,
-                    objectif: "Devenir expert en leadership et mentorat",
-                    formations: [
-                      "Communication",
-                      "Coaching",
-                      "Développement personnel",
-                    ],
-                  );
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          DemandeDetailsPage(demande: detail),
-                    ),
-                  );
-                
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryBlue,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text('Voir'),
-              ),
-            ),
+ 
+          
           ],
         ),
       ),
@@ -406,8 +364,8 @@ class _DemandeDetailsPageAPIState extends State<DemandeDetailsPageAPI> {
     final description = (widget.demande['description'] ?? '').toString().trim();
     
     // Debug: afficher les clés disponibles
-    print('🔍 Clés demande de mentorat: ${widget.demande.keys.toList()}');
-    print('📸 urlPhotoJeune: ${widget.demande['urlPhotoJeune']}');
+    debugPrint('🔍 Clés demande de mentorat: ${widget.demande.keys.toList()}');
+    debugPrint('📸 urlPhotoJeune: ${widget.demande['urlPhotoJeune']}');
     
     final screenWidth = MediaQuery.of(context).size.width;
 
@@ -438,8 +396,22 @@ class _DemandeDetailsPageAPIState extends State<DemandeDetailsPageAPI> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: primaryBlue.withValues(alpha: 0.1),
+                        gradient: LinearGradient(
+                          colors: [
+                            primaryBlue.withOpacity(0.08),
+                            primaryBlue.withOpacity(0.16),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -448,23 +420,30 @@ class _DemandeDetailsPageAPIState extends State<DemandeDetailsPageAPI> {
                           Row(
                             children: [
                               // Avatar avec photo
-                              CircleAvatar(
-                                radius: 35,
-                                backgroundColor: Colors.white,
-                                backgroundImage: (widget.demande['urlPhotoJeune'] != null && 
-                                                 (widget.demande['urlPhotoJeune'] as String).isNotEmpty)
-                                    ? NetworkImage(widget.demande['urlPhotoJeune'])
-                                    : null,
-                                child: (widget.demande['urlPhotoJeune'] == null || 
-                                       (widget.demande['urlPhotoJeune'] as String).isEmpty)
-                                    ? Container(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(color: primaryBlue, width: 3),
-                                        ),
-                                        child: const Icon(Icons.person, size: 35, color: Colors.blueGrey),
-                                      )
-                                    : null,
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: primaryBlue, width: 3),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  radius: 35,
+                                  backgroundColor: Colors.white,
+                                  backgroundImage: (widget.demande['urlPhotoJeune'] != null &&
+                                          (widget.demande['urlPhotoJeune'] as String).isNotEmpty)
+                                      ? NetworkImage(widget.demande['urlPhotoJeune'])
+                                      : null,
+                                  child: (widget.demande['urlPhotoJeune'] == null ||
+                                          (widget.demande['urlPhotoJeune'] as String).isEmpty)
+                                      ? const Icon(Icons.person, size: 35, color: Colors.blueGrey)
+                                      : null,
+                                ),
                               ),
                               const SizedBox(width: 15),
                               // Nom
@@ -482,56 +461,114 @@ class _DemandeDetailsPageAPIState extends State<DemandeDetailsPageAPI> {
                           const SizedBox(height: 20),
 
                           // Objectif
-                          const Text(
-                            'Objectif',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0D47A1),
-                            ),
+                          Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: primaryBlue,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Objectif',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0D47A1),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 10),
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.grey.shade200),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                )
+                              ],
                             ),
-                            child: Text(
-                              objectif,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                height: 1.5,
-                              ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.flag, color: Color(0xFF0D47A1), size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    objectif,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      height: 1.6,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 20),
 
                           // Description
                           if (description.isNotEmpty) ...[
-                            const Text(
-                              'Description',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0D47A1),
-                              ),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 4,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: primaryBlue,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                const Text(
+                                  'Description',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0D47A1),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 10),
+                             const SizedBox(height: 10),
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: Colors.grey.shade200),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.03),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  )
+                                ],
                               ),
-                              child: Text(
-                                description,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  height: 1.5,
-                                ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.description, color: Color(0xFF0D47A1), size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      description,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        height: 1.6,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -541,52 +578,80 @@ class _DemandeDetailsPageAPIState extends State<DemandeDetailsPageAPI> {
                     const SizedBox(height: 30),
 
                     // Bouton Accepter
-                    ElevatedButton(
-                      onPressed: _loading ? null : _accepterDemande,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF66BB6A),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                    Container(
+                      height: 52,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF43A047), Color(0xFF66BB6A)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
                         ),
-                        elevation: 2,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF66BB6A).withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                       ),
-                      child: _loading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
+                      child: ElevatedButton(
+                        onPressed: _loading ? null : _accepterDemande,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: _loading
+                            ? const SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.2,
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(Icons.check_circle, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Accepter la demande',
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                                  ),
+                                ],
                               ),
-                            )
-                          : const Text(
-                              'Accepter la demande',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
+                      ),
                     ),
                     const SizedBox(height: 15),
 
                     // Bouton Refuser
-                    ElevatedButton(
+                    OutlinedButton(
                       onPressed: _loading ? null : _refuserDemande,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEF9A9A).withValues(alpha: 0.5),
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.red.shade400, width: 1.5),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        elevation: 0,
                       ),
-                      child: const Text(
-                        'Refuser la demande',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.cancel, color: Colors.red.shade400),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Refuser la demande',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red.shade400,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -604,11 +669,12 @@ class _DemandeDetailsPageAPIState extends State<DemandeDetailsPageAPI> {
             child: CustomHeader(
               title: "Mentoring",
               showBackButton: true,
-              height: 120,
+              height: 150,
             ),
           ),
         ],
       ),
     );
   }
+
 }

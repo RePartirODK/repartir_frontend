@@ -7,6 +7,10 @@ import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/auth_service.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 
+// Style colors similar to mentors/profile_mentor.dart
+const Color primaryBlue = Color(0xFF3EB2FF);
+const Color primaryRed = Color(0xFFF44336);
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
 
@@ -88,211 +92,166 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_error != null) {
+      return Scaffold(body: Center(child: Text('Erreur: $_error')));
+    }
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          // Contenu principal
-          Positioned(
-            top: 120,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                ? Center(child: Text(_error!))
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Avatar avec bouton caméra pour éditer
-                        GestureDetector(
-                          onTap: () => _navigateToEditProfile(context),
-                          child: Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 50,
-                                backgroundColor: Colors.white,
-                                child: CircleAvatar(
-                                  radius: 48,
-                                  backgroundColor: Colors.grey[200],
-                                  backgroundImage:
-                                      photoUrl != null && photoUrl!.isNotEmpty
-                                      ? NetworkImage(photoUrl!)
-                                      : null,
-                                  onBackgroundImageError:
-                                      photoUrl != null && photoUrl!.isNotEmpty
-                                      ? (_, __) {}
-                                      : null,
-                                  child: photoUrl == null || photoUrl!.isEmpty
-                                      ? const Icon(
-                                          Icons.person,
-                                          size: 48,
-                                          color: Colors.grey,
-                                        )
-                                      : null,
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                right: 0,
-                                child: CircleAvatar(
-                                  backgroundColor: const Color(0xFF3EB2FF),
-                                  radius: 18,
-                                  child: const Icon(
-                                    Icons.camera_alt,
-                                    size: 20.0,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Nom
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // À propos de moi
-                        Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "À propos de moi",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  about.isEmpty ? '—' : about,
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Informations de contact
-                        Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Contact Information",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.email,
-                                    color: Color(0xFF3EB2FF),
-                                  ),
-                                  title: Text(email.isEmpty ? '—' : email),
-                                ),
-                                const Divider(),
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.phone,
-                                    color: Color(0xFF3EB2FF),
-                                  ),
-                                  title: Text(phone.isEmpty ? '—' : phone),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        //Changer son mot de passe de passe
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              debugPrint('Naviguer vers changer mot de passe');
-                              showPasswordChangeDialog(context);
-                            },
-                            icon: const Icon(Icons.logout, color: Colors.white),
-                            label: const Text(
-                              'Changer mot de passe',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white60,
-                              padding: const EdgeInsets.symmetric(vertical: 15),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        // Bouton de déconnexion
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _handleLogout,
-                            icon: const Icon(Icons.logout, color: Colors.white),
-                            label: const Text(
-                              'Déconnexion',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              padding: const EdgeInsets.symmetric(vertical: 15),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Center(child: _buildProfileHeader(context)),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Informations personnelles',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: primaryBlue,
                     ),
                   ),
-          ),
-
-          // Header avec titre et bouton d'édition
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: CustomHeader(
-              title: 'Mon Profil',
-              height: 120,
-              rightWidget: IconButton(
-                icon: const Icon(Icons.edit, color: Colors.white, size: 24),
-                onPressed: () => _navigateToEditProfile(context),
+                  const SizedBox(height: 15),
+                  _buildInfoCard(Icons.email, 'Email', email),
+                  const SizedBox(height: 10),
+                  _buildInfoCard(Icons.phone, 'Téléphone', phone),
+                  const SizedBox(height: 40),
+                  const Text(
+                    'Paramètres du compte',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: primaryBlue,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  _buildSettingItem(
+                    context,
+                    'Changer le mot de passe',
+                    () => showPasswordChangeDialog(context),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildSettingItem(
+                    context,
+                    'Se déconnecter',
+                    _handleLogout,
+                    isDestructive: true,
+                  ),
+                ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(BuildContext context) {
+    return Stack(
+      children: [
+        const CustomHeader(title: "Profil"),
+        Align(
+          child: Column(
+            children: [
+              const SizedBox(height: 100),
+              CircleAvatar(
+                radius: 60,
+                backgroundColor: Colors.grey.shade200,
+                backgroundImage:
+                    (photoUrl != null && photoUrl!.isNotEmpty) ? NetworkImage(photoUrl!) : null,
+                child: (photoUrl == null || photoUrl!.isEmpty)
+                    ? const Icon(Icons.person, size: 80, color: Colors.blueGrey)
+                    : null,
+              ),
+              const SizedBox(height: 15),
+              Text(
+                name.isEmpty ? 'Jeune' : name,
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: () => _navigateToEditProfile(context),
+                icon: const Icon(Icons.edit, size: 18),
+                label: const Text('Modifier le profil'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryBlue,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard(IconData icon, String title, String value) {
+    final v = value.isEmpty ? '—' : value;
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withAlpha(10),
+            blurRadius: 3,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: primaryBlue, size: 24),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Text(
+              '$title : $v',
+              style: const TextStyle(fontSize: 16),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSettingItem(
+    BuildContext context,
+    String title,
+    VoidCallback onTap, {
+    bool isDestructive = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 15),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                color: isDestructive ? primaryRed : Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios,
+                size: 16, color: isDestructive ? primaryRed : Colors.grey),
+          ],
+        ),
       ),
     );
   }

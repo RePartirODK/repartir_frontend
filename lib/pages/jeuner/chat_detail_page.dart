@@ -51,11 +51,11 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       final userIdStr = await _storage.read(key: 'user_id');
       _currentUserId = userIdStr != null ? int.tryParse(userIdStr) : null;
       
-      print('👤 UserId récupéré depuis storage: $_currentUserId');
+      debugPrint('👤 UserId récupéré depuis storage: $_currentUserId');
       
       // Si pas d'userId dans storage, essayer de le récupérer depuis le profil via API
       if (_currentUserId == null) {
-        print('⚠️ Pas d\'userId dans storage, tentative de récupération depuis le profil...');
+        debugPrint('⚠️ Pas d\'userId dans storage, tentative de récupération depuis le profil...');
         try {
           // Essayer de récupérer depuis le profil utilisateur via ProfileService
           final ProfileService profileService = ProfileService();
@@ -74,17 +74,17 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
           
           if (_currentUserId != null) {
             await _storage.write(key: 'user_id', value: _currentUserId.toString());
-            print('✅ UserId récupéré depuis le profil: $_currentUserId');
+            debugPrint('✅ UserId récupéré depuis le profil: $_currentUserId');
           } else {
-            print('⚠️ Profil récupéré mais aucun ID utilisateur trouvé');
+            debugPrint('⚠️ Profil récupéré mais aucun ID utilisateur trouvé');
           }
         } catch (e) {
-          print('❌ Impossible de récupérer l\'userId depuis le profil: $e');
+          debugPrint('❌ Impossible de récupérer l\'userId depuis le profil: $e');
         }
       }
       
       if (_currentUserId == null) {
-        print('❌ CRITIQUE: Aucun userId disponible. Les messages ne pourront pas être différenciés.');
+        debugPrint('❌ CRITIQUE: Aucun userId disponible. Les messages ne pourront pas être différenciés.');
       }
 
       // Récupérer l'historique des messages
@@ -139,7 +139,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
 
       _scrollToBottom();
     } catch (e) {
-      print('❌ Erreur initialisation chat: $e');
+      debugPrint('❌ Erreur initialisation chat: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur de connexion: $e')),
@@ -163,7 +163,7 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       value: lastMessage.timestamp.toIso8601String(),
     );
     
-    print('✅ Messages marqués comme lus pour mentoring ${widget.mentoringId}');
+    debugPrint('✅ Messages marqués comme lus pour mentoring ${widget.mentoringId}');
   }
 
   void _scrollToBottom() {
@@ -404,10 +404,10 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       final preview = message.content.length > 20 
           ? '${message.content.substring(0, 20)}...' 
           : message.content;
-      print('💬 Message[$index]: "$preview"');
-      print('   messageId=${message.messageId}, senderId=${message.senderId}, senderName=${message.senderName}');
-      print('   currentUserId=$_currentUserId');
-      print('   isSentByMe=$isSentByMe');
+      debugPrint('💬 Message[$index]: "$preview"');
+      debugPrint('   messageId=${message.messageId}, senderId=${message.senderId}, senderName=${message.senderName}');
+      debugPrint('   currentUserId=$_currentUserId');
+      debugPrint('   isSentByMe=$isSentByMe');
     }
     
     final contactAvatar = CircleAvatar(
@@ -415,10 +415,11 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       backgroundImage: widget.contactPhoto.isNotEmpty && widget.contactPhoto.startsWith('http')
           ? NetworkImage(widget.contactPhoto)
           : null,
+      
+      radius: 16,
       child: widget.contactPhoto.isEmpty || !widget.contactPhoto.startsWith('http')
           ? const Icon(Icons.person, color: Colors.blue, size: 14)
           : null,
-      radius: 16,
     );
 
     return GestureDetector(

@@ -8,7 +8,7 @@ const Color kPrimaryBlue = Color(0xFF3EB2FF);
 
 // --- PAGE D'AFFICHAGE DE LA LISTE DES MENTORS ---
 class MentorsListPage extends StatefulWidget {
-  MentorsListPage({super.key});
+  const MentorsListPage({super.key});
 
   @override
   State<MentorsListPage> createState() => _MentorsListPageState();
@@ -16,7 +16,6 @@ class MentorsListPage extends StatefulWidget {
 
 class _MentorsListPageState extends State<MentorsListPage> {
   final MentorsService _mentors = MentorsService();
-  final ApiService _api = ApiService();
   bool _loading = true;
   String? _error;
   List<Map<String, dynamic>> _mentorsList = [];
@@ -44,43 +43,6 @@ class _MentorsListPageState extends State<MentorsListPage> {
   }
 
   // Données factices pour la liste des mentors (fallback)
-  static final List<Mentor> _mentorsFallback = [
-    Mentor(
-      name: 'Fatoumata Diawara',
-      specialty: 'Entrepreneuriat',
-      experience: '8 ans d\'expérience',
-      imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=FD',
-      about: 'Fondatrice de trois startups à succès, Fatoumata accompagne les jeunes entrepreneurs dans leurs premiers pas. Passionnée par l\'innovation sociale, elle partage son expertise en création d\'entreprise et en recherche de financements.',
-    ),
-    Mentor(
-      name: 'Bakary Diallo',
-      specialty: 'Numérique',
-      experience: '5 ans d\'expérience',
-      imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=BD',
-      about: 'Expert en transformation digitale, Bakary aide les professionnels à naviguer dans le monde du numérique. Son approche pédagogique rend les concepts complexes accessibles à tous.',
-    ),
-    Mentor(
-      name: 'Djibril Maiga',
-      specialty: 'Communication',
-      experience: '7 ans d\'expérience',
-      imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=DM',
-      about: 'Spécialiste en communication stratégique, Djibril a travaillé avec de grandes marques pour façonner leur image. Il offre des conseils précieux sur le branding personnel et la prise de parole en public.',
-    ),
-    Mentor(
-      name: 'Amadou Diallo',
-      specialty: 'Finance',
-      experience: '10 ans d\'expérience',
-      imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=AD',
-      about: 'Avec une décennie d\'expérience dans le secteur financier, Amadou est un guide fiable pour tout ce qui concerne l\'investissement, la gestion de patrimoine et la planification financière.',
-    ),
-    Mentor(
-      name: 'Cheick Hamala Simpara',
-      specialty: 'Marketing Digital',
-      experience: '6 ans d\'expérience',
-      imageUrl: 'https://placehold.co/150/EFEFEF/333333?text=CS', // Note: Utilise user5, ajuster si nécessaire
-      about: 'Passionné par le marketing en ligne, Cheick maîtrise les stratégies de contenu, le SEO et les campagnes sur les réseaux sociaux pour aider les entreprises à accroître leur visibilité.',
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -155,7 +117,7 @@ class _MentorsListPageState extends State<MentorsListPage> {
             right: 0,
             child: CustomHeader(
               title: 'Mentors',
-              height: 120,
+              height: 150,
             ),
           ),
         ],

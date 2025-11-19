@@ -192,7 +192,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
               title: 'Modifier Profil',
-              height: 120,
+              height: 150,
             ),
           ),
         ],

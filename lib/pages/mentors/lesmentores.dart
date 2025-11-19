@@ -54,7 +54,7 @@ class _MentoresPageState extends State<MentoresPage> {
         _loading = false;
       });
     } catch (e) {
-      print('❌ Erreur chargement mentorés: $e');
+      debugPrint('❌ Erreur chargement mentorés: $e');
       setState(() => _loading = false);
     }
   }
@@ -133,7 +133,7 @@ class _MentoresPageState extends State<MentoresPage> {
             right: 0,
             child: CustomHeader(
               title: "Mentorés",
-              height: 120,
+              height: 150,
             ),
           ),
         ],
@@ -170,7 +170,7 @@ class MentoreTileAPI extends StatelessWidget {
         final maintenant = DateTime.now();
         dureeMois = ((maintenant.difference(dateDebut).inDays) / 30).round();
       } catch (e) {
-        print('Erreur parsing date: $e');
+        debugPrint('Erreur parsing date: $e');
       }
     }
 
@@ -188,7 +188,7 @@ class MentoreTileAPI extends StatelessWidget {
         // Avatar avec photo
         leading: CircleAvatar(
           radius: 30,
-          backgroundColor: primaryBlue.withOpacity(0.1),
+          backgroundColor: primaryBlue.withValues(alpha: 0.1),
           backgroundImage: (urlPhotoJeune.isNotEmpty && urlPhotoJeune.startsWith('http'))
               ? NetworkImage(urlPhotoJeune)
               : null,

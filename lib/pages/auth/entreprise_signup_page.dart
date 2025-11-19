@@ -259,7 +259,7 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
           ),
           const SizedBox(height: 20),
           _buildInputField(
-            label: 'Numéro d\'agrément',
+            label: 'Numéro d\'agrément ou NIF',
             icon: Icons.numbers_outlined,
             keyboardType: TextInputType.number,
             controller: agrementController,

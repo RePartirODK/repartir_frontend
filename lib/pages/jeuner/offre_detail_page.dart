@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class OffreDetailPage extends StatelessWidget {
-  const OffreDetailPage({Key? key}) : super(key: key);
+  const OffreDetailPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +62,6 @@ class OffreDetailPage extends StatelessWidget {
                     Center(
                       child: ElevatedButton(
                         onPressed: () {},
-                        child: const Text("Postuler"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
@@ -71,6 +70,7 @@ class OffreDetailPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                         ),
+                        child: const Text("Postuler"),
                       ),
                     ),
                   ],
@@ -133,7 +133,7 @@ class OffreDetailPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
+        color: Colors.blue.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(

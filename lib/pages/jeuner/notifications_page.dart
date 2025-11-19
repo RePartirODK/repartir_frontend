@@ -3,7 +3,7 @@ import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/services/notifications_service.dart';
 
 class NotificationsPage extends StatefulWidget {
-  const NotificationsPage({Key? key}) : super(key: key);
+  const NotificationsPage({super.key});
 
   @override
   State<NotificationsPage> createState() => _NotificationsPageState();
@@ -47,7 +47,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         children: [
           // Contenu principal
           Positioned(
-            top: 120,
+            top: 130,
             left: 0,
             right: 0,
             bottom: 0,
@@ -126,7 +126,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
               title: 'Notifications',
-              height: 120,
+              height: 150,
               rightWidget: IconButton(
                 icon: const Icon(Icons.refresh, color: Colors.white, size: 24),
                 onPressed: _fetch,

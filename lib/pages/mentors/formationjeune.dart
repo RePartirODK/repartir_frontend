@@ -91,7 +91,7 @@ class Formationjeune extends StatelessWidget {
             child: const CustomHeader(
               title: 'Profil',
               showBackButton: true,
-              height: 120,
+              height: 150,
             ),
           ),
         ],

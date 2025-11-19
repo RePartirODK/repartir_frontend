@@ -136,7 +136,7 @@ class ApprenantTile extends StatelessWidget {
           height: 60,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: primaryBlue.withOpacity(0.1),
+            color: primaryBlue.withValues(alpha:0.1),
             border: Border.all(color: Colors.grey.shade300, width: 2),
           ),
           child: const Icon(

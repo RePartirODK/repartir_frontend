@@ -112,7 +112,7 @@ class _MentorChatListPageState extends State<MentorChatListPage> with WidgetsBin
             try {
               lastReadTime = DateTime.parse(lastReadStr);
             } catch (e) {
-              print('⚠️ Erreur parsing lastReadTime: $e');
+              debugPrint('⚠️ Erreur parsing lastReadTime: $e');
             }
           } else {
             // Première utilisation : marquer tout comme déjà lu
@@ -163,9 +163,9 @@ class _MentorChatListPageState extends State<MentorChatListPage> with WidgetsBin
         _isLoading = false;
       });
 
-      print('✅ ${_allConversations.length} conversations chargées et triées');
+      debugPrint('✅ ${_allConversations.length} conversations chargées et triées');
     } catch (e) {
-      print('❌ Erreur chargement conversations: $e');
+      debugPrint('❌ Erreur chargement conversations: $e');
       setState(() => _isLoading = false);
       
       if (mounted) {
@@ -280,7 +280,7 @@ class _MentorChatListPageState extends State<MentorChatListPage> with WidgetsBin
             right: 0,
             child: CustomHeader(
               title: 'Chats',
-              height: 120,
+              height: 150,
             ),
           ),
         ],

@@ -4,7 +4,7 @@ import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/services/centres_service.dart';
 
 class CentreDetailPage extends StatefulWidget {
-  const CentreDetailPage({Key? key, required this.centreId}) : super(key: key);
+  const CentreDetailPage({super.key, required this.centreId});
   final int centreId;
 
   @override
