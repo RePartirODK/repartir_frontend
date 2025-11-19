@@ -302,16 +302,16 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        Radio<bool>(
-                          value: true,
-                          groupValue: accepted,
-                          onChanged: (bool? value) {
-                            setState(() {
-                              accepted = value ?? false;
-                            });
-                          },
-                        ),
-                        const Expanded(child: Text('J\'accepte les conditions')),
+                       RadioGroup<bool>(
+                      groupValue: accepted,
+                      onChanged: (bool? value) {
+                      setState(() {
+                        accepted = value ?? false;
+                      });
+                    },
+                     child: const Text('J\'accepte les conditions'),
+                  ),
+                     
                       ],
                     ),
                   ],

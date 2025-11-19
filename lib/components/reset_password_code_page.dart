@@ -19,6 +19,8 @@ class _ResetPasswordCodePageState extends State<ResetPasswordCodePage> {
   final _confirmCtrl = TextEditingController();
   final _service = PasswordForgetService(); // Service à intégrer
   bool _submitting = false;
+  bool _showNewPass = false;
+  bool _showConfirmPass = false;
 
   @override
   void dispose() {
@@ -125,7 +127,7 @@ class _ResetPasswordCodePageState extends State<ResetPasswordCodePage> {
                     const SizedBox(height: 20),
                     TextFormField(
                       controller: _newPassCtrl,
-                      obscureText: true,
+                      obscureText: !_showNewPass,
                       decoration: InputDecoration(
                         hintText: 'Nouveau mot de passe',
                         filled: true,
@@ -138,6 +140,15 @@ class _ResetPasswordCodePageState extends State<ResetPasswordCodePage> {
                           vertical: 15,
                           horizontal: 10,
                         ),
+                        suffixIcon: IconButton(
+                          onPressed: () => setState(() {
+                            _showNewPass = !_showNewPass;
+                          }),
+                          icon: Icon(
+                            _showNewPass ? Icons.visibility_off : Icons.visibility,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
                       ),
                       validator: (value) => value == null || value.isEmpty
                           ? 'Veuillez entrer un mot de passe.'
@@ -146,7 +157,7 @@ class _ResetPasswordCodePageState extends State<ResetPasswordCodePage> {
                     const SizedBox(height: 15),
                     TextFormField(
                       controller: _confirmCtrl,
-                      obscureText: true,
+                      obscureText: !_showConfirmPass,
                       decoration: InputDecoration(
                         hintText: 'Confirmer le mot de passe',
                         filled: true,

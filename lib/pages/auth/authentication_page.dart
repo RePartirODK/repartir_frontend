@@ -122,8 +122,8 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(height: 80),
-                    Image.asset('assets/images/logo_repartir.png', height: 120),
-                    const SizedBox(height: 30),
+                    Image.asset('assets/images/logo_repartir.png', height: 200),
+                    const SizedBox(height: 5),
                     Container(
                       padding: const EdgeInsets.all(25),
                       decoration: BoxDecoration(
@@ -177,9 +177,12 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                             child: TextButton(
                               onPressed: () {
                                 Navigator.push(
-  context,
-  MaterialPageRoute(builder: (context) => const ResetPasswordPage()),
-);
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ResetPasswordPage(),
+                                  ),
+                                );
                               },
                               child: const Text(
                                 'Mot de passe oublié?',

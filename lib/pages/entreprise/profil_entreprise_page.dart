@@ -200,7 +200,7 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -432,7 +432,7 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
                   border: Border.all(color: Colors.blue.shade200, width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 6),
                     ),

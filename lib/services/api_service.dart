@@ -143,10 +143,11 @@ class ApiService {
 
     // Gestion des erreurs d'authentification
     if (response.statusCode == 401) {
-      _handleAuthError();
-    throw Exception('SESSION_EXPIRED');
+      // Laisser _executeWithAutoRefresh gérer le refresh;
+      // pas de déconnexion immédiate ici.
+      throw Exception('SESSION_EXPIRED');
     }
-   if (response.statusCode == 403) {
+    if (response.statusCode == 403) {
       // Ne pas déconnecter l'utilisateur pour un 403 (rôle/permission)
       throw Exception('FORBIDDEN');
     }
@@ -209,9 +210,17 @@ class ApiService {
   ) async {
     final response = await send();
     if (response.statusCode != 401) return response;
-    final refreshed = await _refreshAccessToken();
+    bool refreshed = false;
+    try {
+      refreshed = await _refreshAccessToken();
+    } catch (_) {
+      // Échec transitoire (réseau/serveur). Ne pas déconnecter l'utilisateur.
+      // L'appelant gérera la réponse 401 (ex: afficher un message et permettre un retry).
+      return response;
+    }
     if (!refreshed) {
-      _handleAuthError(); // fall back to logout
+      // Refresh explicitement invalide/expiré (401/403) → déconnexion.
+      _handleAuthError();
       return response;
     }
     // Retry the original request with new token
@@ -220,26 +229,30 @@ class ApiService {
 
   /// --- Call /auth/refresh to renew the access token ---
   Future<bool> _refreshAccessToken() async {
-    try {
-      final refreshToken = await _storage.getRefresToken();
-      if (refreshToken == null || refreshToken.isEmpty) return false;
-      final url = Uri.parse('$apiBaseUrl/auth/refresh');
-      final res = await _client.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'refreshToken': refreshToken}),
-      );
-      if (res.statusCode >= 200 && res.statusCode < 300) {
-        final data = jsonDecode(utf8.decode(res.bodyBytes));
-        final newAccess = data['access_token']?.toString();
-        final newRefresh = (data['refresh_token'] ?? refreshToken).toString();
-        if (newAccess == null || newAccess.isEmpty) return false;
-        await _storage.saveTokens(newAccess, newRefresh);
-        return true;
+    final refreshToken = await _storage.getRefresToken();
+    if (refreshToken == null || refreshToken.isEmpty) return false;
+    final url = Uri.parse('$apiBaseUrl/auth/refresh');
+    final res = await _client.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'refreshToken': refreshToken}),
+    );
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      final data = jsonDecode(utf8.decode(res.bodyBytes));
+      final newAccess = data['access_token']?.toString();
+      final newRefresh = (data['refresh_token'] ?? refreshToken).toString();
+      if (newAccess == null || newAccess.isEmpty) {
+        // Réponse inattendue → considérer comme échec transitoire
+        throw Exception('REFRESH_FAILED');
       }
-      return false;
-    } catch (_) {
+      await _storage.saveTokens(newAccess, newRefresh);
+      return true;
+    }
+    // Seul un 401/403 doit forcer le logout
+    if (res.statusCode == 401 || res.statusCode == 403) {
       return false;
     }
+    // Autres erreurs (réseau/serveur) → échec transitoire
+    throw Exception('REFRESH_FAILED_${res.statusCode}');
   }
 }

@@ -25,8 +25,9 @@ Future<void> main() async {
   /**
    * Recupération de la valeur du token et du role de l'utilisateur
    */
-  final token = await secureStorage.read(key: 'auth_token');
+  final token = await secureStorage.read(key: 'access_token');
   final role = await secureStorage.read(key: 'user_role');
+  final normalizedRole = (role ?? '').replaceFirst('ROLE_', '');
 
   late Widget initialPage;
 
@@ -39,7 +40,7 @@ Future<void> main() async {
   } else if (token == null) {
     initialPage = AuthenticationPage();
   } else {
-    switch (role) {
+    switch (normalizedRole) {
       case 'JEUNE':
         initialPage = AccueilPage();
         break;
