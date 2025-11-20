@@ -193,7 +193,7 @@ class _MentorChatDetailPageState extends State<MentorChatDetailPage> {
               child: TextField(
                 controller: _controller,
                 decoration: InputDecoration(
-                  hintText: 'Type your Message',
+                  hintText: 'Tapez votre message',
                   fillColor: Colors.grey[100],
                   filled: true,
                   border: OutlineInputBorder(

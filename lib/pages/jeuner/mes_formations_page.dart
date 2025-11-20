@@ -295,7 +295,7 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha:0.1),
               spreadRadius: 1,
               blurRadius: 5,
               offset: const Offset(0, 2),
@@ -380,7 +380,7 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha:0.1),
               spreadRadius: 1,
               blurRadius: 5,
               offset: const Offset(0, 2),

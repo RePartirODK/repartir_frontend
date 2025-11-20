@@ -22,11 +22,22 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
   bool _obscurePassword = true;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   final authService = AuthService();
   bool isLoading = false;
 
   /// Méthode qui permet la redirection en fonction du role
   void handleLogin() async {
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez corriger les erreurs dans le formulaire'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => isLoading = true);
 
     try {
@@ -92,10 +103,14 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
       }
     } catch (e) {
       // ignore: use_build_context_synchronously
+      final msg = (e is AuthException) ? e.message : e.toString();
       ScaffoldMessenger.of(
         // ignore: use_build_context_synchronously
         context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ).showSnackBar(SnackBar(
+        content: Center(child: Text("Email ou Mot de passe invalide")),
+        
+      ));
     } finally {
       setState(() => isLoading = false);
     }
@@ -137,122 +152,137 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
                           ),
                         ],
                       ),
-                      child: Column(
-                        children: [
-                          RichText(
-                            textAlign: TextAlign.center,
-                            text: const TextSpan(
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                              children: [
-                                TextSpan(text: 'Connexion à votre '),
-                                TextSpan(
-                                  text: '\ncompte',
-                                  style: TextStyle(color: Colors.blue),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Entrez vos identifiants pour accéder à votre espace',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 30),
-                          _buildInputField(
-                            label: 'Votre adresse email',
-                            icon: Icons.email_outlined,
-                            keyboardType: TextInputType.emailAddress,
-                            controller: _emailController,
-                          ),
-                          const SizedBox(height: 20),
-                          _buildPasswordField(),
-                          const SizedBox(height: 10),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ResetPasswordPage(),
-                                  ),
-                                );
-                              },
-                              child: const Text(
-                                'Mot de passe oublié?',
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            RichText(
+                              textAlign: TextAlign.center,
+                              text: const TextSpan(
                                 style: TextStyle(
-                                  color: Colors.blue,
-                                  fontSize: 13,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
                                 ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 15,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                              ),
-                              onPressed: isLoading ? null : handleLogin,
-                              child: isLoading
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : const Text(
-                                      'Se connecter',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          RichText(
-                            text: TextSpan(
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                              ),
-                              children: [
-                                const TextSpan(
-                                  text: 'Vous n\'avez pas de compte? ',
-                                ),
-                                TextSpan(
-                                  text: 'S\'inscrire',
-                                  style: const TextStyle(
-                                    color: Colors.blue,
-                                    fontWeight: FontWeight.bold,
+                                children: [
+                                  TextSpan(text: 'Connexion à votre '),
+                                  TextSpan(
+                                    text: '\ncompte',
+                                    style: TextStyle(color: Colors.blue),
                                   ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const RoleSelectionPage(),
-                                        ),
-                                      );
-                                    },
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 10),
+                            const Text(
+                              'Entrez vos identifiants pour accéder à votre espace',
+                              style: TextStyle(fontSize: 14, color: Colors.grey),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 30),
+                            _buildInputField(
+                              label: 'Votre adresse email',
+                              icon: Icons.email_outlined,
+                              keyboardType: TextInputType.emailAddress,
+                              controller: _emailController,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'L\'email est requis';
+                                }
+                                final emailRegex = RegExp(
+                                  r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                                );
+                                if (!emailRegex.hasMatch(value.trim())) {
+                                  return 'Veuillez entrer un email valide';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            _buildPasswordField(),
+                            const SizedBox(height: 10),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ResetPasswordPage(),
+                                    ),
+                                  );
+                                },
+                                child: const Text(
+                                  'Mot de passe oublié?',
+                                  style: TextStyle(
+                                    color: Colors.blue,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 15,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                ),
+                                onPressed: isLoading ? null : handleLogin,
+                                child: isLoading
+                                    ? const CircularProgressIndicator(
+                                        color: Colors.white,
+                                      )
+                                    : const Text(
+                                        'Se connecter',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            RichText(
+                              text: TextSpan(
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black54,
+                                ),
+                                children: [
+                                  const TextSpan(
+                                    text: 'Vous n\'avez pas de compte? ',
+                                  ),
+                                  TextSpan(
+                                    text: 'S\'inscrire',
+                                    style: const TextStyle(
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const RoleSelectionPage(),
+                                          ),
+                                        );
+                                      },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -271,11 +301,14 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
     TextInputType? keyboardType,
     bool obscureText = false,
     required TextEditingController controller,
+    String? Function(String?)? validator,
   }) {
-    return TextField(
+    return TextFormField(
       obscureText: obscureText,
       controller: controller,
       keyboardType: keyboardType,
+      validator: validator,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.grey.shade600),
@@ -293,6 +326,14 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.green.shade600, width: 2),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
         contentPadding: const EdgeInsets.symmetric(
           vertical: 15,
           horizontal: 20,
@@ -302,9 +343,19 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
   }
 
   Widget _buildPasswordField() {
-    return TextField(
+    return TextFormField(
       obscureText: _obscurePassword,
       controller: _passwordController,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Le mot de passe est requis';
+        }
+        if (value.trim().length < 6) {
+          return 'Le mot de passe doit contenir au moins 6 caractères';
+        }
+        return null;
+      },
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         labelText: 'Votre mot de passe',
         prefixIcon: Icon(Icons.lock_outlined, color: Colors.grey.shade600),
@@ -334,6 +385,14 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.green.shade600, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(
           vertical: 15,

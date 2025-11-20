@@ -9,7 +9,7 @@ import 'package:repartir_frontend/services/api_service.dart';
 import 'package:repartir_frontend/pages/jeuner/mentor_actif_detail_page.dart';
 
 class MesMentorsPage extends StatefulWidget {
-  const MesMentorsPage({Key? key}) : super(key: key);
+  const MesMentorsPage({super.key});
 
   @override
   State<MesMentorsPage> createState() => _MesMentorsPageState();

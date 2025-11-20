@@ -188,7 +188,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ElevatedButton.icon(
                 onPressed: () => _navigateToEditProfile(context),
                 icon: const Icon(Icons.edit, size: 18),
-                label: const Text('Modifier le profil'),
+                label: const Text('Modifier le profile'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryBlue,
                   foregroundColor: Colors.white,

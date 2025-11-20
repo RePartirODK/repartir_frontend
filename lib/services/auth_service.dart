@@ -95,6 +95,8 @@ class AuthService {
     } on FormatException catch (e) {
       debugPrint("Erreur de format JSON : $e");
       throw AuthException("Réponse du serveur invalide.");
+    } on AuthException {
+      rethrow;
     } catch (e) {
       debugPrint("Erreur inattendue : $e");
       throw AuthException("Une erreur est survenue. Réessayez plus tard.");
