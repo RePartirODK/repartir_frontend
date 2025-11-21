@@ -414,47 +414,6 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
   }
 
   // Fonction utilitaire pour construire les champs de texte (ancienne version)
-  Widget _buildTextField({
-    required String label,
-    required String initialValue,
-    required Function(String) onChanged,
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-    double minHeight = 50,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            constraints: BoxConstraints(minHeight: minHeight),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: TextFormField(
-              initialValue: initialValue,
-              onChanged: onChanged,
-              keyboardType: keyboardType,
-              maxLines: maxLines,
-              style: const TextStyle(fontSize: 16),
-              decoration: const InputDecoration(
-                contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-                border: InputBorder.none,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 

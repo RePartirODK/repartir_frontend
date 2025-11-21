@@ -9,7 +9,7 @@ import 'package:repartir_frontend/services/api_service.dart';
 import 'package:repartir_frontend/pages/jeuner/mentor_actif_detail_page.dart';
 
 class MesMentorsPage extends StatefulWidget {
-  const MesMentorsPage({Key? key}) : super(key: key);
+  const MesMentorsPage({super.key});
 
   @override
   State<MesMentorsPage> createState() => _MesMentorsPageState();
@@ -111,7 +111,7 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
     ];
 
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           // Contenu principal
@@ -266,7 +266,7 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
               title: 'Mes Mentors',
-              height: 120,
+             
             ),
           ),
         ],

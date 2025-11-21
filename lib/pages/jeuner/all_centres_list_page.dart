@@ -28,34 +28,9 @@ class _AllCentresListPageState extends State<AllCentresListPage> {
       _error = null;
     });
     try {
-      final all = await _centres.listAll();
-      // Filtrer les centres actifs
-      final centresActifs = all.where((c) {
-        final u = c['utilisateur'] ?? {};
-        return u['estActive'] == true;
-      }).toList();
-      
-      // Filtrer pour ne garder QUE les centres qui ont publié au moins une formation
-      final List<Map<String, dynamic>> centresAvecFormations = [];
-      for (final centre in centresActifs) {
-        try {
-          final formations = await _centres.getFormationsByCentre(centre['id']);
-          // Vérifier que le centre a des formations ET qu'elles appartiennent bien à ce centre
-          if (formations.isNotEmpty) {
-            // Vérifier que la première formation appartient bien à ce centre
-            final premiereFormation = formations.first;
-            final centreFormationId = premiereFormation['centreFormation']?['id'] ?? 
-                                     premiereFormation['centre']?['id'];
-            if (centreFormationId == centre['id'] || centreFormationId == null) {
-              centresAvecFormations.add(centre);
-            }
-          }
-        } catch (e) {
-          // Pas de formation pour ce centre, on ne l'ajoute pas
-        }
-      }
-      
-      _items = centresAvecFormations;
+      // Récupérer tous les centres actifs (inclut ceux sans formation)
+      final all = await _centres.listActifs();
+      _items = all;
     } catch (e) {
       _error = '$e';
     } finally {
@@ -157,7 +132,13 @@ class CentreListItemCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(centre['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text(centre['location'], style: const TextStyle(color: Colors.grey)),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, color: Colors.grey, size: 16),
+                        const SizedBox(width: 4),
+                        Text(centre['location'], style: const TextStyle(color: Colors.grey)),
+                      ],
+                    ),
                   ],
                 ),
               ],
@@ -180,7 +161,7 @@ class CentreListItemCard extends StatelessWidget {
                     ),
                   );
                 },
-                child: const Text('Voir le centre'),
+               
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3EB2FF),
                   foregroundColor: Colors.white,
@@ -188,6 +169,7 @@ class CentreListItemCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
+                 child: const Text('Voir le centre'),
               ),
             )
           ],

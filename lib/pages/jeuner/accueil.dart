@@ -107,7 +107,7 @@ class _AccueilPageState extends State<AccueilPage> {
 
 // Widget séparé pour le contenu de la page d'accueil originale
 class _HomePageContent extends StatefulWidget {
-  const _HomePageContent({Key? key}) : super(key: key);
+  const _HomePageContent({super.key});
 
   @override
   State<_HomePageContent> createState() => _HomePageContentState();
@@ -270,10 +270,30 @@ class _HomePageContentState extends State<_HomePageContent> {
           top: 0,
           left: 0,
           right: 0,
-          child: CustomHeader(
-            leftWidget: _buildLogo(),
-            rightWidget: _buildNotificationIcon(),
-            height: 160,
+          child: Stack(
+            children: [
+              CustomHeader(title: 'Accueil', height: 160),
+              Positioned(
+                height: 80,
+                width: 80,
+                top: 30,
+                left: 20,
+                child: CircleAvatar(
+                  radius: 25,
+                  backgroundColor: Colors.white,
+                  child: Image.asset(
+                    'assets/images/logo_repartir.png',
+                    height: 300,
+                    width: 300,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 30,
+                right: 20,
+                child: _buildNotificationIcon(),
+              ),
+            ],
           ),
         ),
       ],
@@ -318,8 +338,8 @@ class _HomePageContentState extends State<_HomePageContent> {
   // --- Logo à gauche ---
   Widget _buildLogo() {
     return Container(
-      width: 60,
-      height: 60,
+      width: 80,
+      height: 80,
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,

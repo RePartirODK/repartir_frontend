@@ -99,14 +99,6 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
       Navigator.of(context).pop(); // enlever le loader
       //affichage de la modal de succes
       _showSuccessDialog();
-
-            // Redirection vers AuthenticationPage
-      Navigator.pushAndRemoveUntil(
-        // ignore: use_build_context_synchronously
-        context,
-        MaterialPageRoute(builder: (context) => AccueilPage()),
-        (Route<dynamic> route) => false,
-      );
     } catch (e) {
       // Fermer le loader
       // ignore: use_build_context_synchronously

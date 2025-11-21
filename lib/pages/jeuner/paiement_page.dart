@@ -8,11 +8,11 @@ import 'package:repartir_frontend/services/profile_service.dart';
 
 class PaiementPage extends StatefulWidget {
   const PaiementPage({
-    Key? key,
+    super.key,
     required this.formationId,
     required this.formationTitre,
     required this.montantTotal,
-  }) : super(key: key);
+  });
 
   final int formationId;
   final String formationTitre;
@@ -28,7 +28,7 @@ class _PaiementPageState extends State<PaiementPage> {
   final PaiementService _paiementService = PaiementService();
   final InscriptionsService _inscriptionsService = InscriptionsService();
   final ProfileService _profileService = ProfileService();
-  
+
   bool _loading = false;
   bool _paiementPartiel = false;
 
@@ -52,41 +52,40 @@ class _PaiementPageState extends State<PaiementPage> {
 
       // 2. Créer l'inscription d'abord (avec payerDirectement=false pour éviter la création automatique de paiement)
       try {
-        print('📝 Création de l\'inscription...');
+        debugPrint('📝 Création de l\'inscription...');
         final inscription = await _inscriptionsService.sInscrire(
           widget.formationId,
-          payerDirectement: false, // false pour créer le paiement manuellement après
+          payerDirectement:
+              false, // false pour créer le paiement manuellement après
         );
         inscriptionId = inscription['id'] as int;
-        print('✅ Inscription créée avec ID: $inscriptionId');
+        debugPrint('✅ Inscription créée avec ID: $inscriptionId');
       } catch (e) {
         // Si l'utilisateur est déjà inscrit, récupérer l'ID de l'inscription existante
         final errorMsg = e.toString();
         if (errorMsg.contains('409') || errorMsg.contains('déjà inscrit')) {
-          print('ℹ️ Déjà inscrit - Récupération de l\'inscription existante...');
-          
+          debugPrint(
+            'ℹ️ Déjà inscrit - Récupération de l\'inscription existante...',
+          );
+
           // Récupérer les inscriptions du jeune pour trouver celle de cette formation
           final mesInscriptions = await _inscriptionsService.mesInscriptions();
           final inscriptionExistante = mesInscriptions.firstWhere(
             (insc) => insc['formation']?['id'] == widget.formationId,
             orElse: () => throw Exception('Inscription non trouvée'),
           );
-          
+
           inscriptionId = inscriptionExistante['id'] as int;
-          print('✅ Inscription existante trouvée avec ID: $inscriptionId');
+          debugPrint('✅ Inscription existante trouvée avec ID: $inscriptionId');
         } else {
           rethrow; // Autre erreur, on la remonte
         }
       }
 
-      if (inscriptionId == null) {
-        throw Exception('Impossible de récupérer l\'ID de l\'inscription');
-      }
-
       // 3. Créer le paiement manuellement avec le montant saisi
       final montantAPayer = double.parse(_montantController.text);
-      print('💰 Création du paiement de $montantAPayer FCFA...');
-      
+      debugPrint('💰 Création du paiement de $montantAPayer FCFA...');
+
       final requestPaiement = RequestPaiement(
         idJeune: jeuneId,
         idInscription: inscriptionId,
@@ -94,8 +93,12 @@ class _PaiementPageState extends State<PaiementPage> {
         idParrainage: null, // Pas de parrainage pour un paiement direct
       );
 
-      final responsePaiement = await _paiementService.creerPaiement(requestPaiement);
-      print('✅ Paiement créé avec référence: ${responsePaiement.reference}');
+      final responsePaiement = await _paiementService.creerPaiement(
+        requestPaiement,
+      );
+      debugPrint(
+        '✅ Paiement créé avec référence: ${responsePaiement.reference}',
+      );
 
       if (mounted) {
         _showSuccessDialog(
@@ -105,11 +108,13 @@ class _PaiementPageState extends State<PaiementPage> {
         );
       }
     } catch (e) {
-      print('❌ Erreur: $e');
+      debugPrint('❌ Erreur: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur: ${e.toString().replaceAll('Exception: ', '')}'),
+            content: Text(
+              'Erreur: ${e.toString().replaceAll('Exception: ', '')}',
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
@@ -155,14 +160,17 @@ class _PaiementPageState extends State<PaiementPage> {
               Container(
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
                   children: [
                     _buildInfoRow('Référence', reference),
                     const Divider(),
-                    _buildInfoRow('Montant payé', '${montant.toStringAsFixed(0)} FCFA'),
+                    _buildInfoRow(
+                      'Montant payé',
+                      '${montant.toStringAsFixed(0)} FCFA',
+                    ),
                     const Divider(),
                     _buildInfoRow(
                       'Statut',
@@ -175,15 +183,21 @@ class _PaiementPageState extends State<PaiementPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: Colors.orange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.hourglass_empty, color: Colors.orange[700], size: 20),
+                        Icon(
+                          Icons.hourglass_empty,
+                          color: Colors.orange[700],
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         const Expanded(
                           child: Text(
@@ -203,10 +217,7 @@ class _PaiementPageState extends State<PaiementPage> {
                           ? 'Votre paiement partiel de ${montant.toStringAsFixed(0)} FCFA a été enregistré. Montant restant : ${(widget.montantTotal - montant).toStringAsFixed(0)} FCFA.\n\nUn administrateur va vérifier votre paiement. Vous recevrez un reçu par email une fois validé.'
                           : 'Votre paiement de ${montant.toStringAsFixed(0)} FCFA est en attente de validation. Un administrateur va vérifier votre paiement sous peu.\n\nVous recevrez un reçu par email une fois le paiement validé.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[700],
-                      ),
+                      style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                     ),
                   ],
                 ),
@@ -242,10 +253,7 @@ class _PaiementPageState extends State<PaiementPage> {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 14,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
           ),
           Text(
             value,
@@ -263,7 +271,7 @@ class _PaiementPageState extends State<PaiementPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           // Contenu principal
@@ -273,8 +281,9 @@ class _PaiementPageState extends State<PaiementPage> {
             right: 0,
             bottom: 0,
             child: Container(
+              
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: Colors.white,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(60),
                   topRight: Radius.circular(60),
@@ -293,14 +302,14 @@ class _PaiementPageState extends State<PaiementPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 20),
-                        
+
                         // Titre de la page
                         const Text(
                           'Paiement de la formation',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Colors.blue,
+                            color: Color(0xFF3EB2FF),
                           ),
                         ),
                         const SizedBox(height: 30),
@@ -313,7 +322,7 @@ class _PaiementPageState extends State<PaiementPage> {
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.grey.withOpacity(0.2),
+                                color: Colors.grey.withValues(alpha: 0.2),
                                 spreadRadius: 2,
                                 blurRadius: 5,
                                 offset: const Offset(0, 3),
@@ -325,7 +334,11 @@ class _PaiementPageState extends State<PaiementPage> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.school, color: Colors.blue[700], size: 28),
+                                  Icon(
+                                    Icons.school,
+                                    color: Color(0xFF3EB2FF),
+                                    size: 28,
+                                  ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
@@ -342,7 +355,8 @@ class _PaiementPageState extends State<PaiementPage> {
                               const Divider(),
                               const SizedBox(height: 10),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text(
                                     'Montant total',
@@ -364,23 +378,28 @@ class _PaiementPageState extends State<PaiementPage> {
                             ],
                           ),
                         ),
-                        
+
                         const SizedBox(height: 30),
 
                         // Information sur le paiement
                         Container(
                           padding: const EdgeInsets.all(15),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
+                            color: Colors.blue.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                            border: Border.all(
+                              color: Colors.blue.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.info_outline, color: Colors.blue[700]),
+                                  Icon(
+                                    Icons.info_outline,
+                                    color: Color(0xFF3EB2FF),
+                                  ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
@@ -396,7 +415,7 @@ class _PaiementPageState extends State<PaiementPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                '• Vous pouvez payer le montant total ou effectuer un paiement partiel.',
+                                '• En continuant vous devez payer la totalité de la formation',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: Colors.grey[800],
@@ -436,13 +455,20 @@ class _PaiementPageState extends State<PaiementPage> {
                         const SizedBox(height: 10),
                         TextFormField(
                           controller: _montantController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d+\.?\d{0,2}'),
+                            ),
                           ],
                           decoration: InputDecoration(
                             hintText: 'Entrez le montant',
-                            prefixIcon: const Icon(Icons.attach_money, color: Colors.blue),
+                            prefixIcon: const Icon(
+                              Icons.attach_money,
+                              color: Color(0xFF3EB2FF),
+                            ),
                             suffixText: 'FCFA',
                             filled: true,
                             fillColor: Colors.white,
@@ -452,11 +478,16 @@ class _PaiementPageState extends State<PaiementPage> {
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                              borderSide: BorderSide(
+                                color: Colors.grey.withValues(alpha: 0.3),
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: Colors.blue, width: 2),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF3EB2FF),
+                                width: 2,
+                              ),
                             ),
                           ),
                           validator: (value) {
@@ -476,7 +507,8 @@ class _PaiementPageState extends State<PaiementPage> {
                             final montant = double.tryParse(value);
                             if (montant != null) {
                               setState(() {
-                                _paiementPartiel = montant < widget.montantTotal;
+                                _paiementPartiel =
+                                    montant < widget.montantTotal;
                               });
                             }
                           },
@@ -485,17 +517,23 @@ class _PaiementPageState extends State<PaiementPage> {
                         const SizedBox(height: 15),
 
                         // Indicateur de paiement partiel
-                        if (_paiementPartiel && _montantController.text.isNotEmpty)
+                        if (_paiementPartiel &&
+                            _montantController.text.isNotEmpty)
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.1),
+                              color: Colors.orange.withValues(alpha:  0.1),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                              border: Border.all(
+                                color: Colors.orange.withValues(alpha: 0.3),
+                              ),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: Colors.orange,
+                                ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
@@ -553,7 +591,9 @@ class _PaiementPageState extends State<PaiementPage> {
                           width: double.infinity,
                           height: 50,
                           child: TextButton(
-                            onPressed: _loading ? null : () => Navigator.pop(context),
+                            onPressed: _loading
+                                ? null
+                                : () => Navigator.pop(context),
                             child: const Text(
                               'Annuler',
                               style: TextStyle(
@@ -580,7 +620,7 @@ class _PaiementPageState extends State<PaiementPage> {
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
               title: 'Paiement',
-              height: 120,
+              height: 150,
             ),
           ),
         ],
@@ -588,4 +628,3 @@ class _PaiementPageState extends State<PaiementPage> {
     );
   }
 }
-

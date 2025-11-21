@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
 import 'package:repartir_frontend/services/api_service.dart';
@@ -68,7 +69,6 @@ class ProfileService {
     // Détecter le type MIME à partir des bytes
     String contentType = 'image/jpeg'; // par défaut
     if (imageBytes.length > 2) {
-      // Vérifier les magic numbers
       if (imageBytes[0] == 0xFF && imageBytes[1] == 0xD8) {
         contentType = 'image/jpeg';
       } else if (imageBytes[0] == 0x89 && imageBytes[1] == 0x50) {
@@ -78,7 +78,6 @@ class ProfileService {
     
     print('📸 Content-Type détecté: $contentType');
     
-    // Ajouter le fichier avec le bon Content-Type
     request.files.add(
       http.MultipartFile.fromBytes(
         'file',
@@ -88,17 +87,51 @@ class ProfileService {
       ),
     );
     
-    // Ajouter l'email
     request.fields['email'] = email;
     
-    print('📸 Envoi de la requête...');
-    
-    // Envoyer la requête
+    debugPrint('📸 Envoi de la requête...');
     var streamedResponse = await request.send();
     var response = await http.Response.fromStream(streamedResponse);
+    // Tentative d'auto-refresh si le token a expiré pendant l'upload
+    if (response.statusCode == 401) {
+      try {
+        final refreshToken = await _api.storage.getRefresToken();
+        if (refreshToken != null && refreshToken.isNotEmpty) {
+          final refreshRes = await http.post(
+            Uri.parse('${_api.apiBaseUrl}/auth/refresh'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'refreshToken': refreshToken}),
+          );
+          if (refreshRes.statusCode >= 200 && refreshRes.statusCode < 300) {
+            final data = jsonDecode(utf8.decode(refreshRes.bodyBytes));
+            final newAccess = data['access_token']?.toString();
+            final newRefresh = (data['refresh_token'] ?? refreshToken).toString();
+            if (newAccess != null && newAccess.isNotEmpty) {
+              await _api.storage.saveTokens(newAccess, newRefresh);
+              // Recréer et renvoyer la requête avec le nouveau token
+              final retry = http.MultipartRequest('POST', uri)
+                ..headers['Authorization'] = 'Bearer $newAccess'
+                ..fields['email'] = email
+                ..files.add(
+                  http.MultipartFile.fromBytes(
+                    'file',
+                    imageBytes,
+                    filename: contentType == 'image/png' ? 'profile.png' : 'profile.jpg',
+                    contentType: http_parser.MediaType.parse(contentType),
+                  ),
+                );
+              final retriedStream = await retry.send();
+              response = await http.Response.fromStream(retriedStream);
+            }
+          }
+        }
+      } catch (_) {
+        // Erreur transitoire: laisser la réponse 401 telle quelle (UI peut proposer un retry)
+      }
+    }
     
-    print('📸 Réponse backend: ${response.statusCode}');
-    print('📸 Body: ${response.body}');
+    debugPrint('📸 Réponse backend: ${response.statusCode}');
+    debugPrint('📸 Body: ${response.body}');
     
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return {'message': response.body, 'success': true};

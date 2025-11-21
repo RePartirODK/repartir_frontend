@@ -8,6 +8,7 @@ import 'package:repartir_frontend/services/api_service.dart';
 // --- MODÈLE DE DONNÉES POUR UN MENTOR ---
 // Utilisé pour passer les informations entre la page de liste et la page de détail.
 class Mentor {
+  final String prenom;
   final String name;
   final String specialty;
   final String experience;
@@ -16,6 +17,7 @@ class Mentor {
   final int? id; // Ajout de l'ID pour récupérer les détails depuis l'API
 
   const Mentor({
+    required this.prenom,
     required this.name,
     required this.specialty,
     required this.experience,
@@ -114,6 +116,7 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
       }
 
       return Mentor(
+        prenom: prenom,
         name: name,
         specialty:
             (_mentorDetails!['specialite'] ??
@@ -494,7 +497,7 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
+                                      color: Colors.black.withValues(alpha:0.05),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -536,7 +539,7 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: kPrimaryBlue.withOpacity(0.3),
+                                  color: kPrimaryBlue.withValues(alpha:0.3),
                                   blurRadius: 12,
                                   offset: const Offset(0, 6),
                                 ),
@@ -612,14 +615,14 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
       padding: const EdgeInsets.all(28),
        decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color, color.withOpacity(0.8)],
+          colors: [color, color.withValues(alpha:0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha:0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -633,7 +636,7 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
               border: Border.all(color: Colors.white, width: 4),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha:0.15),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -674,6 +677,9 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
             ),
            ),
           const SizedBox(height: 20),
+
+
+          
            Text(
              mentor.name,
              style: const TextStyle(
@@ -684,12 +690,14 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
              ),
             textAlign: TextAlign.center,
            ),
+           
+           
            const SizedBox(height: 8),
            if (mentor.specialty.isNotEmpty && mentor.specialty != '—')
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha:0.2),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -708,7 +716,7 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
               children: [
                 Icon(
                   Icons.workspace_premium,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha:0.9),
                   size: 18,
                 ),
                 const SizedBox(width: 6),
@@ -716,7 +724,7 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
                   mentor.experience,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.white.withOpacity(0.95),
+                    color: Colors.white.withValues(alpha:0.95),
                     fontWeight: FontWeight.w500,
                   ),
                 ),

@@ -46,7 +46,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final me = await _profile.getMe();
       // Backend Jeune entity structure
       final utilisateur = (me['utilisateur'] ?? {}) as Map<String, dynamic>;
-      name = ((me['prenom'] ?? '') + ' ' + (utilisateur['nom'] ?? '')).trim();
+      name = ('${me['prenom'] ?? ''} ${utilisateur['nom'] ?? ''}').trim();
       about = (me['a_propos'] ?? '') as String;
       email = (utilisateur['email'] ?? '') as String;
       phone = (utilisateur['telephone'] ?? '') as String;
@@ -89,6 +89,8 @@ class _ProfilePageState extends State<ProfilePage> {
       });
     }
   }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -138,6 +140,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     () => showPasswordChangeDialog(context),
                   ),
                   const SizedBox(height: 8),
+                   _buildSettingItem(
+                    context,
+                    'Supprimer mon compte',
+                    _showDeleteConfirmationDialog,
+                    isDestructive: true,
+                  ),
+                  const SizedBox(height: 8),
                   _buildSettingItem(
                     context,
                     'Se déconnecter',
@@ -179,7 +188,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ElevatedButton.icon(
                 onPressed: () => _navigateToEditProfile(context),
                 icon: const Icon(Icons.edit, size: 18),
-                label: const Text('Modifier le profil'),
+                label: const Text('Modifier le profile'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryBlue,
                   foregroundColor: Colors.white,
@@ -252,6 +261,48 @@ class _ProfilePageState extends State<ProfilePage> {
                 size: 16, color: isDestructive ? primaryRed : Colors.grey),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Supprimer le compte',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: primaryRed),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                await utilisateurService.suppressionCompte({'email': email});
+                await utilisateurService.logout({'email': email});
+                if (mounted) {
+                  Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erreur: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Supprimer'),
+          ),
+        ],
       ),
     );
   }

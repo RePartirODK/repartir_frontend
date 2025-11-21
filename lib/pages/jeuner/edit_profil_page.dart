@@ -138,15 +138,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                   const SizedBox(height: 20),
                   
-                  _buildTextField(_nameController, "Nom ET Prenom*"),
+                  _buildTextField(_nameController, "Prenom et Nom"),
                   const SizedBox(height: 20),
                   _buildTextField(_aboutController, "A propos", maxLines: 4),
                   const SizedBox(height: 20),
-                  _buildTextField(_addressController, "Adresse*"),
+                  _buildTextField(_addressController, "Adresse"),
                   const SizedBox(height: 20),
-                  _buildTextField(_emailController, "Email professionnel*"),
+                  _buildTextField(_emailController, "Email"),
                   const SizedBox(height: 20),
-                  _buildTextField(_phoneController, "Téléphone*"),
+                  _buildTextField(_phoneController, "Téléphone"),
                   const SizedBox(height: 30),
                   Row(
                     children: [
@@ -166,16 +166,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 20),
-                      TextButton.icon(
-                        onPressed: () {
-                          // Just return
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(Icons.close, color: Colors.grey),
-                        label: const Text('Retour',
-                            style: TextStyle(color: Colors.grey)),
-                      ),
+                     
                     ],
                   ),
                 ],
