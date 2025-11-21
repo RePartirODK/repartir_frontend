@@ -8,6 +8,7 @@ import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
+import 'package:repartir_frontend/services/utilisateur_service.dart';
 
 class ProfilEntreprisePage extends StatefulWidget {
   const ProfilEntreprisePage({super.key});
@@ -19,6 +20,7 @@ class ProfilEntreprisePage extends StatefulWidget {
 class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
   final ProfileService _profileService = ProfileService();
   final SecureStorageService _storage = SecureStorageService();
+  final UtilisateurService _utilisateurService = UtilisateurService();
   
   bool _isLoading = true;
   String _companyName = "Entreprise";
@@ -158,6 +160,15 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
                             _showLogoutDialog();
                           },
                         ),
+                        const SizedBox(height: 15),
+                        _buildActionButton(
+                          Icons.delete_forever,
+                          'Supprimer mon compte',
+                          Colors.red.shade700,
+                          () {
+                            _showDeleteConfirmationDialog();
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -200,7 +211,7 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -369,6 +380,57 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
     );
   }
 
+  void _showDeleteConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          title: const Text(
+            'Supprimer le compte',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                try {
+                  await _utilisateurService.suppressionCompte({'email': _email});
+                  await _utilisateurService.logout({'email': _email});
+                  if (mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+                      (Route<dynamic> route) => false,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Compte supprimé')),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erreur: $e')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Supprimer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // Barre de navigation inférieure
   Widget _buildBottomNavigation() {
     return BottomNavigationBar(
@@ -432,7 +494,7 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
                   border: Border.all(color: Colors.blue.shade200, width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 12,
                       offset: const Offset(0, 6),
                     ),

@@ -210,10 +210,25 @@ class _MentorHomePageState extends State<MentorHomePage> {
             top: 0,
             left: 0,
             right: 0,
-            child: CustomHeader(
-              title: "Accueil",
-              leftWidget: _buildLogo(),
-              height: 150,
+            child: Stack(
+              children: [
+                CustomHeader(title: 'Accueil', height: 150),
+                Positioned(
+                  height: 80,
+                  width: 80,
+                  top: 30,
+                  left: 20,
+                  child: CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.white,
+                    child: Image.asset(
+                      'assets/images/logo_repartir.png',
+                      height: 300,
+                      width: 300,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

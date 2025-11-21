@@ -6,6 +6,7 @@ import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/auth_service.dart';
+import 'package:repartir_frontend/services/secure_storage_service.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 
 // Style colors similar to mentors/profile_mentor.dart
@@ -23,6 +24,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final ProfileService _profile = ProfileService();
   final AuthService _auth = AuthService();
   final utilisateurService = UtilisateurService();
+  final storage = SecureStorageService();
   bool _loading = true;
   String? _error;
   String name = "";
@@ -48,7 +50,7 @@ class _ProfilePageState extends State<ProfilePage> {
       final me = await _profile.getMe();
       // Backend Jeune entity structure
       final utilisateur = (me['utilisateur'] ?? {}) as Map<String, dynamic>;
-      name = ((me['prenom'] ?? '') + ' ' + (utilisateur['nom'] ?? '')).trim();
+      name = ('${me['prenom'] ?? ''} ${utilisateur['nom'] ?? ''}').trim();
       about = (me['a_propos'] ?? '') as String;
       email = (utilisateur['email'] ?? '') as String;
       phone = (utilisateur['telephone'] ?? '') as String;
@@ -87,6 +89,8 @@ class _ProfilePageState extends State<ProfilePage> {
       await _fetch(); // Recharger toutes les données y compris la photo
     }
   }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -136,6 +140,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     () => showPasswordChangeDialog(context),
                   ),
                   const SizedBox(height: 8),
+                   _buildSettingItem(
+                    context,
+                    'Supprimer mon compte',
+                    _showDeleteConfirmationDialog,
+                    isDestructive: true,
+                  ),
+                  const SizedBox(height: 8),
                   _buildSettingItem(
                     context,
                     'Se déconnecter',
@@ -174,7 +185,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ElevatedButton.icon(
                 onPressed: () => _navigateToEditProfile(context),
                 icon: const Icon(Icons.edit, size: 18),
-                label: const Text('Modifier le profil'),
+                label: const Text('Modifier le profile'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryBlue,
                   foregroundColor: Colors.white,
@@ -247,6 +258,61 @@ class _ProfilePageState extends State<ProfilePage> {
                 size: 16, color: isDestructive ? primaryRed : Colors.grey),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text(
+          'Supprimer le compte',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: primaryRed),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                await utilisateurService.suppressionCompte({'email': email});
+                if (email.isNotEmpty) {
+                  await utilisateurService.logout({'email': email});
+                }
+                await storage.clearTokens();
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+                    (Route<dynamic> route) => false,
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Compte supprimé avec succès'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erreur: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Supprimer'),
+          ),
+        ],
       ),
     );
   }
@@ -342,7 +408,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           Navigator.of(context).pop();
                           
                           try {
-                            await utilisateurService.logout({'email': email});
+                            if (email.isNotEmpty) {
+                              await utilisateurService.logout({'email': email});
+                            }
+                            await storage.clearTokens();
                             if (mounted) {
                               Navigator.pushAndRemoveUntil(
                                 context,

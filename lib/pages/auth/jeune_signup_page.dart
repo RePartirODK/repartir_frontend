@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/models/request/jeunerequest.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
-import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/services/jeune_service.dart';
 
 class JeuneSignupPage extends StatefulWidget {
   const JeuneSignupPage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _JeuneSignupPageState createState() => _JeuneSignupPageState();
 }
 
@@ -63,7 +63,7 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
       }
 
       // Créer l'objet JeuneRequest
-      print(_gender);
+      debugPrint(_gender);
       final jeuneRequest = JeuneRequest(
         nom: nomController.text,
         prenom: prenomController.text,

@@ -95,6 +95,7 @@ class _MentorsListPageState extends State<MentorsListPage> {
                                     return _buildMentorListTile(
                                       context, 
                                       Mentor(
+                                        prenom: mentor.prenom,
                                         name: mentor.name,
                                         specialty: mentor.specialty,
                                         experience: mentor.experience,
@@ -174,6 +175,7 @@ class _MentorsListPageState extends State<MentorsListPage> {
     final about = (data['description'] ?? data['a_propos'] ?? data['aPropos'] ?? data['about'] ?? u['description'] ?? '').toString().trim();
     
     return Mentor(
+      prenom: prenom,
       name: name,
       specialty: specialty.isEmpty ? '—' : specialty,
       experience: experience,

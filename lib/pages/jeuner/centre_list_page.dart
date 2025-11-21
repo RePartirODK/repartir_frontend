@@ -35,16 +35,18 @@ class _CentreListPageState extends State<CentreListPage> {
       // Vérifier si l'utilisateur est connecté
       final isConnected = await _api.hasToken();
       if (!isConnected) {
-        throw Exception('Vous devez être connecté pour voir les centres de formation. Veuillez vous connecter.');
+        throw Exception(
+          'Vous devez être connecté pour voir les centres de formation. Veuillez vous connecter.',
+        );
       }
-      
+
       final all = await _centres.listAll();
       // Filtrer les centres actifs
       final centresActifs = all.where((c) {
         final u = c['utilisateur'] ?? {};
         return u['estActive'] == true;
       }).toList();
-      
+
       // Récupérer TOUTES les formations de TOUS les centres actifs
       final List<Map<String, dynamic>> toutesFormations = [];
       for (final centre in centresActifs) {
@@ -56,26 +58,29 @@ class _CentreListPageState extends State<CentreListPage> {
             final s = (raw ?? '').toString().toUpperCase();
             return s != 'ANNULER';
           }).toList();
-           // Pour chaque formation, ajouter les infos du centre
+          // Pour chaque formation, ajouter les infos du centre
           for (final formation in activeFormations) {
-             // Vérifier que la formation appartient bien à ce centre
-             final centreFormationId = formation['centreFormation']?['id'] ?? 
-                                      formation['centre']?['id'];
-             if (centreFormationId == centre['id'] || centreFormationId == null) {
-               // Ajouter les infos du centre à la formation
-               formation['centreInfo'] = {
-                 'id': centre['id'],
-                 'nom': centre['utilisateur']?['nom'] ?? '',
-                 'logo': centre['utilisateur']?['urlPhoto'] ?? '',
-                 'adresse': centre['adresse'] ?? '',
-               };
-               toutesFormations.add(formation);
-             }
-           }
+            // Vérifier que la formation appartient bien à ce centre
+            final centreFormationId =
+                formation['centreFormation']?['id'] ??
+                formation['centre']?['id'];
+            if (centreFormationId == centre['id'] ||
+                centreFormationId == null) {
+              // Ajouter les infos du centre à la formation
+              formation['centreInfo'] = {
+                'id': centre['id'],
+                'nom': centre['utilisateur']?['nom'] ?? '',
+                'logo': centre['utilisateur']?['urlPhoto'] ?? '',
+                'adresse': centre['adresse'] ?? '',
+              };
+              toutesFormations.add(formation);
+            }
+          }
         } catch (e) {
           // Ignorer les erreurs pour ce centre et continuer
         }
       }
+<<<<<<< HEAD
       
       // Trier les formations par ID décroissant (les plus récentes en premier)
       toutesFormations.sort((a, b) {
@@ -120,51 +125,71 @@ class _CentreListPageState extends State<CentreListPage> {
                 child: _loading
                     ? const Center(child: CircularProgressIndicator())
                     : _error != null
-                        ? Center(child: Text(_error!))
-                        : RefreshIndicator(
-                            onRefresh: _fetch,
-                child: ListView.builder(
-                  padding: EdgeInsets.zero,
-                              itemCount: _items.length,
-                  itemBuilder: (context, index) {
-                                final f = _items[index]; // f est maintenant une formation
-                                final centreInfo = f['centreInfo'] ?? {};
-                                final dateDebut = f['date_debut']?.toString() ?? '';
-                                final dateFin = f['date_fin']?.toString() ?? '';
-                                final card = {
-                                  'logo': (centreInfo['logo'] ?? 'https://via.placeholder.com/150').toString(),
-                                  'name': (centreInfo['nom'] ?? 'Centre').toString(),
-                                  'location': (centreInfo['adresse'] ?? '—').toString(),
-                                  'formation': (f['titre'] ?? '').toString(),
-                                  'description': (f['description'] ?? '').toString(),
-                                  'date': (dateDebut.isNotEmpty || dateFin.isNotEmpty)
-                                      ? 'Du ${dateDebut} - au ${dateFin}'
-                                      : '',
-                                  'link': (f['urlFormation'] ?? '').toString(),
-                                  'places': (f['nbrePlace'] ?? '').toString(),
-                                  'price': (f['cout'] != null) ? 'Scolarité : ${f['cout']}' : null,
-                                  'id': centreInfo['id'],
-                                  'formationId': f['id'], // ID de la formation
-                                };
-                                return CentreCard(centre: card);
-                  },
-                ),
+                    ? Center(child: Text(_error!))
+                    : RefreshIndicator(
+                        onRefresh: _fetch,
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          itemCount: _items.length,
+                          itemBuilder: (context, index) {
+                            final f =
+                                _items[index]; // f est maintenant une formation
+                            final centreInfo = f['centreInfo'] ?? {};
+                            final dateDebut = _formatDate(f['date_debut']);
+                            final dateFin = _formatDate(f['date_fin']);
+                            final card = {
+                              'logo':
+                                  (centreInfo['logo'] ??
+                                          'https://via.placeholder.com/150')
+                                      .toString(),
+                              'name': (centreInfo['nom'] ?? 'Centre')
+                                  .toString(),
+                              'location': (centreInfo['adresse'] ?? '—')
+                                  .toString(),
+                              'formation': (f['titre'] ?? '').toString(),
+                              'description': (f['description'] ?? '')
+                                  .toString(),
+                              'date':
+                                  (dateDebut.isNotEmpty || dateFin.isNotEmpty)
+                                  ? 'Du $dateDebut - au $dateFin'
+                                  : '',
+                              'link': (f['urlFormation'] ?? '').toString(),
+                              'places': (f['nbrePlace'] ?? '').toString(),
+                              'price': (f['cout'] != null)
+                                  ? 'Scolarité : ${f['cout']}'
+                                  : null,
+                              'id': centreInfo['id'],
+                              'formationId': f['id'], // ID de la formation
+                            };
+                            return CentreCard(centre: card);
+                          },
+                        ),
+                      ),
               ),
             ),
-          ),
           ),
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            child: CustomHeader(
-              title: 'Centres de formation',
-              height: 150,
-            ),
+            child: CustomHeader(title: 'Centres de formation', height: 150),
           ),
         ],
       ),
     );
+  }
+}
+
+String _formatDate(dynamic raw) {
+  if (raw == null) return '';
+  try {
+    final dt = raw is DateTime ? raw : DateTime.parse(raw.toString());
+    final dd = dt.day.toString().padLeft(2, '0');
+    final mm = dt.month.toString().padLeft(2, '0');
+    final yyyy = dt.year.toString();
+    return '$dd/$mm/$yyyy';
+  } catch (_) {
+    return raw.toString();
   }
 }
 
@@ -185,6 +210,7 @@ class CentreCard extends StatelessWidget {
         );
       },
       child: Card(
+       
         margin: const EdgeInsets.only(bottom: 16.0),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         elevation: 5,
@@ -207,8 +233,20 @@ class CentreCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(centre['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text(centre['location'], style: const TextStyle(color: Colors.grey)),
+                      Text(
+                        centre['name'],
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on, color: Colors.black, size: 16),
+                          const SizedBox(width: 4),
+                          Text(centre['location'], style: const TextStyle(color: Colors.black)),
+                        ],
+                      ),
                     ],
                   ),
                 ],
@@ -217,19 +255,28 @@ class CentreCard extends StatelessWidget {
               const Divider(),
               const SizedBox(height: 10),
               if (centre['formation']?.toString().isNotEmpty ?? false) ...[
-              Text(centre['formation'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 5),
+                Text(
+                  centre['formation'],
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 5),
               ],
               if (centre['description']?.toString().isNotEmpty ?? false) ...[
-              Text(centre['description']),
-              const SizedBox(height: 10),
+                Text(centre['description']),
+                const SizedBox(height: 10),
               ],
               if (centre['date']?.toString().isNotEmpty ?? false)
-              _buildInfoRow(Icons.date_range, centre['date']),
+                _buildInfoRow(Icons.date_range, _formatDate(centre['date'])),
               if (centre['link']?.toString().isNotEmpty ?? false)
-              _buildInfoRow(Icons.link, centre['link']),
+                _buildInfoRow(Icons.link, centre['link']),
               if (centre['places']?.toString().isNotEmpty ?? false)
-                _buildInfoRow(Icons.group, '${centre['places']} places disponibles'),
+                _buildInfoRow(
+                  Icons.group,
+                  '${centre['places']} places disponibles',
+                ),
               if (centre.containsKey('price') && centre['price'] != null)
                 _buildInfoRow(Icons.attach_money, centre['price']),
               const SizedBox(height: 15),
@@ -240,15 +287,16 @@ class CentreCard extends StatelessWidget {
                     // Sur l'onglet Formations, toujours rediriger vers le détail de la formation
                     final formationId = centre['formationId'];
                     if (formationId != null) {
-                    Navigator.push(
-                      context,
+                      Navigator.push(
+                        context,
                         MaterialPageRoute(
-                          builder: (context) => FormationDetailPage(formationId: formationId),
+                          builder: (context) =>
+                              FormationDetailPage(formationId: formationId),
                         ),
-                    );
+                      );
                     }
                   },
-                   style: ElevatedButton.styleFrom(
+                  style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3EB2FF),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
@@ -256,9 +304,8 @@ class CentreCard extends StatelessWidget {
                     ),
                   ),
                   child: const Text('Voir détails'),
-                 
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -273,7 +320,9 @@ class CentreCard extends StatelessWidget {
         children: [
           Icon(icon, color: Colors.grey, size: 16),
           const SizedBox(width: 8),
-          Expanded(child: Text(text, style: const TextStyle(color: Colors.black54))),
+          Expanded(
+            child: Text(text, style: const TextStyle(color: Colors.black54)),
+          ),
         ],
       ),
     );

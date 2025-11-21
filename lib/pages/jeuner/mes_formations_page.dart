@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:repartir_frontend/services/inscriptions_service.dart';
 import 'package:repartir_frontend/services/api_service.dart';
 import 'package:repartir_frontend/pages/jeuner/formation_detail_page.dart';
+import 'package:repartir_frontend/components/custom_header.dart';
 
 // Constantes de couleurs pour un style cohérent
 const Color kPrimaryBlue = Color(0xFF007BFF);
@@ -100,58 +101,71 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kLightGrey,
-      appBar: AppBar(
-        backgroundColor: kLightGrey,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: kDarkText),
-          onPressed: () {
-            // Le bouton retour renvoie à la page d'accueil
-            Navigator.of(context).pop();
-          },
-        ),
-        title: const Text(
-          'Mes formations',
-          style: TextStyle(
-            color: kDarkText,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            // --- Toggle Buttons ---
-            _buildToggleButtons(),
-            const SizedBox(height: 30),
-            // --- Titre de la section ---
-            Text(
-              _showEnCours ? 'Formations en cours' : 'Formations Terminées',
-              style: const TextStyle(
-                color: kDarkText,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+      body: Stack(
+        children: [
+          // Contenu principal
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: kLightGrey,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(60),
+                  topRight: Radius.circular(60),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    // --- Toggle Buttons ---
+                    _buildToggleButtons(),
+                    const SizedBox(height: 30),
+                    // --- Titre de la section ---
+                    Text(
+                      _showEnCours ? 'Formations en cours' : 'Formations Terminées',
+                      style: const TextStyle(
+                        color: kDarkText,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // --- Contenu conditionnel ---
+                    Expanded(
+                      child: _loading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _error != null
+                              ? Center(child: Text(_error!))
+                              : RefreshIndicator(
+                                  onRefresh: _fetch,
+                                  child: _showEnCours ? _buildFormationsEnCours() : _buildFormationsTerminees(),
+                                ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 20),
-            // --- Contenu conditionnel ---
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _error != null
-                      ? Center(child: Text(_error!))
-                      : RefreshIndicator(
-                          onRefresh: _fetch,
-                          child: _showEnCours ? _buildFormationsEnCours() : _buildFormationsTerminees(),
-                        ),
+          ),
+          
+          // Header personnalisé
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CustomHeader(
+              showBackButton: true,
+              onBackPressed: () => Navigator.pop(context),
+              title: 'Mes formations',
+              height: 150,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -275,11 +289,13 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
         final inscription = formations[index];
         final formation = inscription['formation'] ?? {};
         final titre = (formation['titre'] ?? '—').toString();
+        final certifie = (inscription['certifie'] == true);
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: _buildCoursTermineCard(
             title: titre,
             formationId: formation['id'],
+            certified: certifie,
           ),
         );
       },
@@ -306,7 +322,7 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha:0.1),
               spreadRadius: 1,
               blurRadius: 5,
               offset: const Offset(0, 2),
@@ -372,7 +388,7 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
   }
 
   /// Widget pour une carte de formation terminée
-  Widget _buildCoursTermineCard({required String title, int? formationId}) {
+  Widget _buildCoursTermineCard({required String title, int? formationId, bool certified = false}) {
     return GestureDetector(
       onTap: formationId != null
           ? () {
@@ -391,7 +407,7 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha:0.1),
               spreadRadius: 1,
               blurRadius: 5,
               offset: const Offset(0, 2),
@@ -424,7 +440,7 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Row(
+                  if (certified) Row(
                     children: [
                       Icon(Icons.workspace_premium_outlined, color: Colors.orange.shade600, size: 20),
                       const SizedBox(width: 8),

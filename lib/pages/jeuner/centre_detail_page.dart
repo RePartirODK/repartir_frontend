@@ -150,7 +150,7 @@ class _CentreDetailPageState extends State<CentreDetailPage> {
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
               title: 'Détail Centre',
-              height: 120,
+              height: 150,
             ),
           ),
         ],
@@ -232,7 +232,7 @@ class _CentreDetailPageState extends State<CentreDetailPage> {
 
 class FormationCard extends StatelessWidget {
   final Map<String, dynamic> formation;
-  const FormationCard({Key? key, required this.formation}) : super(key: key);
+  const FormationCard({super.key, required this.formation});
 
   @override
   Widget build(BuildContext context) {
@@ -265,15 +265,9 @@ class FormationCard extends StatelessWidget {
             Text(formation['title']?.toString() ?? '—', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             const SizedBox(height: 5),
             Text(formation['description']?.toString() ?? '—'),
-            const SizedBox(height: 10),
-            _buildInfoRow(Icons.date_range, formation['date']?.toString() ?? '—'),
-            if ((formation['link']?.toString() ?? '').isNotEmpty)
-              _buildInfoRow(Icons.link, formation['link']?.toString() ?? '—'),
-            _buildInfoRow(Icons.group, '${formation['places']} places disponibles'),
+            const SizedBox(height: 10),      
             if (formation['cout'] != null)
               _buildInfoRow(Icons.attach_money, 'Coût: ${formation['cout']}'),
-            if (formation['format'] != null)
-              _buildInfoRow(Icons.school, 'Format: ${formation['format']}'),
             if (formation['duree'] != null)
               _buildInfoRow(Icons.access_time, 'Durée: ${formation['duree']}'),
             if ((formation['financing']?.toString() ?? '').isNotEmpty)
@@ -305,7 +299,7 @@ class FormationCard extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Color(0xFF3EB2FF),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),

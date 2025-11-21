@@ -241,8 +241,25 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
       // Appeler le service de suppression de compte
       await utilisateurService.suppressionCompte({'email': email!});
 
-      // Puis éventuellement redirige ou déconnecte l'utilisateur
-      _showLogoutDialog();
+      // Déconnecter l'utilisateur et rediriger vers la page de login
+      if (email != null) {
+        await utilisateurService.logout({'email': email});
+      }
+      await storage.clearTokens();
+      
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+          (Route<dynamic> route) => false,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Compte supprimé avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
       debugPrint("Erreur lors de la suppression : $e");
       // ignore: use_build_context_synchronously
@@ -251,6 +268,7 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -313,7 +331,7 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
           ),
         ),
         const SizedBox(height: 15),
-        
+
         //Bouton Edition
         Align(
           alignment: AlignmentGeometry.centerRight,
@@ -455,5 +473,4 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
       ),
     );
   }
-
 }

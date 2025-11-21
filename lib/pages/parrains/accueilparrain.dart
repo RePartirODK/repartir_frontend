@@ -122,6 +122,8 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
                           // Padding pour le reste du contenu
                         ],
                       ),
+                      
+                      
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24.0),
                         child: Column(
