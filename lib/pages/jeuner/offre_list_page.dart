@@ -35,7 +35,7 @@ class _OffreListPageState extends State<OffreListPage> {
           'titre': m['titre'] ?? '',
           'type_contrat': m['type_contrat']?.toString() ?? '',
           'entreprise': m['nomEntreprise'] ?? '',
-          'lieu': '',
+          'lieu': m['adresseEntreprise']?.toString() ?? '',
           'datePublication': '',
           'description': m['description'] ?? '',
           'lien_postuler': m['lienPostuler'] ?? '',
