@@ -111,7 +111,7 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
     ];
 
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           // Contenu principal
@@ -266,7 +266,7 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
               showBackButton: true,
               onBackPressed: () => Navigator.pop(context),
               title: 'Mes Mentors',
-              height: 120,
+             
             ),
           ),
         ],
