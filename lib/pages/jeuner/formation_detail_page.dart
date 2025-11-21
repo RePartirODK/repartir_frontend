@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/formations_service.dart';
 import 'package:repartir_frontend/services/inscriptions_service.dart';
 import 'package:repartir_frontend/services/centres_service.dart';
@@ -590,20 +591,12 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          CircleAvatar(
+          ProfileAvatar(
+            photoUrl: logoUrl.isNotEmpty ? logoUrl : null,
             radius: 50,
+            isPerson: false,
             backgroundColor: Colors.blue[100],
-            backgroundImage: logoUrl.isNotEmpty
-                ? NetworkImage(logoUrl) 
-                : null,
-            onBackgroundImageError: logoUrl.isNotEmpty
-                ? (_, __) {
-                    // Si l'image ne charge pas, on garde juste le fond coloré
-                  }
-                : null,
-            child: logoUrl.isEmpty 
-                ? const Icon(Icons.business, size: 40, color: Colors.blue) 
-                : null,
+            iconColor: Colors.blue,
           ),
           const SizedBox(width: 16),
           Expanded(

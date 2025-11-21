@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/parrains/pagepaiement.dart';
 import 'package:repartir_frontend/services/centre_service.dart';
@@ -48,6 +49,7 @@ class _DetailPageState extends State<DetailPage> {
 
   // Fetched data
   String _jeuneName = '—';
+  String? _jeunePhotoUrl;
   String _centreSituation = '—';
   String _centreName = '—';
   String _email = '—';
@@ -78,6 +80,7 @@ class _DetailPageState extends State<DetailPage> {
       _jeuneName = (prenom.isNotEmpty || nom.isNotEmpty)
           ? '$prenom $nom'.trim()
           : 'Jeune #${widget.idJeune}';
+      _jeunePhotoUrl = utilisateur['urlPhoto'] as String?;
 
       // Fetch formation details by id
       final f = await _formationsService.details(widget.idFormation);
@@ -222,10 +225,12 @@ class _DetailPageState extends State<DetailPage> {
     return Center(
       child: Column(
         children: <Widget>[
-          const CircleAvatar(
+          ProfileAvatar(
+            photoUrl: _jeunePhotoUrl,
             radius: 50,
-            backgroundColor: primaryBlue, // Couleur d'arrière-plan de l'avatar
-            child: Icon(Icons.person, size: 70, color: Colors.white),
+            isPerson: true,
+            backgroundColor: primaryBlue,
+            iconColor: Colors.white,
           ),
           const SizedBox(height: 10),
           Text(

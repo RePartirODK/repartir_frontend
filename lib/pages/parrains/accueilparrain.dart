@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/models/response/response_parrain.dart';
 import 'package:repartir_frontend/pages/parrains/jeunesparraines.dart';
 import 'package:repartir_frontend/services/parrain_service.dart';
@@ -193,17 +194,16 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
     final sinceLabel = _parrain?.dateInscription != null
         ? 'Parrain depuis ${_parrain!.dateInscription!.year}'
         : 'Parrain';
+    final photoUrl = _parrain?.urlPhoto ?? _parrain?.utilisateur.urlPhoto;
     return Center(
       child: Column(
         children: <Widget>[
-          const CircleAvatar(
+          ProfileAvatar(
+            photoUrl: photoUrl,
             radius: 50,
+            isPerson: true,
             backgroundColor: primaryBlue,
-            child: Icon(
-              Icons.person,
-              size: 70,
-              color: Colors.white,
-            ),
+            iconColor: Colors.white,
           ),
           const SizedBox(height: 10),
           Text(

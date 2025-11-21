@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/mentor_service.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/pages/mentors/mentore_detail_page.dart';
@@ -186,19 +187,12 @@ class MentoreTileAPI extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
         // Avatar avec photo
-        leading: CircleAvatar(
+        leading: ProfileAvatar(
+          photoUrl: urlPhotoJeune,
           radius: 30,
-          backgroundColor: primaryBlue.withValues(alpha: 0.1),
-          backgroundImage: (urlPhotoJeune.isNotEmpty && urlPhotoJeune.startsWith('http'))
-              ? NetworkImage(urlPhotoJeune)
-              : null,
-          child: (urlPhotoJeune.isEmpty || !urlPhotoJeune.startsWith('http'))
-              ? const Icon(
-                  Icons.person,
-                  size: 30,
-                  color: Colors.blueGrey,
-                )
-              : null,
+          isPerson: true,
+          backgroundColor: primaryBlue.withOpacity(0.1),
+          iconColor: Colors.blueGrey,
         ),
         // Nom et infos
         title: Text(

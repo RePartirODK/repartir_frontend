@@ -9,6 +9,8 @@ class ResponseInscription {
   // Add: formation ID and formation persisted statut
   final int? idFormation;
   final String? formationStatut;
+  // Photo de profil du jeune
+  final String? urlPhotoJeune;
 
   ResponseInscription({
     required this.id,
@@ -20,6 +22,7 @@ class ResponseInscription {
     required this.status,
     this.idFormation,
     this.formationStatut,
+    this.urlPhotoJeune,
   });
 
   factory ResponseInscription.fromJson(Map<String, dynamic> json) {
@@ -44,7 +47,8 @@ class ResponseInscription {
           ? json['idFormation'] as int
           : int.tryParse(json['idFormation']?.toString() ?? ''),
       formationStatut: json['formationStatut']?.toString(),
-    
+      // Photo de profil du jeune
+      urlPhotoJeune: json['urlPhotoJeune']?.toString(),
     );
   }
 }

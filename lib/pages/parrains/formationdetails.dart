@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/parrains/voirdetailformation.dart';
@@ -270,17 +271,10 @@ class _FormationPageState extends State<FormationPage>
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: Colors.black,
+                ProfileAvatar(
+                  photoUrl: centre?.urlPhoto,
                   radius: 20,
-                  child: Text(
-                    'ODC',
-                    style: TextStyle(
-                      color: primaryOrange,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  isPerson: false,
                 ),
                 const SizedBox(width: 10),
                 Column(

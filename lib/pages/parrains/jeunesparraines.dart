@@ -4,6 +4,7 @@ import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/services/centres_service.dart';
 import 'package:repartir_frontend/services/parrainages_service.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 
 // --- COULEURS ET CONSTANTES GLOBALES ---
 const Color primaryBlue = Color(0xFF3EB2FF); // Couleur principale bleue
@@ -191,14 +192,12 @@ class _SponsoredYouthPageState extends State<SponsoredYouthPage> {
       ),
       child: Row(
         children: [
-          CircleAvatar(
+          ProfileAvatar(
+            photoUrl: (utilisateur['urlPhoto'] as String?)?.isNotEmpty == true
+                ? utilisateur['urlPhoto'] as String
+                : null,
             radius: 30,
-            backgroundColor: primaryBlue.withValues(alpha: 0.1),
-            child: Icon(
-              Icons.person,
-              color: primaryBlue.withValues(alpha: 0.8),
-              size: 40,
-            ),
+            isPerson: true,
           ),
           const SizedBox(width: 15),
           Expanded(

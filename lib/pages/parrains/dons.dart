@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/parrains/detailsdemande.dart';
 import 'package:repartir_frontend/services/formations_service.dart';
@@ -199,6 +200,7 @@ class _DonationsPageState extends State<DonationsPage> {
                         final name = (prenom.isNotEmpty || nom.isNotEmpty)
                             ? '$prenom $nom'.trim()
                             : 'Jeune #$idJeune';
+                        final photoUrl = utilisateur['urlPhoto'] as String?;
                         debugPrint(
                           "l'id de la formation $idFormation",
                         ); // Affiche l'id de la formation dans le log
@@ -208,6 +210,7 @@ class _DonationsPageState extends State<DonationsPage> {
                         return _buildDonationItem(
                           name: name,
                           description: description,
+                          photoUrl: photoUrl,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -313,6 +316,7 @@ class _DonationsPageState extends State<DonationsPage> {
   Widget _buildDonationItem({
     required String name,
     required String description,
+    String? photoUrl,
     required VoidCallback onTap,
   }) {
     return Card(
@@ -332,10 +336,12 @@ class _DonationsPageState extends State<DonationsPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const CircleAvatar(
+              ProfileAvatar(
+                photoUrl: photoUrl,
                 radius: 30,
+                isPerson: true,
                 backgroundColor: primaryBlue,
-                child: Icon(Icons.person, size: 40, color: Colors.white),
+                iconColor: Colors.white,
               ),
               const SizedBox(width: 15),
               Expanded(

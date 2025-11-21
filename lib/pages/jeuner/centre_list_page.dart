@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/centre_detail_page.dart';
 import 'package:repartir_frontend/pages/jeuner/formation_detail_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/centres_service.dart';
 import 'package:repartir_frontend/services/api_service.dart';
 
@@ -194,9 +195,13 @@ class CentreCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
+                  ProfileAvatar(
+                    photoUrl: centre['logo']?.toString().isNotEmpty == true && 
+                             centre['logo'] != 'https://via.placeholder.com/150'
+                        ? centre['logo'].toString()
+                        : null,
                     radius: 25,
-                    backgroundImage: NetworkImage(centre['logo']),
+                    isPerson: false,
                   ),
                   const SizedBox(width: 10),
                   Column(

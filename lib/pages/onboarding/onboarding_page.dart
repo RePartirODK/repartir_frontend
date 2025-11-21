@@ -118,6 +118,7 @@ class _OnboardingPageContentState extends State<OnboardingPageContent> {
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     widget.title,
@@ -138,10 +139,11 @@ class _OnboardingPageContentState extends State<OnboardingPageContent> {
                       ),
                     ),
                   if (widget.isLastPage)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 20.0),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20.0),
                       child: Column(
-                        children: [
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
                           InfoRow(
                             icon: Icons.search,
                             text: 'Trouvez des formations professionnelles',

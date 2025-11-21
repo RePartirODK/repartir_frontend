@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/api_service.dart';
 import 'package:image_picker/image_picker.dart';
@@ -154,6 +155,9 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
           debugPrint('📷 Upload de la photo...');
           await _profileService.updatePhoto(imageBytes, email);
           debugPrint('✅ Photo uploadée avec succès');
+          
+          // Recharger le profil pour obtenir la nouvelle URL de photo
+          await _loadProfile();
 
           // Réinitialiser la sélection d'image
           setState(() {
@@ -246,23 +250,23 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
                               onTap: _pickImage,
                               child: Stack(
                                 children: [
-                                  CircleAvatar(
-                                    radius: 60,
-                                    backgroundColor: Colors.grey[200],
-                                    backgroundImage: _selectedImageBytes != null
-                                        ? MemoryImage(_selectedImageBytes!)
-                                        : (_selectedImage != null
-                                            ? FileImage(_selectedImage!)
-                                            : (_currentPhotoUrl != null && _currentPhotoUrl!.isNotEmpty
-                                                ? NetworkImage(_currentPhotoUrl!)
-                                                : null)) as ImageProvider?,
-                                    onBackgroundImageError: _currentPhotoUrl != null && _currentPhotoUrl!.isNotEmpty
-                                        ? (_, __) {}
-                                        : null,
-                                    child: (_selectedImage == null && _selectedImageBytes == null && (_currentPhotoUrl == null || _currentPhotoUrl!.isEmpty))
-                                        ? const Icon(Icons.person, size: 60, color: Colors.grey)
-                                        : null,
-                                  ),
+                                  _selectedImageBytes != null
+                                      ? CircleAvatar(
+                                          radius: 60,
+                                          backgroundColor: Colors.grey[200],
+                                          backgroundImage: MemoryImage(_selectedImageBytes!),
+                                        )
+                                      : (_selectedImage != null
+                                          ? CircleAvatar(
+                                              radius: 60,
+                                              backgroundColor: Colors.grey[200],
+                                              backgroundImage: FileImage(_selectedImage!),
+                                            )
+                                          : ProfileAvatar(
+                                              photoUrl: _currentPhotoUrl,
+                                              radius: 60,
+                                              isPerson: true,
+                                            )),
                                   Positioned(
                                     bottom: 0,
                                     right: 0,

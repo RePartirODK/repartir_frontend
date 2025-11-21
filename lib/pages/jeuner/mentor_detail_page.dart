@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/mentors_service.dart';
 import 'package:repartir_frontend/services/mentorings_service.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
@@ -639,38 +640,16 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
                 ),
               ],
             ),
-            child: CircleAvatar(
+            child: ProfileAvatar(
+              photoUrl: mentor.imageUrl.isNotEmpty &&
+                      mentor.imageUrl != 'https://placehold.co/150/EFEFEF/333333?text=M' &&
+                      !mentor.imageUrl.contains('placeholder')
+                  ? mentor.imageUrl
+                  : null,
               radius: 56,
+              isPerson: true,
               backgroundColor: Colors.white,
-              backgroundImage:
-                  mentor.imageUrl.isNotEmpty &&
-                      mentor.imageUrl !=
-                          'https://placehold.co/150/EFEFEF/333333?text=M' &&
-                      !mentor.imageUrl.contains('placeholder')
-                  ? NetworkImage(mentor.imageUrl)
-                  : null,
-              onBackgroundImageError:
-                  mentor.imageUrl.isNotEmpty &&
-                      mentor.imageUrl !=
-                          'https://placehold.co/150/EFEFEF/333333?text=M' &&
-                      !mentor.imageUrl.contains('placeholder')
-                  ? (_, __) {}
-                  : null,
-              child:
-                  mentor.imageUrl.isEmpty ||
-                      mentor.imageUrl ==
-                          'https://placehold.co/150/EFEFEF/333333?text=M' ||
-                      mentor.imageUrl.contains('placeholder')
-                  ? CircleAvatar(
-                      radius: 52,
-                      backgroundColor: Colors.blue[50],
-                      child: Icon(
-                        Icons.person,
-                        size: 50,
-                        color: color,
-                      ),
-                    )
-                  : null,
+              iconColor: color,
             ),
            ),
           const SizedBox(height: 20),

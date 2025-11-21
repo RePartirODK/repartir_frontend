@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/components/password_change_dialog.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/pages/mentors/editerprofil.dart';
+import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 import 'package:repartir_frontend/services/utilisateur_service.dart';
@@ -26,6 +28,7 @@ class _ProfileMentorPageState extends State<ProfileMentorPage> {
   bool _uploadingPhoto = false;
   String? _error;
   Map<String, dynamic>? _profile;
+  int _photoRefreshKey = 0; // Pour forcer le rafraîchissement de l'image
 
   @override
   void initState() {
@@ -42,6 +45,7 @@ class _ProfileMentorPageState extends State<ProfileMentorPage> {
       final p = await profileService.getMe(); // /mentors/profile via role
       setState(() {
         _profile = p;
+        _photoRefreshKey++; // Incrémenter pour forcer le rafraîchissement
       });
     } catch (e) {
       setState(() {
@@ -55,23 +59,118 @@ class _ProfileMentorPageState extends State<ProfileMentorPage> {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Déconnexion'),
-        content: const Text('Voulez-vous vraiment vous déconnecter ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _handleLogout();
-            },
-            child: const Text('Se déconnecter', style: TextStyle(color: primaryRed)),
+          elevation: 10,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icône de déconnexion
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.logout,
+                    size: 40,
+                    color: Colors.red.shade400,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // Titre
+                const Text(
+                  'Se déconnecter',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                // Message
+                Text(
+                  'Êtes-vous sûr de vouloir vous déconnecter ?\n\nVous devrez vous reconnecter pour accéder à votre compte.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey.shade600,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Boutons
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                        child: Text(
+                          'Annuler',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          await _handleLogout();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade400,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Déconnexion',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -162,7 +261,21 @@ class _ProfileMentorPageState extends State<ProfileMentorPage> {
       if (email != null) await utilisateurService.logout({'email': email});
       await storage.clearTokens();
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+          (Route<dynamic> route) => false,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Déconnexion effectuée'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
       }
     } catch (e) {
       // ignore: use_build_context_synchronously
@@ -278,14 +391,11 @@ class _ProfileMentorPageState extends State<ProfileMentorPage> {
               Stack(
                 alignment: Alignment.bottomRight,
                 children: [
-                  CircleAvatar(
+                  ProfileAvatar(
+                    photoUrl: photoUrl,
                     radius: 60,
-                    backgroundColor: Colors.grey.shade200,
-                    backgroundImage:
-                        (photoUrl != null && photoUrl.isNotEmpty) ? NetworkImage(photoUrl) : null,
-                    child: (photoUrl == null || photoUrl.isEmpty)
-                        ? const Icon(Icons.person, size: 80, color: Colors.blueGrey)
-                        : null,
+                    isPerson: true,
+                    cacheKey: _photoRefreshKey.toString(),
                   ),
                   Positioned(
                     bottom: 0,
