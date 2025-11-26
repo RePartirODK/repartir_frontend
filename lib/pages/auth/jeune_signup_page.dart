@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:repartir_frontend/models/request/jeunerequest.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/services/jeune_service.dart';
+import 'package:repartir_frontend/components/custom_alert_dialog.dart';
 
 class JeuneSignupPage extends StatefulWidget {
   const JeuneSignupPage({super.key});
@@ -33,13 +34,10 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
     //verifier que tous les champs sont valide
     if (_formKey.currentState?.validate() != true) {
       // message d'erreur ou retour
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Veuillez remplir correctement tous les champs obligatoires.",
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
+      CustomAlertDialog.showError(
+        context: context,
+        message: "Veuillez remplir correctement tous les champs obligatoires.",
+        title: "Formulaire incomplet",
       );
       return;
     }
@@ -53,11 +51,11 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
 
     try {
       if (_gender == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Veuillez sélectionner votre genre."),
-            backgroundColor: Colors.redAccent,
-          ),
+        Navigator.of(context).pop(); // Fermer le loader
+        CustomAlertDialog.showError(
+          context: context,
+          message: "Veuillez sélectionner votre genre.",
+          title: "Champ manquant",
         );
         return;
       }
@@ -387,13 +385,10 @@ if (utilisateur != null && _selectedDomainIds.isNotEmpty) {
           const SizedBox(height: 40),
           _buildNavigationButton("S'inscrire", () {         
              if (_formKey.currentState?.validate() != true) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  "Veuillez remplir correctement tous les champs obligatoires de l'étape 1.",
-                ),
-                backgroundColor: Colors.redAccent,
-              ),
+            CustomAlertDialog.showError(
+              context: context,
+              message: "Veuillez remplir correctement tous les champs obligatoires de l'étape 1.",
+              title: "Formulaire incomplet",
             );
             return;
           }

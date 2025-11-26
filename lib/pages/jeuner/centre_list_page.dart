@@ -80,7 +80,6 @@ class _CentreListPageState extends State<CentreListPage> {
           // Ignorer les erreurs pour ce centre et continuer
         }
       }
-<<<<<<< HEAD
       
       // Trier les formations par ID décroissant (les plus récentes en premier)
       toutesFormations.sort((a, b) {

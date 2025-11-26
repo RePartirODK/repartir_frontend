@@ -638,19 +638,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
             radius: 50,
             isPerson: false,
             backgroundColor: Colors.blue[100],
-<<<<<<< HEAD
             iconColor: Colors.blue,
-=======
-            backgroundImage: logoUrl.isNotEmpty ? NetworkImage(logoUrl) : null,
-            onBackgroundImageError: logoUrl.isNotEmpty
-                ? (_, __) {
-                    // Si l'image ne charge pas, on garde juste le fond coloré
-                  }
-                : null,
-            child: logoUrl.isEmpty
-                ? const Icon(Icons.business, size: 40, color: Colors.blue)
-                : null,
->>>>>>> main
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -845,7 +833,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     );
   }
 
-<<<<<<< HEAD
   // Vérifier l'inscription existante avant d'afficher le dialogue de choix
   Future<void> _verifierEtInscrire() async {
     if (widget.formationId == null) return;
@@ -917,18 +904,11 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
   }
 
   Future<void> _inscrire({required bool payerDirectement, bool demanderParrainage = false}) async {
-=======
-  Future<void> _inscrire({
-    required bool payerDirectement,
-    bool demanderParrainage = false,
-  }) async {
->>>>>>> main
     if (widget.formationId == null) return;
 
     setState(() => _loading = true);
 
     // Vérifier si la formation est gratuite
-<<<<<<< HEAD
     final isGratuit = _formation?['gratuit'] == true || 
                       (_formation?['cout'] as num?)?.toDouble() == 0.0;
     
@@ -978,12 +958,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       // Continuer avec l'inscription normale si la vérification échoue
     }
     
-=======
-    final isGratuit =
-        _formation?['gratuit'] == true ||
-        (_formation?['cout'] as num?)?.toDouble() == 0.0;
-
->>>>>>> main
     try {
       // 1. S'inscrire à la formation
       debugPrint('📝 Inscription à la formation ${widget.formationId}...');
@@ -1023,7 +997,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
         // Pour les formations payantes, on a déjà vérifié avant, mais si on arrive ici,
         // c'est que le backend a aussi détecté l'inscription
         if (mounted) {
-<<<<<<< HEAD
           // Essayer de récupérer le statut de l'inscription existante
           try {
             final mesInscriptions = await _inscriptions.mesInscriptions();
@@ -1046,9 +1019,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
             context,
             'Vous êtes déjà inscrit à cette formation.',
           );
-=======
-          _showErrorPopup(context, 'Vous êtes déjà inscrit à cette formation.');
->>>>>>> main
         }
         return;
       }
@@ -1100,7 +1070,6 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
     }
   }
 
-<<<<<<< HEAD
   // Convertir le statut en libellé lisible
   String _getStatutLibelle(String statut) {
     switch (statut.toUpperCase()) {
@@ -1407,7 +1376,7 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       },
     );
   }
-=======
+
   String _formatDate(dynamic raw) {
     if (raw == null) return '';
     try {
@@ -1420,5 +1389,4 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
       return raw.toString();
     }
   }
->>>>>>> main
 }

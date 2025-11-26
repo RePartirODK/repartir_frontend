@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/reset_password_page.dart';
+import 'package:repartir_frontend/components/custom_alert_dialog.dart';
 import 'package:repartir_frontend/pages/auth/role_selection_page.dart';
 import 'package:repartir_frontend/pages/centres/navcentre.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
@@ -29,11 +30,10 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
   /// Méthode qui permet la redirection en fonction du role
   void handleLogin() async {
     if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez corriger les erreurs dans le formulaire'),
-          backgroundColor: Colors.red,
-        ),
+      CustomAlertDialog.showError(
+        context: context,
+        message: 'Veuillez corriger les erreurs dans le formulaire avant de continuer.',
+        title: 'Formulaire invalide',
       );
       return;
     }
@@ -96,8 +96,10 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
             );
             break;
           default:
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Rôle utilisateur inconnu')),
+            CustomAlertDialog.showWarning(
+              context: context,
+              message: 'Rôle utilisateur inconnu. Veuillez contacter le support.',
+              title: 'Rôle non reconnu',
             );
         }
       }
@@ -109,11 +111,10 @@ class _AuthenticationPageState extends State<AuthenticationPage> {
           e.toString().contains('403')) {
         message = 'Email ou mot de passe incorrect';
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-        ),
+      CustomAlertDialog.showError(
+        context: context,
+        message: message,
+        title: 'Erreur de connexion',
       );
     } finally {
       setState(() => isLoading = false);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/password_change_dialog.dart';
+import 'package:repartir_frontend/components/custom_alert_dialog.dart';
 import 'package:repartir_frontend/services/utilisateur_service.dart';
 import 'edit_profil_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
@@ -295,18 +296,37 @@ class _ProfilePageState extends State<ProfilePage> {
                     MaterialPageRoute(builder: (context) => const AuthenticationPage()),
                     (Route<dynamic> route) => false,
                   );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Compte supprimé avec succès'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  if (mounted) {
+                    CustomAlertDialog.showSuccess(
+                      context: context,
+                      message: 'Votre compte a été supprimé avec succès.',
+                      title: 'Compte supprimé',
+                      onConfirm: () {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+                          (Route<dynamic> route) => false,
+                        );
+                      },
+                    );
+                  }
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Erreur: $e')),
-                  );
+                  if (mounted) {
+                    final errorMessage = e.toString()
+                        .replaceAll('Exception: ', '')
+                        .replaceAll('HTTP 500: ', '')
+                        .replaceAll('HTTP 400: ', '');
+                    
+                    CustomAlertDialog.showError(
+                      context: context,
+                      message: errorMessage.isNotEmpty 
+                          ? 'Erreur lors de la suppression: $errorMessage'
+                          : 'Une erreur est survenue lors de la suppression du compte.',
+                      title: 'Erreur',
+                    );
+                  }
                 }
               }
             },
@@ -405,6 +425,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () async {
+                          // Fermer le dialog de confirmation d'abord
                           Navigator.of(context).pop();
                           
                           try {
@@ -412,30 +433,31 @@ class _ProfilePageState extends State<ProfilePage> {
                               await utilisateurService.logout({'email': email});
                             }
                             await storage.clearTokens();
+                            
+                            // Naviguer vers la page d'authentification
+                            // On ne peut pas afficher de message après pushAndRemoveUntil
+                            // car on est déjà sur une nouvelle page
                             if (mounted) {
                               Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(builder: (context) => const AuthenticationPage()),
                                 (Route<dynamic> route) => false,
                               );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('Déconnexion effectuée'),
-                                  backgroundColor: Colors.green,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              );
                             }
                           } catch (e) {
+                            // Afficher l'erreur seulement si le widget est toujours monté
                             if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Erreur lors de la déconnexion: $e'),
-                                  backgroundColor: Colors.red,
-                                ),
+                              final errorMessage = e.toString()
+                                  .replaceAll('Exception: ', '')
+                                  .replaceAll('HTTP 401: ', '')
+                                  .replaceAll('HTTP 500: ', '');
+                              
+                              CustomAlertDialog.showError(
+                                context: context,
+                                message: errorMessage.isNotEmpty 
+                                    ? 'Erreur lors de la déconnexion: $errorMessage'
+                                    : 'Une erreur est survenue lors de la déconnexion.',
+                                title: 'Erreur de déconnexion',
                               );
                             }
                           }
