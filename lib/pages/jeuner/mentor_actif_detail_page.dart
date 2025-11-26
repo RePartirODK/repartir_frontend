@@ -386,7 +386,7 @@ class _MentorActifDetailPageState extends State<MentorActifDetailPage> {
             child: const CustomHeader(
               title: 'Mon Mentor',
               showBackButton: true,
-              height: 120,
+              height: 150,
             ),
           ),
         ],

@@ -100,7 +100,7 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kLightGrey,
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           // Contenu principal
@@ -111,7 +111,7 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
             bottom: 0,
             child: Container(
               decoration: const BoxDecoration(
-                color: kLightGrey,
+                color: Colors.white,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(60),
                   topRight: Radius.circular(60),
