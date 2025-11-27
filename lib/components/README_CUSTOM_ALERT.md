@@ -161,3 +161,4 @@ CustomAlertDialog.showError(
 - ✅ Facile à utiliser avec des méthodes helper
 - ✅ Personnalisable (boutons, actions, etc.)
 
+

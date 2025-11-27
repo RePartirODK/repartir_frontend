@@ -3,6 +3,7 @@ import 'package:repartir_frontend/models/chat_contact.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_detail_page.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_list_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/mentorings_service.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/api_service.dart';
@@ -68,9 +69,10 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
         final mentorId = mentoring['idMentor'];
         final specialite = mentoring['specialiteMentor'] ?? '';
         final experience = mentoring['anneesExperienceMentor'] ?? 0;
-        final urlPhoto = mentoring['urlPhotoMentor'] ?? '';
+        final urlPhoto = (mentoring['urlPhotoMentor'] ?? '').toString().trim();
         
         print('📋 Mentor: $fullName (ID: $mentorId, Spé: $specialite, Exp: $experience ans)');
+        print('📸 URL Photo Mentor: $urlPhoto');
         
         return {
           'id': mentorId,
@@ -167,18 +169,12 @@ class _MesMentorsPageState extends State<MesMentorsPage> {
                           elevation: 4,
                           child: ListTile(
                                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            leading: CircleAvatar(
+                            leading: ProfileAvatar(
+                              photoUrl: avatar,
                               radius: 30,
-                                          backgroundColor: Colors.blue[100],
-                                          backgroundImage: avatar.isNotEmpty && !avatar.contains('placeholder')
-                                              ? NetworkImage(avatar)
-                                              : null,
-                                          onBackgroundImageError: avatar.isNotEmpty && !avatar.contains('placeholder')
-                                              ? (_, __) {}
-                                              : null,
-                                          child: avatar.isEmpty || avatar.contains('placeholder')
-                                              ? const Icon(Icons.person, size: 30, color: Colors.blue)
-                                              : null,
+                              isPerson: true,
+                              backgroundColor: Colors.blue[100],
+                              iconColor: Colors.blue,
                             ),
                                         title: Text(
                                           name,

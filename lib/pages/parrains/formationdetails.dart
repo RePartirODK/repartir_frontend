@@ -33,6 +33,7 @@ class _FormationPageState extends State<FormationPage>
   List<ResponseFormation> _formations = [];
   final CentresService _centresService = CentresService();
   final Map<int, ResponseCentre> _centresById = {};
+  final Map<int, String?> _centrePhotoUrls = {}; // Map pour stocker les URLs de photos des centres
   final FormationsService _formationService = FormationsService();
   // Contrôleur pour les onglets 'Toutes' et 'Nouvelles'
   late TabController _tabController;
@@ -61,6 +62,17 @@ class _FormationPageState extends State<FormationPage>
       for (final c in centres) {
         final centre = ResponseCentre.fromJson(c);
         _centresById[centre.id] = centre;
+        
+        // Extraire l'URL de la photo depuis le JSON (peut être dans urlPhoto ou utilisateur.urlPhoto)
+        String? photoUrl;
+        if (c['urlPhoto'] != null && (c['urlPhoto'] ?? '').toString().trim().isNotEmpty) {
+          photoUrl = (c['urlPhoto'] ?? '').toString().trim();
+        } else if (c['utilisateur'] != null && 
+                   c['utilisateur']['urlPhoto'] != null && 
+                   (c['utilisateur']['urlPhoto'] ?? '').toString().trim().isNotEmpty) {
+          photoUrl = (c['utilisateur']['urlPhoto'] ?? '').toString().trim();
+        }
+        _centrePhotoUrls[centre.id] = photoUrl;
       }
       // 3) Aggregate formations across centres
       final List<ResponseFormation> agg = [];
@@ -272,9 +284,11 @@ class _FormationPageState extends State<FormationPage>
             Row(
               children: [
                 ProfileAvatar(
-                  photoUrl: centre?.urlPhoto,
+                  photoUrl: centre != null ? _centrePhotoUrls[centre.id] : null,
                   radius: 20,
                   isPerson: false,
+                  backgroundColor: Colors.grey[200],
+                  iconColor: primaryBlue,
                 ),
                 const SizedBox(width: 10),
                 Column(
@@ -335,12 +349,16 @@ class _FormationPageState extends State<FormationPage>
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
                 onPressed: () {
+                  // Récupérer l'URL de la photo du centre depuis notre map
+                  final centrePhotoUrl = centre != null ? _centrePhotoUrls[centre.id] : null;
+                  
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => FormationDetailsPage(
                         formation: formation,
                         centre: centre,
+                        centrePhotoUrl: centrePhotoUrl, // Passer l'URL de la photo
                       ),
                     ),
                   );

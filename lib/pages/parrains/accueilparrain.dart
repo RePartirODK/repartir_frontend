@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/models/response/response_parrain.dart';
@@ -196,7 +197,22 @@ class _ParrainHomePageState extends State<ParrainHomePage> {
     final sinceLabel = _parrain?.dateInscription != null
         ? 'Parrain depuis ${_parrain!.dateInscription!.year}'
         : 'Parrain';
-    final photoUrl = _parrain?.urlPhoto ?? _parrain?.utilisateur.urlPhoto;
+    
+    // Récupérer l'URL de la photo avec gestion améliorée
+    String? photoUrl;
+    if (_parrain?.urlPhoto != null && (_parrain!.urlPhoto ?? '').toString().trim().isNotEmpty) {
+      photoUrl = (_parrain!.urlPhoto ?? '').toString().trim();
+    } else if (_parrain?.utilisateur.urlPhoto != null && (_parrain!.utilisateur.urlPhoto ?? '').toString().trim().isNotEmpty) {
+      photoUrl = (_parrain!.utilisateur.urlPhoto ?? '').toString().trim();
+    }
+    
+    // Debug: Vérifier l'URL de la photo
+    debugPrint('📸 Parrain accueil - Photo URL: $photoUrl');
+    if (_parrain != null) {
+      debugPrint('📸 Parrain accueil - urlPhoto: ${_parrain!.urlPhoto}');
+      debugPrint('📸 Parrain accueil - utilisateur.urlPhoto: ${_parrain!.utilisateur.urlPhoto}');
+    }
+    
     return Center(
       child: Column(
         children: <Widget>[
