@@ -3,6 +3,7 @@ import 'package:repartir_frontend/models/request/entreprise_request.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/services/entreprise_service.dart'; // Added import for AuthenticationPage
+import 'package:repartir_frontend/components/custom_alert_dialog.dart';
 
 class EntrepriseSignupPage extends StatefulWidget {
   const EntrepriseSignupPage({super.key});
@@ -48,8 +49,10 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
       });
     } catch (e) {
       debugPrint('Erreur lors du chargement des domaines: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur lors du chargement des domaines')),
+      CustomAlertDialog.showError(
+        context: context,
+        message: 'Erreur lors du chargement des domaines. Veuillez réessayer.',
+        title: 'Erreur de chargement',
       );
     } finally {
       setState(() => _loadingDomains = false);
@@ -73,13 +76,10 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
     // verifier que le formulaire est valide
     if (_formKey.currentState?.validate() != true) {
       // message d'erreur ou retour
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Veuillez remplir correctement tous les champs obligatoires.",
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
+      CustomAlertDialog.showError(
+        context: context,
+        message: "Veuillez remplir correctement tous les champs obligatoires.",
+        title: "Formulaire incomplet",
       );
       return;
     }

@@ -54,12 +54,16 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  flutter_native_splash: ^2.4.0
+
+
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -75,6 +79,12 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/
+
+flutter_native_splash:
+  color: "#FFFFFF"   # couleur de fond
+  image: assets/images/repartir_logo.png   # ton logo
+  android: true
+  ios: true
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -101,3 +111,26 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Configuration pour générer les icônes de l'application
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/repartir_logo.png"
+  # Pour Android : icône adaptative avec fond blanc
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/repartir_logo.png"
+  # Pour iOS : générer toutes les tailles nécessaires
+  remove_alpha_ios: true
+  web: true
+  windows: true
+  linux: true
+
+  android_screen_density:
+      ldpi: 100
+      mdpi: 140
+      hdpi: 160
+      xhdpi: 180
+      xxhdpi: 200
+      xxxhdpi: 220
+    

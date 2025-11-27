@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/mentor_detail_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/mentors_service.dart';
 import 'package:repartir_frontend/services/api_service.dart';
 
@@ -187,21 +188,13 @@ class _MentorsListPageState extends State<MentorsListPage> {
   Widget _buildMentorListTile(BuildContext context, Mentor mentor, int? mentorId) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      leading: CircleAvatar(
+      leading: ProfileAvatar(
+        photoUrl: mentor.imageUrl.isNotEmpty && 
+                  mentor.imageUrl != 'https://placehold.co/150/EFEFEF/333333?text=M'
+            ? mentor.imageUrl
+            : null,
         radius: 30,
-        backgroundColor: Colors.grey[200],
-        backgroundImage: mentor.imageUrl.isNotEmpty && 
-                        mentor.imageUrl != 'https://placehold.co/150/EFEFEF/333333?text=M'
-            ? NetworkImage(mentor.imageUrl)
-            : null,
-        onBackgroundImageError: mentor.imageUrl.isNotEmpty && 
-                               mentor.imageUrl != 'https://placehold.co/150/EFEFEF/333333?text=M'
-            ? (_, __) {}
-            : null,
-        child: mentor.imageUrl.isEmpty || 
-               mentor.imageUrl == 'https://placehold.co/150/EFEFEF/333333?text=M'
-            ? const Icon(Icons.person, color: Colors.grey)
-            : null,
+        isPerson: true,
       ),
       title: Text(mentor.name.trim().isEmpty ? 'Mentor' : mentor.name, style: const TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Column(

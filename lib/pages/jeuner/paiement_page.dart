@@ -41,6 +41,22 @@ class _PaiementPageState extends State<PaiementPage> {
   Future<void> _confirmerPaiement() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Vérifier que le montant saisi est égal au montant total
+    final montantSaisi = double.tryParse(_montantController.text);
+    if (montantSaisi == null) {
+      _showErrorPopup('Veuillez entrer un montant valide.');
+      return;
+    }
+
+    // Vérifier que le montant est égal au montant total
+    if ((montantSaisi - widget.montantTotal).abs() > 0.01) {
+      // Le montant n'est pas égal au montant total
+      _showErrorPopup(
+        'Vous devez payer le montant total de ${widget.montantTotal.toStringAsFixed(0)} FCFA maintenant.',
+      );
+      return;
+    }
+
     setState(() => _loading = true);
 
     try {
@@ -104,25 +120,84 @@ class _PaiementPageState extends State<PaiementPage> {
         _showSuccessDialog(
           reference: responsePaiement.reference,
           montant: montantAPayer,
-          estPartiel: montantAPayer < widget.montantTotal,
+          estPartiel: false, // Maintenant toujours false car on exige le montant total
         );
       }
     } catch (e) {
       debugPrint('❌ Erreur: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Erreur: ${e.toString().replaceAll('Exception: ', '')}',
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
+        _showErrorPopup('Erreur: ${e.toString().replaceAll('Exception: ', '')}');
       }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  // Popup d'erreur en haut de l'écran
+  void _showErrorPopup(String message) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+    
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 50,
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.red.shade600,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.red.withValues(alpha: 0.3),
+                  spreadRadius: 2,
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                  onPressed: () {
+                    overlayEntry.remove();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+
+    // Retirer automatiquement après 5 secondes
+    Future.delayed(const Duration(seconds: 5), () {
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
+    });
   }
 
   void _showSuccessDialog({
@@ -213,9 +288,7 @@ class _PaiementPageState extends State<PaiementPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      estPartiel
-                          ? 'Votre paiement partiel de ${montant.toStringAsFixed(0)} FCFA a été enregistré. Montant restant : ${(widget.montantTotal - montant).toStringAsFixed(0)} FCFA.\n\nUn administrateur va vérifier votre paiement. Vous recevrez un reçu par email une fois validé.'
-                          : 'Votre paiement de ${montant.toStringAsFixed(0)} FCFA est en attente de validation. Un administrateur va vérifier votre paiement sous peu.\n\nVous recevrez un reçu par email une fois le paiement validé.',
+                      'Votre paiement de ${montant.toStringAsFixed(0)} FCFA est en attente de validation. Un administrateur va vérifier votre paiement sous peu.\n\nVous recevrez un reçu par email une fois le paiement validé.',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                     ),
@@ -385,29 +458,24 @@ class _PaiementPageState extends State<PaiementPage> {
                         Container(
                           padding: const EdgeInsets.all(15),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.1),
+                            color: Colors.orange.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: Colors.blue.withValues(alpha: 0.3),
-                            ),
+                            border: Border.all(color: Colors.orange.withOpacity(0.3)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
                                 children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    color: Color(0xFF3EB2FF),
-                                  ),
+                                  Icon(Icons.info_outline, color: Colors.orange[700]),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
-                                      'Informations importantes',
+                                      'Information importante',
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.blue[700],
+                                        color: Colors.orange[700],
                                       ),
                                     ),
                                   ),
@@ -415,10 +483,11 @@ class _PaiementPageState extends State<PaiementPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                '• En continuant vous devez payer la totalité de la formation',
+                                '• Vous devez payer le montant total de ${widget.montantTotal.toStringAsFixed(0)} FCFA maintenant.',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Colors.grey[800],
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.orange[900],
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -501,6 +570,10 @@ class _PaiementPageState extends State<PaiementPage> {
                             if (montant > widget.montantTotal) {
                               return 'Le montant ne peut pas dépasser ${widget.montantTotal.toStringAsFixed(0)} FCFA';
                             }
+                            // Vérifier que le montant est égal au montant total
+                            if ((montant - widget.montantTotal).abs() > 0.01) {
+                              return 'Vous devez payer le montant total de ${widget.montantTotal.toStringAsFixed(0)} FCFA';
+                            }
                             return null;
                           },
                           onChanged: (value) {
@@ -516,37 +589,67 @@ class _PaiementPageState extends State<PaiementPage> {
 
                         const SizedBox(height: 15),
 
-                        // Indicateur de paiement partiel
-                        if (_paiementPartiel &&
-                            _montantController.text.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.withValues(alpha:  0.1),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Colors.orange.withValues(alpha: 0.3),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: Colors.orange,
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    'Montant restant à payer : ${(widget.montantTotal - (double.tryParse(_montantController.text) ?? 0)).toStringAsFixed(0)} FCFA',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.orange,
-                                    ),
+                        // Indicateur si le montant n'est pas égal au total
+                        if (_montantController.text.isNotEmpty)
+                          Builder(
+                            builder: (context) {
+                              final montantSaisi = double.tryParse(_montantController.text) ?? 0;
+                              final difference = (montantSaisi - widget.montantTotal).abs();
+                              
+                              if (difference > 0.01) {
+                                return Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: Colors.red.withOpacity(0.3)),
                                   ),
-                                ),
-                              ],
-                            ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.error_outline, color: Colors.red),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          montantSaisi < widget.montantTotal
+                                              ? 'Montant insuffisant. Il vous manque ${(widget.montantTotal - montantSaisi).toStringAsFixed(0)} FCFA'
+                                              : 'Montant trop élevé. Le montant total est de ${widget.montantTotal.toStringAsFixed(0)} FCFA',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.red,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              } else {
+                                return Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: Colors.green.withOpacity(0.3)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.check_circle, color: Colors.green),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          'Montant correct. Vous pouvez confirmer le paiement.',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.green[700],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            },
                           ),
 
                         const SizedBox(height: 40),

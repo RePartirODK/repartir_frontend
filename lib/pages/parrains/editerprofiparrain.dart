@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/models/request/parrain_request.dart';
 import 'package:repartir_frontend/provider/parrain_provider.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 import 'package:repartir_frontend/services/utilisateur_service.dart';
+import 'package:repartir_frontend/services/profile_service.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
+import 'dart:convert';
 
 const Color primaryBlue = Color(0xFF3EB2FF);
 
@@ -26,10 +30,11 @@ class _EditProfilParrainPageState extends ConsumerState<EditProfilParrainPage> {
   late TextEditingController professionController;
 
   final utilisateurService = UtilisateurService();
+  final ProfileService _profile = ProfileService();
   bool _saving = false;
   bool _uploadingPhoto = false;
   final storage = SecureStorageService();
-   String? _photoUrl;
+  String? _photoUrl;
 
   @override
   void initState() {
@@ -87,11 +92,20 @@ class _EditProfilParrainPageState extends ConsumerState<EditProfilParrainPage> {
     try {
       setState(() => _uploadingPhoto = true);
       final picker = ImagePicker();
-      final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+      
+      // Compatible Web et Mobile
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+      
       if (picked == null) {
         setState(() => _uploadingPhoto = false);
         return;
       }
+      
       final email = await storage.getUserEmail();
       if (email == null || email.isEmpty) {
         setState(() => _uploadingPhoto = false);
@@ -102,23 +116,85 @@ class _EditProfilParrainPageState extends ConsumerState<EditProfilParrainPage> {
         }
         return;
       }
-      final url = await utilisateurService.uploadPhotoProfil(email, picked.path);
-      setState(() {
-        _photoUrl = url ?? _photoUrl;
-      });
+
+      // Lire les bytes de l'image (compatible Web et Mobile)
+      final imageBytes = await picked.readAsBytes();
+      
+      debugPrint('📷 Upload de la photo pour le parrain...');
+      debugPrint('📷 Taille fichier: ${imageBytes.length} bytes');
+      debugPrint('📷 Email: $email');
+
+      // Upload la photo au backend en utilisant ProfileService (compatible Web)
+      final uploadResult = await _profile.updatePhoto(imageBytes, email);
+      debugPrint('✅ Photo uploadée avec succès: $uploadResult');
+
+      // Extraire la nouvelle URL de la réponse
+      String? newPhotoUrl;
+      try {
+        final message = uploadResult['message'];
+        
+        if (message is Map) {
+          newPhotoUrl = message['urlPhoto'] as String?;
+        } else if (message is String) {
+          final decoded = jsonDecode(message);
+          if (decoded is Map<String, dynamic> && decoded['urlPhoto'] != null) {
+            newPhotoUrl = decoded['urlPhoto'] as String;
+          }
+        }
+        
+        if (newPhotoUrl == null && uploadResult['urlPhoto'] != null) {
+          newPhotoUrl = uploadResult['urlPhoto'] as String;
+        }
+        
+        debugPrint('🖼️ Nouvelle URL photo extraite: $newPhotoUrl');
+      } catch (e) {
+        debugPrint('⚠️ Erreur lors de l\'extraction de l\'URL: $e');
+      }
+
+      if (newPhotoUrl != null) {
+        setState(() {
+          _photoUrl = newPhotoUrl;
+        });
+        
+        // Mettre à jour le provider localement
+        final parrain = ref.read(parrainNotifierProvider);
+        if (parrain != null) {
+          final updated = ParrainRequest(
+            nom: parrain.nom,
+            prenom: parrain.prenom,
+            email: parrain.email,
+            telephone: parrain.telephone,
+            motDePasse: '',
+            profession: parrain.profession ?? '',
+            urlPhoto: newPhotoUrl,
+          );
+          ref.read(parrainNotifierProvider.notifier).updateParrainLocally(updated);
+        }
+      }
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Photo mise à jour.')),
+          const SnackBar(
+            content: Text('Photo mise à jour avec succès ✅'),
+            backgroundColor: Colors.green,
+          ),
         );
-      }    } catch (e) {
+      }
+    } catch (e) {
+      debugPrint('❌ ERREUR lors de l\'upload de la photo: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Échec de la mise à jour: $e')),
+          SnackBar(
+            content: Text('Échec de la mise à jour: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     } finally {
       if (mounted) setState(() => _uploadingPhoto = false);
-    }}
+    }
+  }
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
@@ -174,13 +250,10 @@ class _EditProfilParrainPageState extends ConsumerState<EditProfilParrainPage> {
             Center(
               child: Stack(
                 children: [
-                  CircleAvatar(
+                  ProfileAvatar(
+                    photoUrl: photoUrl,
                     radius: 60,
-                    backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
-                    backgroundColor: Colors.grey.shade200,
-                    child: photoUrl == null
-                        ? const Icon(Icons.person, size: 80, color: Colors.blueGrey)
-                        : null,
+                    isPerson: true,
                   ),
                   Positioned(
                     bottom: 0,

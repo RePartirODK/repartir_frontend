@@ -7,6 +7,7 @@ import 'package:repartir_frontend/pages/entreprise/profil_entreprise_page.dart';
 import 'package:repartir_frontend/pages/entreprise/detail_offre_page.dart';
 import 'package:repartir_frontend/pages/entreprise/nouvelle_offre_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/offre_emploi_service.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/models/offre_emploi.dart';
@@ -395,13 +396,10 @@ class _AccueilEntreprisePageState extends State<AccueilEntreprisePage> {
         child: Row(
           children: [
             // Logo de l'entreprise
-            CircleAvatar(
+            ProfileAvatar(
+              photoUrl: _companyImageUrl.isNotEmpty ? _companyImageUrl : null,
               radius: 25,
-              backgroundColor: Colors.grey.shade200,
-              backgroundImage: _companyImageUrl.isNotEmpty ? NetworkImage(_companyImageUrl) : null,
-              child: _companyImageUrl.isEmpty
-                  ? Icon(Icons.business, size: 25, color: Colors.grey.shade600)
-                  : null,
+              isPerson: false,
             ),
             const SizedBox(width: 15),
             Expanded(

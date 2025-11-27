@@ -115,6 +115,10 @@ class _FormationsPageCentreState extends ConsumerState<FormationsPageCentre> {
       final s = (f.statut).toString().trim().toUpperCase();
       return s != 'ANNULER';
     }).toList();
+    
+    // Trier par ID décroissant (les plus récentes en premier - ID plus élevé = plus récent)
+    visible.sort((a, b) => b.id.compareTo(a.id));
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(

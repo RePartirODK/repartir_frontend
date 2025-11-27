@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/formation_detail_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/centres_service.dart';
 
 class CentreDetailPage extends StatefulWidget {
@@ -40,6 +41,13 @@ class _CentreDetailPageState extends State<CentreDetailPage> {
       // Pas d'erreur si pas de formations, on affiche juste les infos du centre
       //Filter pour enlever les formations annuler
       _formations = _formations.where((f) => f['statut'] != 'ANNULER').toList();
+      
+      // Trier par ID décroissant (les plus récentes en premier - ID plus élevé = plus récent)
+      _formations.sort((a, b) {
+        final idA = (a['id'] is int) ? a['id'] as int : int.tryParse(a['id']?.toString() ?? '0') ?? 0;
+        final idB = (b['id'] is int) ? b['id'] as int : int.tryParse(b['id']?.toString() ?? '0') ?? 0;
+        return idB.compareTo(idA);
+      });
     } catch (e) {
       _error = '$e';
     } finally {
@@ -54,8 +62,15 @@ class _CentreDetailPageState extends State<CentreDetailPage> {
   @override
   Widget build(BuildContext context) {
     final u = _centre?['utilisateur'] ?? {};
+    final logoUrl = (u['urlPhoto'] ?? '').toString().trim();
+    
+    // Debug: Vérifier l'URL du logo
+    debugPrint('📸 Centre détails - Logo URL: $logoUrl');
+    
     final centerData = {
-      'logo': (u['urlPhoto'] ?? 'https://via.placeholder.com/150').toString(),
+      'logo': logoUrl.isNotEmpty && !logoUrl.contains('placeholder')
+          ? logoUrl
+          : '',
       'name': (u['nom'] ?? '—').toString(),
       'location': (_centre?['adresse'] ?? '—').toString(),
       'phone': (u['telephone'] ?? '—').toString(),
@@ -163,9 +178,12 @@ class _CentreDetailPageState extends State<CentreDetailPage> {
       padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
       child: Column(
         children: [
-          CircleAvatar(
+          ProfileAvatar(
+            photoUrl: centerData['logo'],
             radius: 40,
-            backgroundImage: NetworkImage(centerData['logo']!),
+            isPerson: false,
+            backgroundColor: Colors.grey[200],
+            iconColor: Colors.grey[600],
           ),
           const SizedBox(height: 10),
           Text(centerData['name']!, style: const TextStyle(color: Colors.black87, fontSize: 22, fontWeight: FontWeight.bold)),

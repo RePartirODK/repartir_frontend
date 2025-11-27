@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/models/response/response_inscription.dart';
 import 'package:repartir_frontend/services/centre_service.dart';
@@ -126,19 +127,25 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
         map[f.titre] = f;
       }
 
-      // Avatar du jeune (via liste des jeunes)
-      final jeunes = await _jeuneService.listAll();
+      // Avatar du jeune : utiliser urlPhotoJeune depuis l'inscription si disponible
+      // Sinon, chercher dans la liste des jeunes
       String? urlPhoto;
-      for (final j in jeunes) {
-        final u = j['utilisateur'] as Map<String, dynamic>? ?? {};
-        final prenom = (j['prenom'] ?? '').toString();
-        final nom = (u['nom'] ?? '').toString();
-        final full = (prenom.isNotEmpty || nom.isNotEmpty)
-            ? '$prenom $nom'.trim()
-            : '';
-        if (full == targetName) {
-          urlPhoto = (u['urlPhoto'] ?? '').toString();
-          break;
+      if (filtered.isNotEmpty && filtered.first.urlPhotoJeune != null && filtered.first.urlPhotoJeune!.isNotEmpty) {
+        urlPhoto = filtered.first.urlPhotoJeune;
+      } else {
+        // Fallback : chercher dans la liste des jeunes
+        final jeunes = await _jeuneService.listAll();
+        for (final j in jeunes) {
+          final u = j['utilisateur'] as Map<String, dynamic>? ?? {};
+          final prenom = (j['prenom'] ?? '').toString();
+          final nom = (u['nom'] ?? '').toString();
+          final full = (prenom.isNotEmpty || nom.isNotEmpty)
+              ? '$prenom $nom'.trim()
+              : '';
+          if (full == targetName) {
+            urlPhoto = (u['urlPhoto'] ?? '').toString();
+            break;
+          }
         }
       }
 
@@ -219,15 +226,12 @@ class _ApplicantProfilePageState extends State<ApplicantProfilePage> {
             children: const [SizedBox(width: 48)],
           ),
         ),
-        CircleAvatar(
+        ProfileAvatar(
+          photoUrl: _avatarUrl,
           radius: 50,
-          backgroundColor: kPrimaryColor.withValues(alpha: 0.8),
-          backgroundImage: _avatarUrl != null
-              ? NetworkImage(_avatarUrl!)
-              : null,
-          child: _avatarUrl == null
-              ? const Icon(Icons.person, color: Colors.white, size: 60)
-              : null,
+          isPerson: true,
+          backgroundColor: kPrimaryColor.withOpacity(0.8),
+          iconColor: Colors.white,
         ),
         const SizedBox(height: 8),
         Text(

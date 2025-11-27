@@ -5,6 +5,7 @@ import '../../models/chat_message.dart';
 import '../../services/chat_service.dart';
 import '../../services/api_service.dart';
 import '../../services/profile_service.dart';
+import '../../components/profile_avatar.dart';
 
 // Page de détail d'une conversation
 class ChatDetailPage extends StatefulWidget {
@@ -340,15 +341,12 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.of(context).pop(true),
                   ),
-                  CircleAvatar(
+                  ProfileAvatar(
+                    photoUrl: widget.contactPhoto,
                     radius: 22,
+                    isPerson: true,
                     backgroundColor: Colors.blue[100],
-                    backgroundImage: widget.contactPhoto.isNotEmpty && widget.contactPhoto.startsWith('http')
-                        ? NetworkImage(widget.contactPhoto)
-                        : null,
-                    child: widget.contactPhoto.isEmpty || !widget.contactPhoto.startsWith('http')
-                        ? const Icon(Icons.person, color: Colors.blue, size: 24)
-                        : null,
+                    iconColor: Colors.blue,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -410,16 +408,12 @@ class _ChatDetailPageState extends State<ChatDetailPage> {
       debugPrint('   isSentByMe=$isSentByMe');
     }
     
-    final contactAvatar = CircleAvatar(
-      backgroundColor: Colors.blue[100],
-      backgroundImage: widget.contactPhoto.isNotEmpty && widget.contactPhoto.startsWith('http')
-          ? NetworkImage(widget.contactPhoto)
-          : null,
-      
+    final contactAvatar = ProfileAvatar(
+      photoUrl: widget.contactPhoto,
       radius: 16,
-      child: widget.contactPhoto.isEmpty || !widget.contactPhoto.startsWith('http')
-          ? const Icon(Icons.person, color: Colors.blue, size: 14)
-          : null,
+      isPerson: true,
+      backgroundColor: Colors.blue[100],
+      iconColor: Colors.blue,
     );
 
     return GestureDetector(

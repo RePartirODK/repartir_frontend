@@ -14,10 +14,20 @@ class MentoringsService {
     String? message, {
     String? objectif,
   }) async {
+    // Limite de caractères pour la base de données (VARCHAR standard)
+    const int maxObjectifLength = 255;
+    
+    // Tronquer l'objectif si nécessaire pour éviter l'erreur SQL
+    String trimmedObjectif = (objectif ?? 'Développement de compétences professionnelles').trim();
+    if (trimmedObjectif.length > maxObjectifLength) {
+      trimmedObjectif = trimmedObjectif.substring(0, maxObjectifLength);
+      debugPrint('⚠️ L\'objectif a été tronqué à $maxObjectifLength caractères');
+    }
+    
     // RequestMentoring du backend attend: description et objectif
     final bodyData = {
       'description': message ?? 'Je souhaiterais bénéficier de votre accompagnement pour progresser dans ma carrière.',
-      'objectif': objectif ?? 'Développement de compétences professionnelles',
+      'objectif': trimmedObjectif,
     };
     
     debugPrint('📨 POST /mentorings/create/$idMentor/$idJeune');

@@ -49,6 +49,17 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
         final statut = (f['formation']?['statut'] ?? '').toString().toUpperCase();
         return statut != 'ANNULER';
       }).toList();
+      
+      // Trier par ID de formation décroissant (les plus récentes en premier)
+      _formations.sort((a, b) {
+        final idA = (a['formation']?['id'] is int) 
+            ? (a['formation']?['id'] as int)
+            : (int.tryParse(a['formation']?['id']?.toString() ?? '0') ?? 0);
+        final idB = (b['formation']?['id'] is int) 
+            ? (b['formation']?['id'] as int)
+            : (int.tryParse(b['formation']?['id']?.toString() ?? '0') ?? 0);
+        return idB.compareTo(idA);
+      });
     } catch (e) {
       _error = '$e';
     } finally {

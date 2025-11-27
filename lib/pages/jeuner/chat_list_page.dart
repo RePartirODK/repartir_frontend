@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:repartir_frontend/pages/jeuner/chat_detail_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/mentor_service.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/chat_service.dart';
@@ -91,7 +92,10 @@ class _ChatListPageState extends State<ChatListPage> with WidgetsBindingObserver
       for (var mentoring in validMentorings) {
         final mentoringId = mentoring['id'] as int;
         final mentorName = '${mentoring['prenomMentor'] ?? ''} ${mentoring['nomMentor'] ?? ''}'.trim();
-        final urlPhotoMentor = mentoring['urlPhotoMentor'] ?? '';
+        final urlPhotoMentor = (mentoring['urlPhotoMentor'] ?? '').toString().trim();
+        
+        // Debug: Vérifier les données récupérées
+        debugPrint('📸 Chat liste - Mentor: $mentorName, Photo: $urlPhotoMentor');
         
         // Récupérer l'historique des messages
         final messages = await _chatService.getMessageHistory(mentoringId);
@@ -314,17 +318,12 @@ class _ChatListPageState extends State<ChatListPage> with WidgetsBindingObserver
       contentPadding: EdgeInsets.zero,
       leading: Stack(
         children: [
-          CircleAvatar(
+          ProfileAvatar(
+            photoUrl: conversation.contactPhoto,
             radius: 28,
+            isPerson: true,
             backgroundColor: const Color(0xFF6C63FF).withOpacity(0.1),
-            backgroundImage: conversation.contactPhoto.isNotEmpty && 
-                             conversation.contactPhoto.startsWith('http')
-                ? NetworkImage(conversation.contactPhoto)
-                : null,
-            child: conversation.contactPhoto.isEmpty || 
-                   !conversation.contactPhoto.startsWith('http')
-                ? const Icon(Icons.person, color: Color(0xFF6C63FF))
-                : null,
+            iconColor: const Color(0xFF6C63FF),
           ),
           // Badge pour messages non lus
           if (conversation.unreadCount > 0)

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/pages/mentors/formentoringdetails.dart';
 import 'package:repartir_frontend/pages/mentors/formentoring.dart';
 import 'package:repartir_frontend/services/mentor_service.dart';
@@ -620,15 +621,12 @@ class _MentorHomePageState extends State<MentorHomePage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircleAvatar(
+                    ProfileAvatar(
+                      photoUrl: urlPhoto,
                       radius: 35,
+                      isPerson: true,
                       backgroundColor: kAccentColor.withOpacity(0.4),
-                      backgroundImage: (urlPhoto.isNotEmpty && urlPhoto.startsWith('http'))
-                          ? NetworkImage(urlPhoto)
-                          : null,
-                      child: (urlPhoto.isEmpty || !urlPhoto.startsWith('http'))
-                          ? const Icon(Icons.person, size: 40, color: kPrimaryColor)
-                          : null,
+                      iconColor: kPrimaryColor,
                     ),
                     const SizedBox(height: 10),
                     Padding(
@@ -714,15 +712,12 @@ class _MentorHomePageState extends State<MentorHomePage> {
             },
             child: Row(
               children: [
-                CircleAvatar(
+                ProfileAvatar(
+                  photoUrl: urlPhoto,
                   radius: 25,
-                  backgroundColor: kAccentColor.withValues(alpha: 0.3),
-                  backgroundImage: (urlPhoto.isNotEmpty && urlPhoto.startsWith('http'))
-                      ? NetworkImage(urlPhoto)
-                      : null,
-                  child: (urlPhoto.isEmpty || !urlPhoto.startsWith('http'))
-                      ? const Icon(Icons.person, size: 30, color: kPrimaryColor)
-                      : null,
+                  isPerson: true,
+                  backgroundColor: kAccentColor.withOpacity(0.3),
+                  iconColor: kPrimaryColor,
                 ),
                 const SizedBox(width: 15),
                 Expanded(

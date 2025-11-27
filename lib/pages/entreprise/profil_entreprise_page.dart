@@ -5,6 +5,7 @@ import 'package:repartir_frontend/pages/entreprise/mes_offres_page.dart';
 import 'package:repartir_frontend/pages/entreprise/nouvelle_offre_page.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 import 'package:repartir_frontend/services/utilisateur_service.dart';
@@ -50,7 +51,7 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
         _location = profile['adresse'] ?? '';
         _email = profile['email'] ?? '';
         _phone = profile['telephone'] ?? '';
-        _companyImageUrl = profile['urlPhotoEntreprise'] ?? '';
+        _companyImageUrl = profile['urlPhotoEntreprise'] ?? profile['utilisateur']?['urlPhoto'] ?? '';
         _imageRefreshKey++; // Incrémenter pour forcer le rafraîchissement de l'image
         _isLoading = false;
       });
@@ -128,9 +129,8 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
                                     MaterialPageRoute(
                                         builder: (context) => const ModifierProfilPage()),
                                   );
-                                  if (result == true) {
-                                    _loadProfile();
-                                  }
+                                  // Recharger le profil après modification (y compris la photo)
+                                  _loadProfile();
                                 },
                               ),
                             ),
@@ -500,24 +500,12 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
                     ),
                   ],
                 ),
-                child: ClipOval(
-                  child: (_companyImageUrl.isEmpty)
-                      ? Container(
-                          color: Colors.blue.shade50,
-                          child: Icon(Icons.business, size: 60, color: Colors.blue.shade400),
-                        )
-                      : Image.network(
-                          '$_companyImageUrl?v=$_imageRefreshKey',
-                          key: ValueKey('company_avatar_$_imageRefreshKey'),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.blue.shade50,
-                              child:
-                                  Icon(Icons.business, size: 60, color: Colors.blue.shade400),
-                            );
-                          },
-                        ),
+                child: ProfileAvatar(
+                  photoUrl: _companyImageUrl.isNotEmpty ? '$_companyImageUrl?v=$_imageRefreshKey' : null,
+                  radius: 60,
+                  isPerson: false,
+                  backgroundColor: Colors.blue.shade50,
+                  iconColor: Colors.blue.shade400,
                 ),
               ),
               const SizedBox(height: 16),

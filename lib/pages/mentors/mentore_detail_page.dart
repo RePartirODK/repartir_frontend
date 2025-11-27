@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/mentor_service.dart';
 
 const Color primaryBlue = Color(0xFF3EB2FF);
@@ -131,19 +132,12 @@ class _MentoreDetailPageState extends State<MentoreDetailPage> {
                     Center(
                       child: Column(
                         children: [
-                          CircleAvatar(
+                          ProfileAvatar(
+                            photoUrl: urlPhotoJeune,
                             radius: 60,
+                            isPerson: true,
                             backgroundColor: primaryBlue.withOpacity(0.1),
-                            backgroundImage: (urlPhotoJeune.isNotEmpty && urlPhotoJeune.startsWith('http'))
-                                ? NetworkImage(urlPhotoJeune)
-                                : null,
-                            child: (urlPhotoJeune.isEmpty || !urlPhotoJeune.startsWith('http'))
-                                ? const Icon(
-                                    Icons.person,
-                                    size: 80,
-                                    color: primaryBlue,
-                                  )
-                                : null,
+                            iconColor: primaryBlue,
                           ),
                           const SizedBox(height: 15),
                           Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/centre_detail_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/centres_service.dart';
 
 class AllCentresListPage extends StatefulWidget {
@@ -74,8 +75,17 @@ class _AllCentresListPageState extends State<AllCentresListPage> {
                             itemBuilder: (context, index) {
                               final c = _items[index];
                               final u = c['utilisateur'] ?? {};
+                              final logoUrl = (u['urlPhoto'] ?? '').toString().trim();
+                              
+                              // Debug: Vérifier l'URL du logo
+                              if (index == 0) {
+                                debugPrint('📸 Centre liste - Logo URL: $logoUrl');
+                              }
+                              
                               final centre = {
-                                'logo': (u['urlPhoto'] ?? 'https://via.placeholder.com/150').toString(),
+                                'logo': logoUrl.isNotEmpty && !logoUrl.contains('placeholder')
+                                    ? logoUrl
+                                    : '',
                                 'name': (u['nom'] ?? '—').toString(),
                                 'location': (c['adresse'] ?? '—').toString(),
                                 'description': (u['description'] ?? '').toString(), // À propos du centre, pas l'agrément
@@ -123,9 +133,12 @@ class CentreListItemCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
+                ProfileAvatar(
+                  photoUrl: centre['logo'],
                   radius: 25,
-                  backgroundImage: NetworkImage(centre['logo']),
+                  isPerson: false,
+                  backgroundColor: Colors.grey[200],
+                  iconColor: Colors.grey[600],
                 ),
                 const SizedBox(width: 10),
                 Column(

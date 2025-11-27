@@ -1,9 +1,12 @@
 // NEW_FILE_CODE
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/models/response/response_inscription.dart';
 import 'package:repartir_frontend/pages/centres/voirappliquant.dart';
 import 'package:repartir_frontend/services/centre_service.dart';
+import 'package:repartir_frontend/services/jeune_service.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 
 const Color kPrimaryColor = Color(0xFF3EB2FF);
@@ -17,12 +20,14 @@ class DemandesEnAttentePage extends StatefulWidget {
 
 class _DemandesEnAttentePageState extends State<DemandesEnAttentePage> {
   final CentreService _centreService = CentreService();
+  final JeuneService _jeuneService = JeuneService();
   final SecureStorageService _storage = SecureStorageService();
 
   bool _loading = true;
   String? _error;
   List<ResponseInscription> _all = [];
   List<ResponseInscription> _pending = [];
+  final Map<String, String?> _photoUrlByJeuneName = {}; // Cache pour les photos
 
   @override
   void initState() {
@@ -38,7 +43,26 @@ class _DemandesEnAttentePageState extends State<DemandesEnAttentePage> {
     try {
       final centreId = int.tryParse(await _storage.getUserId() ?? '0') ?? 0;
       if (centreId == 0) throw Exception('Centre introuvable');
+      
+      // Charger les inscriptions et les jeunes en parallèle
       final items = await _centreService.getCentreInscriptions(centreId);
+      
+      // Charger les jeunes pour obtenir les photos
+      try {
+        final jeunes = await _jeuneService.listAll();
+        for (final j in jeunes) {
+          final utilisateur = j['utilisateur'] as Map<String, dynamic>? ?? {};
+          final prenom = (j['prenom'] ?? '').toString();
+          final nom = (utilisateur['nom'] ?? '').toString();
+          final fullName = (prenom.isNotEmpty || nom.isNotEmpty) ? '$prenom $nom'.trim() : '';
+          if (fullName.isNotEmpty) {
+            final urlPhoto = (utilisateur['urlPhoto'] ?? '').toString();
+            _photoUrlByJeuneName[fullName] = urlPhoto.isNotEmpty ? urlPhoto : null;
+          }
+        }
+      } catch (e) {
+        debugPrint('Failed to load jeunes for photos: $e');
+      }
 
       // Only inscriptions in EN_ATTENTE AND formation not ANNULER
       final pending = items.where((e) {
@@ -105,6 +129,9 @@ class _DemandesEnAttentePageState extends State<DemandesEnAttentePage> {
   }
 
   Widget _buildInscriptionCard(ResponseInscription insc) {
+    // Utiliser urlPhotoJeune de l'inscription, sinon chercher dans le cache
+    final photoUrl = insc.urlPhotoJeune ?? _photoUrlByJeuneName[insc.nomJeune];
+    
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
@@ -113,14 +140,12 @@ class _DemandesEnAttentePageState extends State<DemandesEnAttentePage> {
         padding: const EdgeInsets.all(14.0),
         child: Row(
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.person, color: kPrimaryColor, size: 28),
+            ProfileAvatar(
+              photoUrl: photoUrl,
+              radius: 24,
+              isPerson: true,
+              backgroundColor: Colors.grey[200]!,
+              iconColor: kPrimaryColor,
             ),
             const SizedBox(width: 12),
             Expanded(

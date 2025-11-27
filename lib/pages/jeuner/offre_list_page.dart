@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/pages/jeuner/detail_offre_commune_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/offers_service.dart';
 
 class OffreListPage extends StatefulWidget {
@@ -29,7 +30,61 @@ class _OffreListPageState extends State<OffreListPage> {
     });
     try {
       final list = await _offersService.search();
+      
+      // Debug: Afficher la structure de la première offre pour comprendre la structure
+      if (list.isNotEmpty) {
+        debugPrint('🔍 Structure de la première offre:');
+        debugPrint('   Clés disponibles: ${list.first.keys.toList()}');
+        debugPrint('   Contenu complet: ${list.first}');
+        
+        // Vérifier toutes les offres pour voir s'il y a des variations
+        for (var i = 0; i < list.length && i < 3; i++) {
+          debugPrint('   Offre ${i + 1} - Clés: ${list[i].keys.toList()}');
+          if (list[i].containsKey('entrepriseId') || list[i].containsKey('idEntreprise')) {
+            debugPrint('   ⚠️ Offre ${i + 1} a un ID entreprise: ${list[i]['entrepriseId'] ?? list[i]['idEntreprise']}');
+          }
+        }
+      }
+      
       _items = list.map((m) {
+        // Récupérer la photo de profil de l'entreprise
+        // Le backend retourne maintenant urlPhotoEntreprise directement dans l'objet principal
+        String? urlPhotoEntreprise;
+        
+        // Méthode 1: Priorité au nouveau champ urlPhotoEntreprise (directement dans l'objet principal)
+        urlPhotoEntreprise = m['urlPhotoEntreprise'] as String?;
+        
+        // Méthode 2: Fallback si entreprise est un objet imbriqué (ancien format ou variante)
+        if (urlPhotoEntreprise == null || urlPhotoEntreprise.isEmpty) {
+          if (m['entreprise'] != null && m['entreprise'] is Map) {
+            final entreprise = m['entreprise'] as Map<String, dynamic>;
+            urlPhotoEntreprise = entreprise['urlPhotoEntreprise'] ?? 
+                                entreprise['urlPhoto'] ?? 
+                                null;
+          }
+        }
+        
+        // Méthode 3: Fallback pour d'autres formats possibles
+        if (urlPhotoEntreprise == null || urlPhotoEntreprise.isEmpty) {
+          urlPhotoEntreprise = m['urlPhoto'] ?? 
+                              m['logoEntreprise'] ??
+                              m['logo'] ??
+                              null;
+        }
+        
+        // Finaliser l'URL (convertir en string ou null, exclure "null" comme chaîne)
+        final logoUrl = (urlPhotoEntreprise != null && 
+                        urlPhotoEntreprise.toString().trim().isNotEmpty && 
+                        urlPhotoEntreprise.toString().trim() != 'null') 
+            ? urlPhotoEntreprise.toString().trim() 
+            : null;
+        
+        if (logoUrl != null) {
+          debugPrint('✅ Logo trouvé pour offre ${m['id']} (${m['nomEntreprise']}): $logoUrl');
+        } else {
+          debugPrint('⚠️ Pas de logo pour offre ${m['id']} (${m['nomEntreprise']}) - entreprise sans photo');
+        }
+        
         return <String, dynamic>{
           'id': m['id'],
           'titre': m['titre'] ?? '',
@@ -39,7 +94,7 @@ class _OffreListPageState extends State<OffreListPage> {
           'datePublication': '',
           'description': m['description'] ?? '',
           'lien_postuler': m['lienPostuler'] ?? '',
-          'logo': 'https://via.placeholder.com/150',
+          'logo': logoUrl,
           'date_debut': m['dateDebut']?.toString(),
           'date_fin': m['dateFin']?.toString(),
           'competence': m['competence']?.toString() ?? '',
@@ -132,9 +187,13 @@ class OffreCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
+                ProfileAvatar(
+                  photoUrl: offre['logo']?.toString().isNotEmpty == true && 
+                           offre['logo'] != 'https://via.placeholder.com/150'
+                      ? offre['logo'].toString()
+                      : null,
                   radius: 30,
-                  backgroundImage: NetworkImage(offre['logo']),
+                  isPerson: false,
                 ),
                 const SizedBox(width: 12),
                 Column(

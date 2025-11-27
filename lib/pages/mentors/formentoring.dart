@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/pages/mentors/formentoringdetails.dart';
 import 'package:repartir_frontend/services/mentor_service.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
@@ -432,17 +433,12 @@ class _DemandeDetailsPageAPIState extends State<DemandeDetailsPageAPI> {
                                     ),
                                   ],
                                 ),
-                                child: CircleAvatar(
+                                child: ProfileAvatar(
+                                  photoUrl: widget.demande['urlPhotoJeune']?.toString(),
                                   radius: 35,
+                                  isPerson: true,
                                   backgroundColor: Colors.white,
-                                  backgroundImage: (widget.demande['urlPhotoJeune'] != null &&
-                                          (widget.demande['urlPhotoJeune'] as String).isNotEmpty)
-                                      ? NetworkImage(widget.demande['urlPhotoJeune'])
-                                      : null,
-                                  child: (widget.demande['urlPhotoJeune'] == null ||
-                                          (widget.demande['urlPhotoJeune'] as String).isEmpty)
-                                      ? const Icon(Icons.person, size: 35, color: Colors.blueGrey)
-                                      : null,
+                                  iconColor: Colors.blueGrey,
                                 ),
                               ),
                               const SizedBox(width: 15),

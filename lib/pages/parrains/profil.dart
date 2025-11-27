@@ -3,12 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
 import 'package:repartir_frontend/components/password_change_dialog.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/models/request/parrain_request.dart';
 import 'package:repartir_frontend/models/response/response_parrain.dart';
 import 'package:repartir_frontend/pages/parrains/editerprofiparrain.dart';
+import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/provider/parrain_provider.dart';
 import 'package:repartir_frontend/services/secure_storage_service.dart';
 import 'package:repartir_frontend/services/utilisateur_service.dart';
+import 'package:repartir_frontend/services/profile_service.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
+import 'dart:convert';
 
 const Color primaryBlue = Color(0xFF3EB2FF);
 const Color primaryRed = Color(0xFFF44336);
@@ -22,10 +27,12 @@ class ProfilePage extends ConsumerStatefulWidget {
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
   final utilisateurService = UtilisateurService();
+  final _profile = ProfileService();
   final storage = SecureStorageService();
   bool _loading = true;
   bool _uploadingPhoto = false;
   String? _error;
+  int _photoRefreshKey = 0; // Pour forcer le rafraîchissement de l'image
 
   @override
   void initState() {
@@ -36,6 +43,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   Future<void> _loadData() async {
     try {
       await ref.read(parrainNotifierProvider.notifier).loadCurrentParrain();
+      setState(() {
+        _photoRefreshKey++; // Incrémenter pour forcer le rafraîchissement
+      });
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -47,23 +57,118 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Déconnexion'),
-        content: const Text('Voulez-vous vraiment vous déconnecter ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler', style: TextStyle(color: Colors.grey)),
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _handleLogout();
-            },
-            child: const Text('Se déconnecter', style: TextStyle(color: primaryRed)),
+          elevation: 10,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icône de déconnexion
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.logout,
+                    size: 40,
+                    color: Colors.red.shade400,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // Titre
+                const Text(
+                  'Se déconnecter',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                // Message
+                Text(
+                  'Êtes-vous sûr de vouloir vous déconnecter ?\n\nVous devrez vous reconnecter pour accéder à votre compte.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey.shade600,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Boutons
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                        child: Text(
+                          'Annuler',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          await _handleLogout();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade400,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Déconnexion',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -72,7 +177,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     try {
       setState(() => _uploadingPhoto = true);
       final picker = ImagePicker();
-      final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+      
+      // Compatible Web et Mobile
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
 
       if (picked == null) {
         setState(() => _uploadingPhoto = false);
@@ -82,34 +194,94 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       final parrain = ref.read(parrainNotifierProvider);
       final email = parrain?.email ?? '';
       if (email.isEmpty) {
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Email utilisateur introuvable.')));
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('Email utilisateur introuvable.')));
+        }
+        setState(() => _uploadingPhoto = false);
         return;
       }
 
-      final urlPhoto = await utilisateurService.uploadPhotoProfil(email, picked.path);
+      // Lire les bytes de l'image (compatible Web et Mobile)
+      final imageBytes = await picked.readAsBytes();
+      
+      debugPrint('📷 Upload de la photo pour le parrain...');
+      debugPrint('📷 Taille fichier: ${imageBytes.length} bytes');
+      debugPrint('📷 Email: $email');
 
-      final updated = ParrainRequest(
-        nom: parrain?.nom ?? '',
-        prenom: parrain?.prenom ?? '',
-        email: parrain?.email ?? '',
-        telephone: parrain?.telephone ?? '',
-        motDePasse: '',
-        profession: parrain?.profession ?? '',
-        urlPhoto: urlPhoto,
-      );
-      await ref.read(parrainNotifierProvider.notifier).updateParrain(updated);
+      // Upload la photo au backend en utilisant ProfileService (compatible Web)
+      final uploadResult = await _profile.updatePhoto(imageBytes, email);
+      debugPrint('✅ Photo uploadée avec succès: $uploadResult');
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Photo mise à jour avec succès ✅")),
+      // Extraire la nouvelle URL de la réponse
+      String? newPhotoUrl;
+      try {
+        final message = uploadResult['message'];
+        
+        if (message is Map) {
+          newPhotoUrl = message['urlPhoto'] as String?;
+        } else if (message is String) {
+          final decoded = jsonDecode(message);
+          if (decoded is Map<String, dynamic> && decoded['urlPhoto'] != null) {
+            newPhotoUrl = decoded['urlPhoto'] as String;
+          }
+        }
+        
+        if (newPhotoUrl == null && uploadResult['urlPhoto'] != null) {
+          newPhotoUrl = uploadResult['urlPhoto'] as String;
+        }
+        
+        debugPrint('🖼️ Nouvelle URL photo extraite: $newPhotoUrl');
+      } catch (e) {
+        debugPrint('⚠️ Erreur lors de l\'extraction de l\'URL: $e');
+      }
+
+      if (newPhotoUrl != null && parrain != null) {
+        final updated = ParrainRequest(
+          nom: parrain.nom,
+          prenom: parrain.prenom,
+          email: parrain.email,
+          telephone: parrain.telephone,
+          motDePasse: '',
+          profession: parrain.profession ?? '',
+          urlPhoto: newPhotoUrl,
         );
+        
+        // Mettre à jour le provider localement pour éviter l'appel API problématique
+        ref.read(parrainNotifierProvider.notifier).updateParrainLocally(updated);
+        
+        // Forcer le rafraîchissement
+        _photoRefreshKey++;
+        
+        if (mounted) {
+          setState(() {});
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Photo mise à jour avec succès ✅"),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        // Recharger les données si l'extraction a échoué
+        await _loadData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Photo mise à jour avec succès ✅")),
+          );
+        }
       }
     } catch (e) {
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Erreur lors de la mise à jour de la photo : $e")));
+      debugPrint('❌ ERREUR lors de l\'upload de la photo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erreur lors de la mise à jour de la photo : ${e.toString().replaceAll('Exception: ', '')}"),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _uploadingPhoto = false);
     }
@@ -165,7 +337,21 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       if (email != null) await utilisateurService.logout({'email': email});
       await storage.clearTokens();
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+          (Route<dynamic> route) => false,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Déconnexion effectuée'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
       }
     } catch (e) {
       // ignore: use_build_context_synchronously
@@ -279,13 +465,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               Stack(
                 alignment: Alignment.bottomRight,
                 children: [
-                  CircleAvatar(
+                  ProfileAvatar(
+                    photoUrl: photoUrl,
                     radius: 60,
-                    backgroundColor: Colors.grey.shade200,
-                    backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
-                    child: photoUrl == null
-                        ? const Icon(Icons.person, size: 80, color: Colors.blueGrey)
-                        : null,
+                    isPerson: true,
+                    cacheKey: _photoRefreshKey.toString(),
                   ),
                   Positioned(
                     bottom: 0,

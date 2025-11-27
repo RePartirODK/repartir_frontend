@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/models/response/response_inscription.dart';
 import 'package:repartir_frontend/pages/centres/voirappliquant.dart';
 import 'package:repartir_frontend/services/centre_service.dart';
+import 'package:repartir_frontend/services/jeune_service.dart';
 
 const Color kPrimaryColor = Color(0xFF3EB2FF);
 const Color kSecondary = Color(0xFF4CAF50);
@@ -67,7 +69,9 @@ class _ApplicantsFormationNonTerminePageState
     extends State<ApplicantsFormationNonTerminePage> {
 
         final _centreService = CentreService();
+  final _jeuneService = JeuneService();
   List<ResponseInscription> _filtered = [];
+  final Map<String, String?> _photoUrlByJeuneName = {}; // Cache pour les photos
 
  @override
   void initState() {
@@ -88,6 +92,24 @@ class _ApplicantsFormationNonTerminePageState
     Future<void> _loadApplicantsForFormation() async {
     try {
       final items = await _centreService.getInscriptionsByFormation(widget.formation.id);
+      
+      // Charger les jeunes pour obtenir les photos
+      try {
+        final jeunes = await _jeuneService.listAll();
+        for (final j in jeunes) {
+          final utilisateur = j['utilisateur'] as Map<String, dynamic>? ?? {};
+          final prenom = (j['prenom'] ?? '').toString();
+          final nom = (utilisateur['nom'] ?? '').toString();
+          final fullName = (prenom.isNotEmpty || nom.isNotEmpty) ? '$prenom $nom'.trim() : '';
+          if (fullName.isNotEmpty) {
+            final urlPhoto = (utilisateur['urlPhoto'] ?? '').toString();
+            _photoUrlByJeuneName[fullName] = urlPhoto.isNotEmpty ? urlPhoto : null;
+          }
+        }
+      } catch (e) {
+        debugPrint('Failed to load jeunes for photos: $e');
+      }
+      
       setState(() {
         _filtered = items;
       });
@@ -163,6 +185,9 @@ class _ApplicantsFormationNonTerminePageState
 
  
   Widget _buildApplicantCardFromInscription(ResponseInscription insc) {
+    // Utiliser urlPhotoJeune de l'inscription, sinon chercher dans le cache
+    final photoUrl = insc.urlPhotoJeune ?? _photoUrlByJeuneName[insc.nomJeune];
+    
     return Card(
       elevation: 2.0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
@@ -172,10 +197,12 @@ class _ApplicantsFormationNonTerminePageState
         child: Row(
           children: <Widget>[
             // Avatar
-            CircleAvatar(
+            ProfileAvatar(
+              photoUrl: photoUrl,
               radius: 25,
-              backgroundColor: kPrimaryColor.withValues(alpha: 0.15),
-              child: const Icon(Icons.person, color: kPrimaryColor, size: 30),
+              isPerson: true,
+              backgroundColor: kPrimaryColor.withOpacity(0.15),
+              iconColor: kPrimaryColor,
             ),
             const SizedBox(width: 15),
 

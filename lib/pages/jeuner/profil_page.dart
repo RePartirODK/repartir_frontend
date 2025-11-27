@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/password_change_dialog.dart';
+import 'package:repartir_frontend/components/custom_alert_dialog.dart';
 import 'package:repartir_frontend/services/utilisateur_service.dart';
 import 'edit_profil_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 import 'package:repartir_frontend/services/auth_service.dart';
+import 'package:repartir_frontend/services/secure_storage_service.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 
 // Style colors similar to mentors/profile_mentor.dart
@@ -22,6 +25,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final ProfileService _profile = ProfileService();
   final AuthService _auth = AuthService();
   final utilisateurService = UtilisateurService();
+  final storage = SecureStorageService();
   bool _loading = true;
   String? _error;
   String name = "";
@@ -30,6 +34,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String phone = "";
   String address = "";
   String? photoUrl;
+  int _photoRefreshKey = 0; // Pour forcer le rafraîchissement de l'image
 
   @override
   void initState() {
@@ -52,6 +57,7 @@ class _ProfilePageState extends State<ProfilePage> {
       phone = (utilisateur['telephone'] ?? '') as String;
       address = '';
       photoUrl = utilisateur['urlPhoto'] as String?;
+      _photoRefreshKey++; // Incrémenter pour forcer le rafraîchissement
     } catch (e) {
       _error = '$e';
     } finally {
@@ -79,14 +85,9 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
 
-    if (result != null) {
-      setState(() {
-        name = result['name'];
-        about = result['about'];
-        email = result['email'];
-        phone = result['phone'];
-        address = result['address'];
-      });
+    // Recharger les données du profil après modification (y compris la photo)
+    if (result != null || result == null) {
+      await _fetch(); // Recharger toutes les données y compris la photo
     }
   }
 
@@ -170,14 +171,11 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             children: [
               const SizedBox(height: 100),
-              CircleAvatar(
+              ProfileAvatar(
+                photoUrl: photoUrl,
                 radius: 60,
-                backgroundColor: Colors.grey.shade200,
-                backgroundImage:
-                    (photoUrl != null && photoUrl!.isNotEmpty) ? NetworkImage(photoUrl!) : null,
-                child: (photoUrl == null || photoUrl!.isEmpty)
-                    ? const Icon(Icons.person, size: 80, color: Colors.blueGrey)
-                    : null,
+                isPerson: true,
+                cacheKey: _photoRefreshKey.toString(),
               ),
               const SizedBox(height: 15),
               Text(
@@ -288,15 +286,47 @@ class _ProfilePageState extends State<ProfilePage> {
               Navigator.of(ctx).pop();
               try {
                 await utilisateurService.suppressionCompte({'email': email});
-                await utilisateurService.logout({'email': email});
+                if (email.isNotEmpty) {
+                  await utilisateurService.logout({'email': email});
+                }
+                await storage.clearTokens();
                 if (mounted) {
-                  Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+                    (Route<dynamic> route) => false,
+                  );
+                  if (mounted) {
+                    CustomAlertDialog.showSuccess(
+                      context: context,
+                      message: 'Votre compte a été supprimé avec succès.',
+                      title: 'Compte supprimé',
+                      onConfirm: () {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+                          (Route<dynamic> route) => false,
+                        );
+                      },
+                    );
+                  }
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Erreur: $e')),
-                  );
+                  if (mounted) {
+                    final errorMessage = e.toString()
+                        .replaceAll('Exception: ', '')
+                        .replaceAll('HTTP 500: ', '')
+                        .replaceAll('HTTP 400: ', '');
+                    
+                    CustomAlertDialog.showError(
+                      context: context,
+                      message: errorMessage.isNotEmpty 
+                          ? 'Erreur lors de la suppression: $errorMessage'
+                          : 'Une erreur est survenue lors de la suppression du compte.',
+                      title: 'Erreur',
+                    );
+                  }
                 }
               }
             },
@@ -307,59 +337,161 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Future<void> _handleLogout() async {
-    // Afficher un dialogue de confirmation
-    final confirm = await showDialog<bool>(
+  // Dialog de confirmation de déconnexion
+  void _showLogoutDialog() {
+    showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Déconnexion'),
-          content: const Text('Voulez-vous vraiment vous déconnecter ?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Annuler'),
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 10,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Déconnexion',
-                style: TextStyle(color: Colors.red),
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icône de déconnexion
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.logout,
+                    size: 40,
+                    color: Colors.red.shade400,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // Titre
+                const Text(
+                  'Se déconnecter',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                // Message
+                Text(
+                  'Êtes-vous sûr de vouloir vous déconnecter ?\n\nVous devrez vous reconnecter pour accéder à votre compte.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey.shade600,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Boutons
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                        child: Text(
+                          'Annuler',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          // Fermer le dialog de confirmation d'abord
+                          Navigator.of(context).pop();
+                          
+                          try {
+                            if (email.isNotEmpty) {
+                              await utilisateurService.logout({'email': email});
+                            }
+                            await storage.clearTokens();
+                            
+                            // Naviguer vers la page d'authentification
+                            // On ne peut pas afficher de message après pushAndRemoveUntil
+                            // car on est déjà sur une nouvelle page
+                            if (mounted) {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+                                (Route<dynamic> route) => false,
+                              );
+                            }
+                          } catch (e) {
+                            // Afficher l'erreur seulement si le widget est toujours monté
+                            if (mounted) {
+                              final errorMessage = e.toString()
+                                  .replaceAll('Exception: ', '')
+                                  .replaceAll('HTTP 401: ', '')
+                                  .replaceAll('HTTP 500: ', '');
+                              
+                              CustomAlertDialog.showError(
+                                context: context,
+                                message: errorMessage.isNotEmpty 
+                                    ? 'Erreur lors de la déconnexion: $errorMessage'
+                                    : 'Une erreur est survenue lors de la déconnexion.',
+                                title: 'Erreur de déconnexion',
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade400,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Déconnexion',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
+  }
 
-    if (confirm == true) {
-      try {
-        await utilisateurService.logout({'email': email});
-        if (mounted) {
-          // Rediriger vers la page d'authentification
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const AuthenticationPage()),
-            (Route<dynamic> route) => false,
-          );
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Déconnexion effectuée'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erreur lors de la déconnexion: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
+  Future<void> _handleLogout() async {
+    _showLogoutDialog();
   }
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/mentorings_service.dart';
 
 const Color primaryBlue = Color(0xFF3EB2FF);
@@ -89,6 +90,9 @@ class _MentorActifDetailPageState extends State<MentorActifDetailPage> {
     final objectif = (widget.mentoring['objectif'] ?? '').toString().trim();
     final description = (widget.mentoring['description'] ?? '').toString().trim();
     final urlPhoto = (widget.mentoring['urlPhotoMentor'] ?? '').toString().trim();
+    
+    // Debug: Vérifier l'URL de la photo
+    debugPrint('📸 Page note mentor - Photo URL: $urlPhoto');
 
     // Calculer la durée
     int dureeMois = 0;
@@ -133,22 +137,12 @@ class _MentorActifDetailPageState extends State<MentorActifDetailPage> {
                     Center(
                       child: Column(
                         children: [
-                          CircleAvatar(
+                          ProfileAvatar(
+                            photoUrl: urlPhoto,
                             radius: 60,
+                            isPerson: true,
                             backgroundColor: primaryBlue.withOpacity(0.1),
-                            backgroundImage: urlPhoto.isNotEmpty && !urlPhoto.contains('placeholder')
-                                ? NetworkImage(urlPhoto)
-                                : null,
-                            onBackgroundImageError: urlPhoto.isNotEmpty && !urlPhoto.contains('placeholder')
-                                ? (_, __) {}
-                                : null,
-                            child: urlPhoto.isEmpty || urlPhoto.contains('placeholder')
-                                ? const Icon(
-                                    Icons.person,
-                                    size: 80,
-                                    color: primaryBlue,
-                                  )
-                                : null,
+                            iconColor: primaryBlue,
                           ),
                           const SizedBox(height: 15),
                           Text(

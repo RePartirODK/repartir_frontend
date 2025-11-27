@@ -6,6 +6,7 @@ import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/pages/parrains/nav.dart';
 import 'package:repartir_frontend/services/jeune_service.dart';
 import 'package:repartir_frontend/services/parrain_service.dart';
+import 'package:repartir_frontend/components/custom_alert_dialog.dart';
 
 class ParrainSignupPage extends StatefulWidget {
   const ParrainSignupPage({super.key});
@@ -32,13 +33,10 @@ class _ParrainSignupPageState extends State<ParrainSignupPage> {
     //verifier que tous les champs sont valide
     if (_formKey.currentState?.validate() != true) {
       // message d'erreur ou retour
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Veuillez remplir correctement tous les champs obligatoires.",
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
+      CustomAlertDialog.showError(
+        context: context,
+        message: "Veuillez remplir correctement tous les champs obligatoires.",
+        title: "Formulaire incomplet",
       );
       return;
     }
@@ -80,20 +78,30 @@ class _ParrainSignupPageState extends State<ParrainSignupPage> {
       );
 
       // Message de succès
-      ScaffoldMessenger.of(
-        // ignore: use_build_context_synchronously
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Inscription réussie !")));
+      CustomAlertDialog.showSuccess(
+        context: context,
+        message: "Votre inscription a été effectuée avec succès !",
+        title: "Inscription réussie",
+        onConfirm: () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => AuthenticationPage()),
+            (Route<dynamic> route) => false,
+          );
+        },
+      );
     } catch (e) {
       // Fermer le loader
       // ignore: use_build_context_synchronously
       Navigator.of(context).pop();
 
       // Afficher l'erreur
-      ScaffoldMessenger.of(
-        // ignore: use_build_context_synchronously
-        context,
-      ).showSnackBar(SnackBar(content: Text("Erreur : ${e.toString()}")));
+      final errorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('HTTP 500: ', '').replaceAll('HTTP 400: ', '');
+      CustomAlertDialog.showError(
+        context: context,
+        message: errorMessage.isNotEmpty ? errorMessage : "Une erreur est survenue lors de l'inscription.",
+        title: "Erreur d'inscription",
+      );
     }
   }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 
@@ -10,9 +12,10 @@ const Color primaryOrange = Color(0xFFFF9800); // Couleur Orange pour le logo OD
 
 // --- 2. WIDGET PRINCIPAL : FormationDetailsPage ---
 class FormationDetailsPage extends StatelessWidget {
-  const FormationDetailsPage({super.key, required this.formation, this.centre});
+  const FormationDetailsPage({super.key, required this.formation, this.centre, this.centrePhotoUrl});
   final ResponseFormation formation;
   final ResponseCentre? centre;
+  final String? centrePhotoUrl; // URL de la photo du centre
   @override
   Widget build(BuildContext context) {
     // Utilisation de SafeArea pour éviter le chevauchement avec la barre de statut
@@ -83,24 +86,37 @@ class FormationDetailsPage extends StatelessWidget {
   Widget _buildCenterHeaderCard() {
     final centreName = centre?.nom ?? 'Centre';
     final centreLocation = centre?.adresse ?? 'Adresse indisponible';
+    
+    // Récupérer l'URL de la photo du centre avec gestion améliorée
+    // Priorité à centrePhotoUrl passé en paramètre, sinon depuis centre?.urlPhoto
+    String? photoUrl = centrePhotoUrl;
+    if ((photoUrl == null || photoUrl.isEmpty) && 
+        centre?.urlPhoto != null && 
+        (centre!.urlPhoto ?? '').toString().trim().isNotEmpty) {
+      photoUrl = (centre!.urlPhoto ?? '').toString().trim();
+    }
+    
+    // Nettoyer l'URL si elle existe
+    if (photoUrl != null) {
+      photoUrl = photoUrl.trim();
+      if (photoUrl.isEmpty) photoUrl = null;
+    }
+    
+    // Debug: Vérifier l'URL de la photo
+    debugPrint('📸 Parrain formation détails - Centre: $centreName, Photo URL: $photoUrl');
+    if (centre != null) {
+      debugPrint('📸 Parrain formation détails - centre.urlPhoto: ${centre!.urlPhoto}');
+    }
+    
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: Colors.black,
-            shape: BoxShape.circle,
-            border: Border.all(color: primaryOrange, width: 2),
-          ),
-          child: const Center(
-            child: Text(
-              'Orange\nDigital\nCenter',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: primaryOrange, fontSize: 10, fontWeight: FontWeight.bold),
-            ),
-          ),
+        ProfileAvatar(
+          photoUrl: photoUrl,
+          radius: 40,
+          isPerson: false,
+          backgroundColor: Colors.grey[200],
+          iconColor: primaryOrange,
         ),
         const SizedBox(width: 15),
         Expanded(

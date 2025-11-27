@@ -3,6 +3,7 @@ import 'package:repartir_frontend/models/request/centre_request.dart';
 import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/services/centre_service.dart';
+import 'package:repartir_frontend/components/custom_alert_dialog.dart';
 
 class CentreSignupPage extends StatefulWidget {
   const CentreSignupPage({super.key});
@@ -55,13 +56,10 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
     // verifier que le formulaire est valide
     if (_formKey.currentState?.validate() != true) {
       // message d'erreur ou retour
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Veuillez remplir correctement tous les champs obligatoires.",
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
+      CustomAlertDialog.showError(
+        context: context,
+        message: "Veuillez remplir correctement tous les champs obligatoires.",
+        title: "Formulaire incomplet",
       );
       return;
     }
@@ -105,10 +103,11 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
       Navigator.of(context).pop();
 
       // Afficher l'erreur
-      ScaffoldMessenger.of(
-        // ignore: use_build_context_synchronously
-        context,
-      ).showSnackBar(SnackBar(content: Text("Erreur est survenue")));
+      CustomAlertDialog.showError(
+        context: context,
+        message: "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
+        title: "Erreur d'inscription",
+      );
       debugPrint("Erreur lors de l'inscription du Centre: ${e.toString()}");
     }
   }
@@ -155,8 +154,10 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
       });
     } catch (e) {
       debugPrint('Erreur lors du chargement des domaines: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur lors du chargement des domaines')),
+      CustomAlertDialog.showError(
+        context: context,
+        message: 'Erreur lors du chargement des domaines. Veuillez réessayer.',
+        title: 'Erreur de chargement',
       );
     } finally {
       setState(() => _loadingDomains = false);

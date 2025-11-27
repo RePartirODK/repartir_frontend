@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/models/response/response_centre.dart';
 import 'package:repartir_frontend/models/response/response_formation.dart';
 import 'package:repartir_frontend/pages/parrains/voirdetailformation.dart';
@@ -32,6 +33,7 @@ class _FormationPageState extends State<FormationPage>
   List<ResponseFormation> _formations = [];
   final CentresService _centresService = CentresService();
   final Map<int, ResponseCentre> _centresById = {};
+  final Map<int, String?> _centrePhotoUrls = {}; // Map pour stocker les URLs de photos des centres
   final FormationsService _formationService = FormationsService();
   // Contrôleur pour les onglets 'Toutes' et 'Nouvelles'
   late TabController _tabController;
@@ -60,6 +62,17 @@ class _FormationPageState extends State<FormationPage>
       for (final c in centres) {
         final centre = ResponseCentre.fromJson(c);
         _centresById[centre.id] = centre;
+        
+        // Extraire l'URL de la photo depuis le JSON (peut être dans urlPhoto ou utilisateur.urlPhoto)
+        String? photoUrl;
+        if (c['urlPhoto'] != null && (c['urlPhoto'] ?? '').toString().trim().isNotEmpty) {
+          photoUrl = (c['urlPhoto'] ?? '').toString().trim();
+        } else if (c['utilisateur'] != null && 
+                   c['utilisateur']['urlPhoto'] != null && 
+                   (c['utilisateur']['urlPhoto'] ?? '').toString().trim().isNotEmpty) {
+          photoUrl = (c['utilisateur']['urlPhoto'] ?? '').toString().trim();
+        }
+        _centrePhotoUrls[centre.id] = photoUrl;
       }
       // 3) Aggregate formations across centres
       final List<ResponseFormation> agg = [];
@@ -75,6 +88,10 @@ class _FormationPageState extends State<FormationPage>
       }
       // Filter out cancelled formations
       final nonCancelled = agg.where((f) => (f.statut).toString().trim().toUpperCase() != 'ANNULER').toList();
+      
+      // Trier par ID décroissant (les plus récentes en premier - ID plus élevé = plus récent)
+      nonCancelled.sort((a, b) => b.id.compareTo(a.id));
+      
       if (mounted) {
         setState(() {
           _formations = nonCancelled;
@@ -193,13 +210,19 @@ class _FormationPageState extends State<FormationPage>
     final query = q.trim().toLowerCase();
     setState(() {
       if (query.isEmpty) {
-        _filteredFormations = List<ResponseFormation>.from(_formations);
+        // Trier par ID décroissant (les plus récentes en premier)
+        final sorted = List<ResponseFormation>.from(_formations);
+        sorted.sort((a, b) => b.id.compareTo(a.id));
+        _filteredFormations = sorted;
         return;
       }
-      _filteredFormations = _formations.where((f) {
+      final filtered = _formations.where((f) {
         final titre = (f.titre).toString().toLowerCase();
         return titre.contains(query);
       }).toList();
+      // Trier les résultats filtrés par ID décroissant
+      filtered.sort((a, b) => b.id.compareTo(a.id));
+      _filteredFormations = filtered;
     });
   }
 
@@ -260,17 +283,12 @@ class _FormationPageState extends State<FormationPage>
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: Colors.black,
+                ProfileAvatar(
+                  photoUrl: centre != null ? _centrePhotoUrls[centre.id] : null,
                   radius: 20,
-                  child: Text(
-                    'ODC',
-                    style: TextStyle(
-                      color: primaryOrange,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  isPerson: false,
+                  backgroundColor: Colors.grey[200],
+                  iconColor: primaryBlue,
                 ),
                 const SizedBox(width: 10),
                 Column(
@@ -331,12 +349,16 @@ class _FormationPageState extends State<FormationPage>
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
                 onPressed: () {
+                  // Récupérer l'URL de la photo du centre depuis notre map
+                  final centrePhotoUrl = centre != null ? _centrePhotoUrls[centre.id] : null;
+                  
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => FormationDetailsPage(
                         formation: formation,
                         centre: centre,
+                        centrePhotoUrl: centrePhotoUrl, // Passer l'URL de la photo
                       ),
                     ),
                   );

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
 
 class EditProfilePage extends StatefulWidget {
@@ -94,31 +95,35 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       onTap: _pickImage,
                       child: Stack(
                         children: [
-                          CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.white,
-                      child: CircleAvatar(
-                        radius: 48,
-                              backgroundColor: Colors.grey[200],
-                              backgroundImage: _selectedImageBytes != null
-                                  ? MemoryImage(_selectedImageBytes!)
-                                  : (_selectedImage != null && !kIsWeb
-                                      ? FileImage(_selectedImage!)
-                                      : (_photoUrl != null && _photoUrl!.isNotEmpty
-                                          ? NetworkImage(_photoUrl!)
-                                          : null)),
-                              onBackgroundImageError: _selectedImageBytes != null || 
-                                                      (_selectedImage != null && !kIsWeb) ||
-                                                      (_photoUrl != null && _photoUrl!.isNotEmpty)
-                                  ? (_, __) {}
-                                  : null,
-                              child: _selectedImageBytes == null && 
-                                     _selectedImage == null &&
-                                     (_photoUrl == null || _photoUrl!.isEmpty)
-                                  ? const Icon(Icons.person, size: 48, color: Colors.grey)
-                                  : null,
-                            ),
-                          ),
+                          _selectedImageBytes != null
+                              ? CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: Colors.white,
+                                  child: CircleAvatar(
+                                    radius: 48,
+                                    backgroundColor: Colors.grey[200],
+                                    backgroundImage: MemoryImage(_selectedImageBytes!),
+                                  ),
+                                )
+                              : (_selectedImage != null && !kIsWeb
+                                  ? CircleAvatar(
+                                      radius: 50,
+                                      backgroundColor: Colors.white,
+                                      child: CircleAvatar(
+                                        radius: 48,
+                                        backgroundColor: Colors.grey[200],
+                                        backgroundImage: FileImage(_selectedImage!),
+                                      ),
+                                    )
+                                  : CircleAvatar(
+                                      radius: 50,
+                                      backgroundColor: Colors.white,
+                                      child: ProfileAvatar(
+                                        photoUrl: _photoUrl,
+                                        radius: 48,
+                                        isPerson: true,
+                                      ),
+                                    )),
                           Positioned(
                             bottom: 0,
                             right: 0,
@@ -290,19 +295,8 @@ extension on _EditProfilePageState {
       final String prenom = parts.isNotEmpty ? parts.first : (me['prenom'] ?? '');
       final String nom = parts.length > 1 ? parts.sublist(1).join(' ') : (utilisateur['nom'] ?? '');
 
-      final payload = <String, dynamic>{
-        'prenom': prenom.isEmpty ? (me['prenom'] ?? '') : prenom,
-        'a_propos': _aboutController.text.isEmpty ? (me['a_propos'] ?? '') : _aboutController.text,
-        'age': me['age'],
-        'niveau': me['niveau'],
-        'genre': me['genre'],
-        'urlDiplome': me['urlDiplome'],
-        'nom': nom.isEmpty ? (utilisateur['nom'] ?? '') : nom,
-        'telephone': _phoneController.text.isEmpty ? (utilisateur['telephone'] ?? '') : _phoneController.text,
-        'urlPhoto': utilisateur['urlPhoto'],
-      };
-      
-      // Si une nouvelle photo a été sélectionnée, l'uploader séparément
+      // Si une nouvelle photo a été sélectionnée, l'uploader AVANT de construire le payload
+      String? newPhotoUrl;
       if (_selectedImageBytes != null || (_selectedImage != null && !kIsWeb)) {
         try {
           final imageBytes = await _getImageBytes();
@@ -314,12 +308,22 @@ extension on _EditProfilePageState {
           final uploadResult = await _profile.updatePhoto(imageBytes, email);
           debugPrint('✅ Photo uploadée avec succès: $uploadResult');
           
-          // Recharger pour avoir la nouvelle URL
+          // Extraire la nouvelle URL de la réponse
+          if (uploadResult['urlPhoto'] != null) {
+            newPhotoUrl = uploadResult['urlPhoto'] as String;
+            debugPrint('🖼️ Nouvelle URL photo: $newPhotoUrl');
+          }
+          
+          // Recharger pour avoir la nouvelle URL dans _photoUrl
           debugPrint('🔄 Rechargement du profil pour obtenir la nouvelle URL...');
           await _loadCurrentPhoto();
           debugPrint('🔄 Profil rechargé');
           
+          // Utiliser la nouvelle URL si disponible et mettre à jour l'affichage
           setState(() {
+            if (newPhotoUrl != null) {
+              _photoUrl = newPhotoUrl;
+            }
             _selectedImage = null;
             _selectedImageBytes = null;
           });
@@ -341,9 +345,33 @@ extension on _EditProfilePageState {
         }
       }
 
-      debugPrint('📤 Envoi du profil au backend...');
+      // Construire le payload APRÈS l'upload de la photo (si applicable)
+      final payload = <String, dynamic>{
+        'prenom': prenom.isEmpty ? (me['prenom'] ?? '') : prenom,
+        'a_propos': _aboutController.text.isEmpty ? (me['a_propos'] ?? '') : _aboutController.text,
+        'age': me['age'],
+        'niveau': me['niveau'],
+        'genre': me['genre'],
+        'urlDiplome': me['urlDiplome'],
+        'nom': nom.isEmpty ? (utilisateur['nom'] ?? '') : nom,
+        'telephone': _phoneController.text.isEmpty ? (utilisateur['telephone'] ?? '') : _phoneController.text,
+        // Utiliser la nouvelle URL si disponible, sinon l'URL actuelle (qui devrait être correcte après rechargement)
+        'urlPhoto': newPhotoUrl ?? _photoUrl ?? utilisateur['urlPhoto'],
+      };
+      
+      debugPrint('📤 Envoi du profil au backend avec urlPhoto: ${payload['urlPhoto']}');
       await _profile.updateMe(payload);
       debugPrint('✅ Profil mis à jour avec succès');
+      
+      // Recharger une dernière fois pour s'assurer d'avoir la bonne URL
+      await _loadCurrentPhoto();
+      
+      // Mettre à jour l'affichage avec la nouvelle photo
+      if (mounted) {
+        setState(() {
+          // _photoUrl a déjà été mis à jour par _loadCurrentPhoto()
+        });
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
+import 'package:repartir_frontend/components/profile_avatar.dart';
+import 'package:repartir_frontend/components/custom_alert_dialog.dart';
 import 'package:repartir_frontend/services/mentors_service.dart';
 import 'package:repartir_frontend/services/mentorings_service.dart';
 import 'package:repartir_frontend/services/profile_service.dart';
@@ -263,14 +265,11 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
     } catch (e) {
       print('❌ Erreur création mentoring: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Erreur: ${e.toString().replaceAll('Exception: ', '')}',
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
+        final errorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('HTTP 500: ', '').replaceAll('HTTP 400: ', '');
+        CustomAlertDialog.showError(
+          context: context,
+          message: errorMessage.isNotEmpty ? errorMessage : 'Une erreur est survenue lors de la création de la demande.',
+          title: 'Erreur',
         );
       }
     } finally {
@@ -282,96 +281,132 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
   Widget _buildDemandeMentoratDialog() {
     final descriptionController = TextEditingController();
     final objectifController = TextEditingController();
+    
+    // Constante pour la limite de caractères (255 caractères - taille standard VARCHAR)
+    const int maxObjectifLength = 255;
 
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text(
-        'Demande de mentorat',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 20,
-          color: Color(0xFF3EB2FF),
-        ),
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Décrivez votre demande',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: descriptionController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText:
-                    'Exemple: Bonjour, je souhaiterais bénéficier de votre accompagnement pour...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Votre objectif',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: objectifController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'Exemple: Développer mes compétences en...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: Colors.grey[50],
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Annuler'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            final description = descriptionController.text.trim();
-            final objectif = objectifController.text.trim();
-
-            if (description.isEmpty || objectif.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Veuillez remplir tous les champs'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-              return;
-            }
-
-            Navigator.pop(context, {
-              'description': description,
-              'objectif': objectif,
-            });
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3EB2FF),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            'Demande de mentorat',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Color(0xFF3EB2FF),
             ),
           ),
-          child: const Text('Envoyer'),
-        ),
-      ],
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Décrivez votre demande',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText:
+                        'Exemple: Bonjour, je souhaiterais bénéficier de votre accompagnement pour...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Votre objectif',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: objectifController,
+                  maxLines: 3,
+                  maxLength: maxObjectifLength,
+                  decoration: InputDecoration(
+                    hintText: 'Exemple: Développer mes compétences en...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                    counterText: '', // Cacher le compteur par défaut
+                  ),
+                  buildCounter: (context, {required currentLength, required isFocused, maxLength}) {
+                    final max = maxLength ?? maxObjectifLength;
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '$currentLength/$max caractères',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: currentLength > max 
+                                ? Colors.red 
+                                : (currentLength > (max * 0.9).round() 
+                                    ? Colors.orange 
+                                    : Colors.grey),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  onChanged: (value) {
+                    setState(() {}); // Mettre à jour le compteur
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final description = descriptionController.text.trim();
+                var objectif = objectifController.text.trim();
+
+                if (description.isEmpty || objectif.isEmpty) {
+                  CustomAlertDialog.showWarning(
+                    context: context,
+                    message: 'Veuillez remplir tous les champs avant de continuer.',
+                    title: 'Champs requis',
+                  );
+                  return;
+                }
+
+                // Protection supplémentaire : tronquer si nécessaire
+                if (objectif.length > maxObjectifLength) {
+                  objectif = objectif.substring(0, maxObjectifLength);
+                }
+
+                Navigator.pop(context, {
+                  'description': description,
+                  'objectif': objectif,
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3EB2FF),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Envoyer'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -642,38 +677,16 @@ class _MentorDetailPageState extends State<MentorDetailPage> {
                 ),
               ],
             ),
-            child: CircleAvatar(
+            child: ProfileAvatar(
+              photoUrl: mentor.imageUrl.isNotEmpty &&
+                      mentor.imageUrl != 'https://placehold.co/150/EFEFEF/333333?text=M' &&
+                      !mentor.imageUrl.contains('placeholder')
+                  ? mentor.imageUrl
+                  : null,
               radius: 56,
+              isPerson: true,
               backgroundColor: Colors.white,
-              backgroundImage:
-                  mentor.imageUrl.isNotEmpty &&
-                      mentor.imageUrl !=
-                          'https://placehold.co/150/EFEFEF/333333?text=M' &&
-                      !mentor.imageUrl.contains('placeholder')
-                  ? NetworkImage(mentor.imageUrl)
-                  : null,
-              onBackgroundImageError:
-                  mentor.imageUrl.isNotEmpty &&
-                      mentor.imageUrl !=
-                          'https://placehold.co/150/EFEFEF/333333?text=M' &&
-                      !mentor.imageUrl.contains('placeholder')
-                  ? (_, __) {}
-                  : null,
-              child:
-                  mentor.imageUrl.isEmpty ||
-                      mentor.imageUrl ==
-                          'https://placehold.co/150/EFEFEF/333333?text=M' ||
-                      mentor.imageUrl.contains('placeholder')
-                  ? CircleAvatar(
-                      radius: 52,
-                      backgroundColor: Colors.blue[50],
-                      child: Icon(
-                        Icons.person,
-                        size: 50,
-                        color: color,
-                      ),
-                    )
-                  : null,
+              iconColor: color,
             ),
            ),
           const SizedBox(height: 20),
