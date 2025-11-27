@@ -82,7 +82,7 @@ flutter:
 
 flutter_native_splash:
   color: "#FFFFFF"   # couleur de fond
-  image: assets/images/logo_repartir.png   # ton logo
+  image: assets/images/repartir_logo.png   # ton logo
   android: true
   ios: true
 
@@ -116,9 +116,21 @@ flutter_native_splash:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo_repartir.png"
+  image_path: "assets/images/repartir_logo.png"
   # Pour Android : icône adaptative avec fond blanc
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/logo_repartir.png"
+  adaptive_icon_foreground: "assets/images/repartir_logo.png"
   # Pour iOS : générer toutes les tailles nécessaires
   remove_alpha_ios: true
+  web: true
+  windows: true
+  linux: true
+
+  android_screen_density:
+      ldpi: 100
+      mdpi: 140
+      hdpi: 160
+      xhdpi: 180
+      xxhdpi: 200
+      xxxhdpi: 220
+    
