@@ -73,7 +73,7 @@ class _MentorHomePageState extends State<MentorHomePage> {
   List<Map<String, dynamic>> _mentorings = [];
   MentorStat _stats = MentorStat(mentoring: 0, demande: 0, dejaMentores: 0);
   List<Map<String, dynamic>> _mentoringsEnCours = [];
-  Map<String, dynamic>? _requeteEnAttente;
+  List<Map<String, dynamic>> _requetesEnAttente = [];
 
   @override
   void initState() {
@@ -107,8 +107,14 @@ class _MentorHomePageState extends State<MentorHomePage> {
       // Filtrer les mentorings en cours (VALIDE)
       final enCours = valides;
 
-      // Récupérer la première demande en attente
+      // Récupérer les deux dernières demandes en attente (les plus récentes)
       final demandesEnAttente = mentorings.where((m) => m['statut'] == 'EN_ATTENTE').toList();
+      // Trier par date de création (la plus récente en premier)
+      demandesEnAttente.sort((a, b) {
+        final dateA = DateTime.parse(a['dateCreation'].toString());
+        final dateB = DateTime.parse(b['dateCreation'].toString());
+        return dateB.compareTo(dateA); // Plus récent en premier
+      });
 
       setState(() {
         _mentorings = mentorings;
@@ -118,7 +124,8 @@ class _MentorHomePageState extends State<MentorHomePage> {
           dejaMentores: total,
         );
         _mentoringsEnCours = enCours;
-        _requeteEnAttente = demandesEnAttente.isNotEmpty ? demandesEnAttente.first : null;
+        // Prendre les deux premières demandes (les plus récentes)
+        _requetesEnAttente = demandesEnAttente.length > 2 ? demandesEnAttente.sublist(0, 2) : demandesEnAttente;
         _loading = false;
       });
     } catch (e) {
@@ -195,9 +202,9 @@ class _MentorHomePageState extends State<MentorHomePage> {
                               _buildMentoringEnCoursAPI(_mentoringsEnCours, _scrollController),
                             if (_mentoringsEnCours.isNotEmpty) const SizedBox(height: 30),
 
-                            // 4. Requête en Attente
-                            if (_requeteEnAttente != null)
-                              _buildRequeteEnAttenteAPI(_requeteEnAttente!, context),
+                            // 4. Requêtes en Attente (afficher les deux dernières)
+                            if (_requetesEnAttente.isNotEmpty)
+                              _buildRequetesEnAttenteAPI(_requetesEnAttente, context),
                           ],
                         ),
                       ),
@@ -734,6 +741,92 @@ class _MentorHomePageState extends State<MentorHomePage> {
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  /// Affiche les requêtes en attente depuis l'API (les deux dernières)
+  Widget _buildRequetesEnAttenteAPI(List<Map<String, dynamic>> requetes, BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Requêtes en attente',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 15),
+        // Afficher chaque requête
+        ...requetes.map((requete) {
+          final prenom = (requete['prenomJeune'] ?? '').toString().trim();
+          final nom = (requete['nomJeune'] ?? '').toString().trim();
+          final nomComplet = '$prenom $nom'.trim();
+          final urlPhoto = (requete['urlPhotoJeune'] ?? '').toString().trim();
+          
+          return Container(
+            margin: const EdgeInsets.only(bottom: 15),
+            child: Container(
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.grey.shade300),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withValues(alpha: 0.1),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: InkWell(
+                onTap: () async {
+                  // ✅ Naviguer vers la page de détails avec l'API
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DemandeDetailsPageAPI(
+                        demande: requete,
+                        onUpdate: _loadData, // ✅ Callback pour auto-refresh
+                      ),
+                    ),
+                  );
+                  // ✅ Recharger automatiquement après retour si une action a été faite
+                  if (result == true) {
+                    print('✅ Action effectuée, rechargement de la page d\'accueil...');
+                    await _loadData();
+                  }
+                },
+                child: Row(
+                  children: [
+                    ProfileAvatar(
+                      photoUrl: urlPhoto,
+                      radius: 25,
+                      isPerson: true,
+                      backgroundColor: kAccentColor.withOpacity(0.3),
+                      iconColor: kPrimaryColor,
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Text(
+                        nomComplet.isNotEmpty ? nomComplet : 'Jeune',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ],
     );
   }

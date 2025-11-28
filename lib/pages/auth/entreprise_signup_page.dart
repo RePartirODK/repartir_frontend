@@ -76,11 +76,13 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
     // verifier que le formulaire est valide
     if (_formKey.currentState?.validate() != true) {
       // message d'erreur ou retour
-      CustomAlertDialog.showError(
-        context: context,
-        message: "Veuillez remplir correctement tous les champs obligatoires.",
-        title: "Formulaire incomplet",
-      );
+      if (context.mounted) {
+        CustomAlertDialog.showError(
+          context: context,
+          message: "Veuillez remplir correctement tous les champs obligatoires.",
+          title: "Formulaire incomplet",
+        );
+      }
       return;
     }
 
@@ -96,16 +98,20 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
     );
     debugPrint(entrepriseRequest.toJson().toString());
     //on affiche un loader
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+    }
     try {
       //appel de l'api
       final user = await entrepriseService.register(entrepriseRequest);
       // ignore: use_build_context_synchronously
-      Navigator.of(context).pop(); // enlever le loader
+      if (context.mounted) {
+        Navigator.of(context).pop(); // enlever le loader
+      }
 
       // Associer les domaines si l'entreprise a été créée avec succès
       if (user != null && _selectedDomainIds.isNotEmpty) {
@@ -115,17 +121,23 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
         );
       }
       //affichage de la modal de succes
-      _showSuccessDialog();
+      if (context.mounted) {
+        _showSuccessDialog();
+      }
     } catch (e) {
       // Fermer le loader
       // ignore: use_build_context_synchronously
-      Navigator.of(context).pop();
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
 
       // Afficher l'erreur
-      ScaffoldMessenger.of(
-        // ignore: use_build_context_synchronously
-        context,
-      ).showSnackBar(SnackBar(content: Text("Erreur est survenue")));
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          // ignore: use_build_context_synchronously
+          context,
+        ).showSnackBar(SnackBar(content: Text("Erreur est survenue")));
+      }
       debugPrint(
         "Erreur lors de l'inscription de l'entreprise: ${e.toString()}",
       );
@@ -253,7 +265,6 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
           _buildInputField(
             label: 'Numéro d\'agrément ou NIF',
             icon: Icons.numbers_outlined,
-            keyboardType: TextInputType.number,
             controller: agrementController,
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -386,56 +397,64 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
   }
 
   void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: true, // Permet de fermer en cliquant à l'extérieur
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          content: GestureDetector(
-            onTap: () {
-              // Rediriger vers la page d'authentification après avoir fermé la modal
-              Navigator.of(context).pop(); // Ferme la modal
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AuthenticationPage(),
-                ),
-                (Route<dynamic> route) => false,
-              ); // Redirige vers l'authentification
-            },
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.check_circle_outline,
-                  color: Colors.green,
-                  size: 60,
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Inscription reçue',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Nous vous remercions pour votre inscription. Notre équipe va vérifier vos informations dans les plus brefs délais. Nous vous contacterons bientôt pour confirmer votre compte et vous donner accès à nos services.',
-                  style: TextStyle(fontSize: 14, color: Colors.black87),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+    // Stocker le contexte actuel
+    final currentContext = context;
+    
+    if (currentContext.mounted) {
+      showDialog(
+        context: currentContext,
+        barrierDismissible: true, // Permet de fermer en cliquant à l'extérieur
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-          ),
-        );
-      },
-    );
+            content: GestureDetector(
+              onTap: () {
+                // Vérifier que le contexte est encore valide
+                if (currentContext.mounted) {
+                  // Rediriger vers la page d'authentification après avoir fermé la modal
+                  Navigator.of(currentContext).pop(); // Ferme la modal
+                  Navigator.pushAndRemoveUntil(
+                    currentContext,
+                    MaterialPageRoute(
+                      builder: (context) => const AuthenticationPage(),
+                    ),
+                    (Route<dynamic> route) => false,
+                  ); // Redirige vers l'authentification
+                }
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.green,
+                    size: 60,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Inscription reçue',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Nous vous remercions pour votre inscription. Notre équipe va vérifier vos informations dans les plus brefs délais. Nous vous contacterons bientôt pour confirmer votre compte et vous donner accès à nos services.',
+                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
   }
 
   Widget _buildHeader(String title, String subtitle) {

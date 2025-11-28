@@ -55,10 +55,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   /// --- LOGIQUE DE DÉCONNEXION ---
   void _showLogoutDialog(BuildContext context) {
+    // Stocker le contexte de la page principale
+    final mainContext = context;
+    
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -118,7 +121,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     Expanded(
                       child: TextButton(
                         onPressed: () {
-                          Navigator.of(context).pop();
+                          Navigator.of(dialogContext).pop();
                         },
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -141,7 +144,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () async {
-                          Navigator.of(context).pop();
+                          Navigator.of(dialogContext).pop();
                           await _handleLogout();
                         },
                         style: ElevatedButton.styleFrom(
@@ -354,9 +357,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         );
       }
     } catch (e) {
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Erreur de déconnexion : $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Erreur de déconnexion : $e")));
+      }
     }
   }
 

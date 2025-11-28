@@ -242,10 +242,13 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
 
   // Dialog de confirmation de déconnexion
   void _showLogoutDialog() {
+    // Stocker le contexte de la page principale
+    final mainContext = context;
+    
     showDialog(
-      context: context,
+      context: mainContext,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -305,7 +308,7 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
                     Expanded(
                       child: TextButton(
                         onPressed: () {
-                          Navigator.of(context).pop();
+                          Navigator.of(dialogContext).pop();
                         },
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -328,19 +331,19 @@ class _ProfilEntreprisePageState extends State<ProfilEntreprisePage> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () async {
-                          Navigator.of(context).pop();
+                          Navigator.of(dialogContext).pop();
                           
                           // Nettoyer les tokens
                           await _storage.clearTokens();
                           
                           // Déconnexion et retour à la page d'authentification
-                          if (mounted) {
+                          if (mainContext.mounted) {
                             Navigator.pushAndRemoveUntil(
-                              context,
+                              mainContext,
                               MaterialPageRoute(builder: (context) => const AuthenticationPage()),
                               (Route<dynamic> route) => false,
                             );
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            ScaffoldMessenger.of(mainContext).showSnackBar(
                               SnackBar(
                                 content: const Text('Déconnexion effectuée'),
                                 backgroundColor: Colors.green,

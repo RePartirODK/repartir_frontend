@@ -153,7 +153,7 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
         _domains.addAll(domaines);
       });
     } catch (e) {
-      debugPrint('Erreur lors du chargement des domaines: $e');
+      debugPrint('--------------Erreur lors du chargement des domaines: $e-------------------');
       CustomAlertDialog.showError(
         context: context,
         message: 'Erreur lors du chargement des domaines. Veuillez réessayer.',
@@ -254,7 +254,6 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
           _buildInputField(
             label: 'Numéro d\'agrément',
             icon: Icons.numbers_outlined,
-            keyboardType: TextInputType.number,
             controller: agrementController,
             validator: (value) {
               if (value == null || value.isEmpty) {

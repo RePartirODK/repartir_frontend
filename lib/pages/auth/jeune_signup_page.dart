@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:repartir_frontend/models/request/jeunerequest.dart';
+import 'package:repartir_frontend/pages/auth/authentication_page.dart';
 import 'package:repartir_frontend/pages/jeuner/accueil.dart';
 import 'package:repartir_frontend/services/jeune_service.dart';
 import 'package:repartir_frontend/components/custom_alert_dialog.dart';
@@ -84,11 +85,10 @@ if (utilisateur != null && _selectedDomainIds.isNotEmpty) {
       // ignore: use_build_context_synchronously
       Navigator.of(context).pop();
 
-      // Redirection vers AuthenticationPage
-      Navigator.pushAndRemoveUntil(
+        Navigator.pushAndRemoveUntil(
         // ignore: use_build_context_synchronously
         context,
-        MaterialPageRoute(builder: (context) => AccueilPage()),
+        MaterialPageRoute(builder: (context) => AuthenticationPage()),
         (Route<dynamic> route) => false,
       );
 
