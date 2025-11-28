@@ -81,10 +81,12 @@ flutter:
     - assets/images/
 
 flutter_native_splash:
-  color: "#FFFFFF"   # couleur de fond
-  image: assets/images/repartir_logo.png   # ton logo
+  color: "#FFFFFF"   # Écran clair (blanc)
+  image: assets/images/logo_in_circle.png   # logo dans un cercle gris foncé
   android: true
   ios: true
+  android_gravity: center
+  ios_content_mode: center
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -122,15 +124,13 @@ flutter_launcher_icons:
   adaptive_icon_foreground: "assets/images/repartir_logo.png"
   # Pour iOS : générer toutes les tailles nécessaires
   remove_alpha_ios: true
-  web: true
-  windows: true
-  linux: true
+  
 
   android_screen_density:
-      ldpi: 100
-      mdpi: 140
-      hdpi: 160
-      xhdpi: 180
-      xxhdpi: 200
-      xxxhdpi: 220
+    ldpi: 150
+    mdpi: 190
+    hdpi: 210
+    xhdpi: 230
+    xxhdpi: 250
+    xxxhdpi: 270
     

@@ -71,39 +71,41 @@ class _MentorSignupPageState extends State<MentorSignupPage> {
       // ignore: use_build_context_synchronously
       Navigator.of(context).pop();
 
-      // Redirection vers AuthenticationPage
-      Navigator.pushAndRemoveUntil(
-        // ignore: use_build_context_synchronously
-        context,
-        MaterialPageRoute(builder: (context) => AuthenticationPage()),
-        (Route<dynamic> route) => false,
-      );
-
-      // Message de succès
-      CustomAlertDialog.showSuccess(
-        context: context,
-        message: "Votre inscription a été effectuée avec succès !",
-        title: "Inscription réussie",
-        onConfirm: () {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => AuthenticationPage()),
-            (Route<dynamic> route) => false,
-          );
-        },
-      );
+      // Stocker le contexte avant la navigation
+      final currentContext = context;
+      
+      // Message de succès - vérifier que le contexte est encore monté
+      if (currentContext.mounted) {
+        CustomAlertDialog.showSuccess(
+          context: currentContext,
+          message: "Votre inscription a été effectuée avec succès !",
+          title: "Inscription réussie",
+          onConfirm: () {
+            // Vérifier que le contexte est encore valide
+            if (currentContext.mounted) {
+              Navigator.pushAndRemoveUntil(
+                currentContext,
+                MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+                (Route<dynamic> route) => false,
+              );
+            }
+          },
+        );
+      }
     } catch (e) {
       // Fermer le loader
       // ignore: use_build_context_synchronously
       Navigator.of(context).pop();
 
-      // Afficher l'erreur
+      // Afficher l'erreur - vérifier que le contexte est encore monté
       final errorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('HTTP 500: ', '').replaceAll('HTTP 400: ', '');
-      CustomAlertDialog.showError(
-        context: context,
-        message: errorMessage.isNotEmpty ? errorMessage : "Une erreur est survenue lors de l'inscription.",
-        title: "Erreur d'inscription",
-      );
+      if (context.mounted) {
+        CustomAlertDialog.showError(
+          context: context,
+          message: errorMessage.isNotEmpty ? errorMessage : "Une erreur est survenue lors de l'inscription.",
+          title: "Erreur d'inscription",
+        );
+      }
     }
   }
 

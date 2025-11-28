@@ -134,6 +134,18 @@ class ProfileService {
     debugPrint('📸 Body: ${response.body}');
     
     if (response.statusCode >= 200 && response.statusCode < 300) {
+      // Parser la réponse pour extraire l'URL de la photo
+      try {
+        final responseData = jsonDecode(response.body);
+        final urlPhoto = responseData['urlPhoto'] ?? responseData['utilisateur']?['urlPhoto'];
+        if (urlPhoto != null) {
+          return {'urlPhoto': urlPhoto, 'success': true};
+        }
+      } catch (e) {
+        // Si le parsing échoue, retourner la réponse brute
+        return {'message': response.body, 'success': true};
+      }
+      // Si aucune URL n'est trouvée, retourner la réponse brute
       return {'message': response.body, 'success': true};
     } else {
       throw Exception('HTTP ${response.statusCode}: ${response.body}');

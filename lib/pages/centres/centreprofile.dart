@@ -33,10 +33,13 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
 
   // Dialog de confirmation de déconnexion
   void _showLogoutDialog() {
+    // Stocker le contexte de la page principale
+    final mainContext = context;
+    
     showDialog(
-      context: context,
+      context: mainContext,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -96,7 +99,8 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
                     Expanded(
                       child: TextButton(
                         onPressed: () {
-                          Navigator.of(context).pop();
+                          // Utiliser le contexte du dialog pour le fermer
+                          Navigator.of(dialogContext).pop();
                         },
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -119,7 +123,11 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () async {
-                          Navigator.of(context).pop();
+                          // Fermer le dialog de confirmation d'abord
+                          Navigator.of(dialogContext).pop();
+                          
+                          // Attendre un court instant pour s'assurer que le dialog est fermé
+                          await Future.delayed(const Duration(milliseconds: 100));
                           
                           try {
                             final email = await storage.getUserEmail();
@@ -128,13 +136,14 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
                             }
                             await storage.clearTokens();
                             
-                            if (mounted) {
+                            // Naviguer vers la page d'authentification
+                            if (mainContext.mounted) {
                               Navigator.pushAndRemoveUntil(
-                                context,
+                                mainContext,
                                 MaterialPageRoute(builder: (context) => const AuthenticationPage()),
                                 (Route<dynamic> route) => false,
                               );
-                              ScaffoldMessenger.of(context).showSnackBar(
+                              ScaffoldMessenger.of(mainContext).showSnackBar(
                                 SnackBar(
                                   content: const Text('Déconnexion effectuée'),
                                   backgroundColor: Colors.green,
@@ -146,8 +155,8 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
                               );
                             }
                           } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
+                            if (mainContext.mounted) {
+                              ScaffoldMessenger.of(mainContext).showSnackBar(
                                 SnackBar(
                                   content: Text('Erreur lors de la déconnexion: $e'),
                                   backgroundColor: Colors.red,
@@ -196,10 +205,13 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
   }
 
   void _showDeleteConfirmationDialog() {
+    // Stocker le contexte de la page principale
+    final mainContext = context;
+    
     showDialog(
-      context: context,
+      context: mainContext,
       barrierDismissible: false, // empêche la fermeture en cliquant en dehors
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text(
             "Supprimer le compte",
@@ -215,14 +227,14 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
                 style: TextStyle(color: Colors.grey),
               ),
               onPressed: () {
-                Navigator.of(context).pop(); // ferme le dialogue
+                Navigator.of(dialogContext).pop(); // ferme le dialogue
               },
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: kDangerColor),
               child: const Text("Supprimer"),
               onPressed: () {
-                Navigator.of(context).pop(); // ferme le dialogue
+                Navigator.of(dialogContext).pop(); // ferme le dialogue
                 _deleteAccount(); // ta fonction réelle de suppression
               },
             ),
@@ -233,6 +245,9 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
   }
 
   Future<void> _deleteAccount() async {
+    // Stocker le contexte de la page principale
+    final mainContext = context;
+    
     try {
       debugPrint("Suppression du compte…");
       // Recupérer l'email du centre depuis le stockage sécurisé
@@ -247,13 +262,13 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
       }
       await storage.clearTokens();
       
-      if (mounted) {
+      if (mainContext.mounted) {
         Navigator.pushAndRemoveUntil(
-          context,
+          mainContext,
           MaterialPageRoute(builder: (context) => const AuthenticationPage()),
           (Route<dynamic> route) => false,
         );
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(mainContext).showSnackBar(
           const SnackBar(
             content: Text('Compte supprimé avec succès'),
             backgroundColor: Colors.green,
@@ -262,10 +277,11 @@ class _ProfileCentrePageState extends ConsumerState<ProfileCentrePage> {
       }
     } catch (e) {
       debugPrint("Erreur lors de la suppression : $e");
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Impossible de supprimer le compte")),
-      );
+      if (mainContext.mounted) {
+        ScaffoldMessenger.of(mainContext).showSnackBar(
+          const SnackBar(content: Text("Impossible de supprimer le compte")),
+        );
+      }
     }
   }
 

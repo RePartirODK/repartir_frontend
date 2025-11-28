@@ -133,7 +133,7 @@ class _NouvelleOffrePageState extends State<NouvelleOffrePage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Créez une nouvelle offre d\'emploi',
+                  'Créez une nouvelle offre',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade600,
@@ -214,7 +214,7 @@ class _NouvelleOffrePageState extends State<NouvelleOffrePage> {
                 children: [
                   const Icon(Icons.assignment_outlined, color: Color(0xFF3EB2FF), size: 20),
                   const SizedBox(width: 8),
-                  const Text('Type de contrat *', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const Text('Type de contrat *', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 ],
               ),
               const SizedBox(height: 8),
@@ -222,14 +222,23 @@ class _NouvelleOffrePageState extends State<NouvelleOffrePage> {
                 value: _typeContratSelectionne,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.grey.shade50,
+                  fillColor: Colors.grey.shade50, // Couleur unifiée avec les autres champs
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF3EB2FF), width: 2),
+                  ),
                 ),
                 items: TypeContrat.values.map((type) {
-                  return DropdownMenuItem(value: type, child: Text(type.displayName));
+                  return DropdownMenuItem(value: type, child: Text(
+                    type.displayName, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400)));
                 }).toList(),
                 onChanged: (value) {
                   if (value != null) setState(() => _typeContratSelectionne = value);
@@ -250,7 +259,7 @@ class _NouvelleOffrePageState extends State<NouvelleOffrePage> {
                       children: [
                         const Icon(Icons.calendar_today, color: Color(0xFF3EB2FF), size: 20),
                         const SizedBox(width: 8),
-                        const Text('Date de début *', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const Text('Date de début *', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -259,10 +268,18 @@ class _NouvelleOffrePageState extends State<NouvelleOffrePage> {
                       child: InputDecorator(
                         decoration: InputDecoration(
                           filled: true,
-                          fillColor: Colors.grey.shade50,
+                          fillColor: Colors.grey.shade50, // Couleur unifiée avec les autres champs
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF3EB2FF), width: 2),
                           ),
                         ),
                         child: Text(
@@ -283,7 +300,7 @@ class _NouvelleOffrePageState extends State<NouvelleOffrePage> {
                       children: [
                         const Icon(Icons.event, color: Color(0xFF3EB2FF), size: 20),
                         const SizedBox(width: 8),
-                        const Text('Date de fin *', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const Text('Date de fin *', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -292,10 +309,18 @@ class _NouvelleOffrePageState extends State<NouvelleOffrePage> {
                       child: InputDecorator(
                         decoration: InputDecoration(
                           filled: true,
-                          fillColor: Colors.grey.shade50,
+                          fillColor: Colors.grey.shade50, // Couleur unifiée avec les autres champs
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFF3EB2FF), width: 2),
                           ),
                         ),
                         child: Text(
@@ -345,7 +370,7 @@ class _NouvelleOffrePageState extends State<NouvelleOffrePage> {
             Text(
               label,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.black87,
               ),
@@ -355,7 +380,7 @@ class _NouvelleOffrePageState extends State<NouvelleOffrePage> {
                 ' *',
                 style: TextStyle(
                   color: Colors.red,
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -427,7 +452,7 @@ class _NouvelleOffrePageState extends State<NouvelleOffrePage> {
             Text(
               label,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.black87,
               ),

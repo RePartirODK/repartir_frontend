@@ -52,6 +52,13 @@ class _MentoringPageState extends State<MentoringPage> {
 
       // Filtrer les demandes EN_ATTENTE uniquement
       final enAttente = mentorings.where((m) => m['statut'] == 'EN_ATTENTE').toList();
+      
+      // Trier par date de création (la plus récente en premier)
+      enAttente.sort((a, b) {
+        final dateA = DateTime.parse(a['dateCreation'].toString());
+        final dateB = DateTime.parse(b['dateCreation'].toString());
+        return dateB.compareTo(dateA); // Plus récent en premier
+      });
 
       setState(() {
         _demandesEnAttente = enAttente;

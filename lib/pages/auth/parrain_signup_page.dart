@@ -69,27 +69,28 @@ class _ParrainSignupPageState extends State<ParrainSignupPage> {
       // ignore: use_build_context_synchronously
       Navigator.of(context).pop();
 
-      // Redirection vers AuthenticationPage
-      Navigator.pushAndRemoveUntil(
-        // ignore: use_build_context_synchronously
-        context,
-        MaterialPageRoute(builder: (context) => AuthenticationPage()),
-        (Route<dynamic> route) => false,
-      );
-
-      // Message de succès
-      CustomAlertDialog.showSuccess(
-        context: context,
-        message: "Votre inscription a été effectuée avec succès !",
-        title: "Inscription réussie",
-        onConfirm: () {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => AuthenticationPage()),
-            (Route<dynamic> route) => false,
-          );
-        },
-      );
+      // Stocker le contexte avant la navigation
+      final currentContext = context;
+      
+      // Afficher le message de succès AVANT la redirection
+      if (currentContext.mounted) {
+        CustomAlertDialog.showSuccess(
+          context: currentContext,
+          message: "Votre inscription a été effectuée avec succès !",
+          title: "Inscription réussie",
+          onConfirm: () {
+            // Vérifier que le contexte est toujours valide
+            if (currentContext.mounted) {
+              // Redirection vers AuthenticationPage après confirmation
+              Navigator.pushAndRemoveUntil(
+                currentContext,
+                MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+                (Route<dynamic> route) => false,
+              );
+            }
+          },
+        );
+      }
     } catch (e) {
       // Fermer le loader
       // ignore: use_build_context_synchronously
@@ -97,11 +98,13 @@ class _ParrainSignupPageState extends State<ParrainSignupPage> {
 
       // Afficher l'erreur
       final errorMessage = e.toString().replaceAll('Exception: ', '').replaceAll('HTTP 500: ', '').replaceAll('HTTP 400: ', '');
-      CustomAlertDialog.showError(
-        context: context,
-        message: errorMessage.isNotEmpty ? errorMessage : "Une erreur est survenue lors de l'inscription.",
-        title: "Erreur d'inscription",
-      );
+      if (context.mounted) {
+        CustomAlertDialog.showError(
+          context: context,
+          message: errorMessage.isNotEmpty ? errorMessage : "Une erreur est survenue lors de l'inscription.",
+          title: "Erreur d'inscription",
+        );
+      }
     }
   }
 

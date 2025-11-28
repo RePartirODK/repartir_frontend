@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -22,7 +23,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final ImagePicker _picker = ImagePicker();
   late TextEditingController _nameController;
   late TextEditingController _aboutController;
-  late TextEditingController _addressController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   bool _saving = false;
@@ -36,8 +36,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.initState();
     _nameController = TextEditingController(text: widget.userData['name']);
     _aboutController = TextEditingController(text: widget.userData['about']);
-    _addressController =
-        TextEditingController(text: widget.userData['address']);
     _emailController = TextEditingController(text: widget.userData['email']);
     _phoneController = TextEditingController(text: widget.userData['phone']);
     _loadCurrentPhoto();
@@ -66,7 +64,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void dispose() {
     _nameController.dispose();
     _aboutController.dispose();
-    _addressController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     super.dispose();
@@ -135,8 +132,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 size: 20.0,
                                 color: Colors.white,
                               ),
-                          ),
-                        ),
+                          ),)
                         ],
                       ),
                     ),
@@ -146,8 +142,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   _buildTextField(_nameController, "Prenom et Nom"),
                   const SizedBox(height: 20),
                   _buildTextField(_aboutController, "A propos", maxLines: 4),
-                  const SizedBox(height: 20),
-                  _buildTextField(_addressController, "Adresse"),
                   const SizedBox(height: 20),
                   _buildTextField(_emailController, "Email"),
                   const SizedBox(height: 20),
@@ -312,21 +306,18 @@ extension on _EditProfilePageState {
           if (uploadResult['urlPhoto'] != null) {
             newPhotoUrl = uploadResult['urlPhoto'] as String;
             debugPrint('🖼️ Nouvelle URL photo: $newPhotoUrl');
-          }
-          
-          // Recharger pour avoir la nouvelle URL dans _photoUrl
-          debugPrint('🔄 Rechargement du profil pour obtenir la nouvelle URL...');
-          await _loadCurrentPhoto();
-          debugPrint('🔄 Profil rechargé');
-          
-          // Utiliser la nouvelle URL si disponible et mettre à jour l'affichage
-          setState(() {
-            if (newPhotoUrl != null) {
-              _photoUrl = newPhotoUrl;
+          } else if (uploadResult['message'] != null) {
+            // Essayer d'extraire l'URL du message
+            try {
+              final messageData = jsonDecode(uploadResult['message'] as String);
+              newPhotoUrl = messageData['urlPhoto'] ?? messageData['utilisateur']?['urlPhoto'];
+              if (newPhotoUrl != null) {
+                debugPrint('🖼️ Nouvelle URL photo extraite du message: $newPhotoUrl');
+              }
+            } catch (e) {
+              debugPrint('ℹ️ Impossible de parser le message pour extraire l\'URL: $e');
             }
-            _selectedImage = null;
-            _selectedImageBytes = null;
-          });
+          }
         } catch (e) {
           debugPrint('❌ ERREUR lors de l\'upload de la photo: $e');
           if (mounted) {
@@ -355,23 +346,13 @@ extension on _EditProfilePageState {
         'urlDiplome': me['urlDiplome'],
         'nom': nom.isEmpty ? (utilisateur['nom'] ?? '') : nom,
         'telephone': _phoneController.text.isEmpty ? (utilisateur['telephone'] ?? '') : _phoneController.text,
-        // Utiliser la nouvelle URL si disponible, sinon l'URL actuelle (qui devrait être correcte après rechargement)
+        // Utiliser la nouvelle URL si disponible, sinon l'URL actuelle
         'urlPhoto': newPhotoUrl ?? _photoUrl ?? utilisateur['urlPhoto'],
       };
       
       debugPrint('📤 Envoi du profil au backend avec urlPhoto: ${payload['urlPhoto']}');
       await _profile.updateMe(payload);
       debugPrint('✅ Profil mis à jour avec succès');
-      
-      // Recharger une dernière fois pour s'assurer d'avoir la bonne URL
-      await _loadCurrentPhoto();
-      
-      // Mettre à jour l'affichage avec la nouvelle photo
-      if (mounted) {
-        setState(() {
-          // _photoUrl a déjà été mis à jour par _loadCurrentPhoto()
-        });
-      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -383,7 +364,6 @@ extension on _EditProfilePageState {
         Navigator.pop(context, {
           'name': _nameController.text,
           'about': _aboutController.text,
-          'address': _addressController.text,
           'email': _emailController.text,
           'phone': _phoneController.text,
         });

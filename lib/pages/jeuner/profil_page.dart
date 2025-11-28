@@ -79,7 +79,6 @@ class _ProfilePageState extends State<ProfilePage> {
             'about': about,
             'email': email,
             'phone': phone,
-            'address': address,
           },
         ),
       ),
@@ -339,10 +338,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Dialog de confirmation de déconnexion
   void _showLogoutDialog() {
+    // Stocker le contexte de la page principale
+    final mainContext = context;
+    
     showDialog(
-      context: context,
+      context: mainContext,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -402,7 +404,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     Expanded(
                       child: TextButton(
                         onPressed: () {
-                          Navigator.of(context).pop();
+                          // Utiliser le contexte du dialog pour le fermer
+                          Navigator.of(dialogContext).pop();
                         },
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -425,35 +428,36 @@ class _ProfilePageState extends State<ProfilePage> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () async {
-                          // Fermer le dialog de confirmation d'abord
-                          Navigator.of(context).pop();
-                          
                           try {
+                            // Fermer le dialog de confirmation d'abord
+                            Navigator.of(dialogContext).pop();
+                            
+                            // Attendre un court instant pour s'assurer que le dialog est fermé
+                            await Future.delayed(const Duration(milliseconds: 100));
+                            
                             if (email.isNotEmpty) {
                               await utilisateurService.logout({'email': email});
                             }
                             await storage.clearTokens();
                             
                             // Naviguer vers la page d'authentification
-                            // On ne peut pas afficher de message après pushAndRemoveUntil
-                            // car on est déjà sur une nouvelle page
-                            if (mounted) {
+                            if (mainContext.mounted) {
                               Navigator.pushAndRemoveUntil(
-                                context,
+                                mainContext,
                                 MaterialPageRoute(builder: (context) => const AuthenticationPage()),
                                 (Route<dynamic> route) => false,
                               );
                             }
                           } catch (e) {
                             // Afficher l'erreur seulement si le widget est toujours monté
-                            if (mounted) {
+                            if (mainContext.mounted) {
                               final errorMessage = e.toString()
                                   .replaceAll('Exception: ', '')
                                   .replaceAll('HTTP 401: ', '')
                                   .replaceAll('HTTP 500: ', '');
                               
                               CustomAlertDialog.showError(
-                                context: context,
+                                context: mainContext,
                                 message: errorMessage.isNotEmpty 
                                     ? 'Erreur lors de la déconnexion: $errorMessage'
                                     : 'Une erreur est survenue lors de la déconnexion.',
