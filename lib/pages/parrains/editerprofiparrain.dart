@@ -35,6 +35,7 @@ class _EditProfilParrainPageState extends ConsumerState<EditProfilParrainPage> {
   bool _uploadingPhoto = false;
   final storage = SecureStorageService();
   String? _photoUrl;
+  String? _photoCacheKey; // Clé de cache pour forcer le rafraîchissement de l'image
 
   @override
   void initState() {
@@ -154,6 +155,8 @@ class _EditProfilParrainPageState extends ConsumerState<EditProfilParrainPage> {
       if (newPhotoUrl != null) {
         setState(() {
           _photoUrl = newPhotoUrl;
+          // Mettre à jour la clé de cache pour forcer le rafraîchissement de l'image
+          _photoCacheKey = '${newPhotoUrl}_${DateTime.now().millisecondsSinceEpoch}';
         });
         
         // Mettre à jour le provider localement
@@ -254,6 +257,7 @@ class _EditProfilParrainPageState extends ConsumerState<EditProfilParrainPage> {
                     photoUrl: photoUrl,
                     radius: 60,
                     isPerson: true,
+                    cacheKey: _photoCacheKey ?? photoUrl, // Utiliser la clé de cache pour forcer le rafraîchissement
                   ),
                   Positioned(
                     bottom: 0,

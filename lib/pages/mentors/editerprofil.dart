@@ -37,6 +37,7 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
   bool _saving = false;
   int? _mentorId;
   String? _currentPhotoUrl;
+  String? _photoCacheKey; // Clé de cache pour forcer le rafraîchissement de l'image
   
   // Image sélectionnée
   File? _selectedImage;
@@ -153,17 +154,39 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
           final email = _emailController.text;
 
           debugPrint('📷 Upload de la photo...');
-          await _profileService.updatePhoto(imageBytes, email);
-          debugPrint('✅ Photo uploadée avec succès');
+          final uploadResult = await _profileService.updatePhoto(imageBytes, email);
+          debugPrint('✅ Photo uploadée avec succès: $uploadResult');
+          
+          // Extraire la nouvelle URL de la réponse
+          String? newPhotoUrl;
+          if (uploadResult['urlPhoto'] != null) {
+            newPhotoUrl = uploadResult['urlPhoto'] as String;
+          } else if (uploadResult['message'] != null) {
+            try {
+              final messageData = jsonDecode(uploadResult['message'] as String);
+              newPhotoUrl = messageData['urlPhoto'] ?? messageData['utilisateur']?['urlPhoto'];
+            } catch (e) {
+              debugPrint('ℹ️ Impossible de parser le message pour extraire l\'URL: $e');
+            }
+          }
           
           // Recharger le profil pour obtenir la nouvelle URL de photo
           await _loadProfile();
-
-          // Réinitialiser la sélection d'image
-          setState(() {
-            _selectedImage = null;
-            _selectedImageBytes = null;
-          });
+          
+          // Mettre à jour la clé de cache pour forcer le rafraîchissement de l'image
+          if (newPhotoUrl != null || _currentPhotoUrl != null) {
+            setState(() {
+              _photoCacheKey = '${newPhotoUrl ?? _currentPhotoUrl}_${DateTime.now().millisecondsSinceEpoch}';
+              _selectedImage = null;
+              _selectedImageBytes = null;
+            });
+          } else {
+            // Réinitialiser la sélection d'image même si l'URL n'est pas extraite
+            setState(() {
+              _selectedImage = null;
+              _selectedImageBytes = null;
+            });
+          }
         } catch (e) {
           debugPrint('❌ Erreur upload photo: $e');
           if (mounted) {
@@ -266,6 +289,7 @@ class _EditProfilMentorPageState extends State<EditProfilMentorPage> {
                                               photoUrl: _currentPhotoUrl,
                                               radius: 60,
                                               isPerson: true,
+                                              cacheKey: _photoCacheKey ?? _currentPhotoUrl, // Utiliser la clé de cache pour forcer le rafraîchissement
                                             )),
                                   Positioned(
                                     bottom: 0,

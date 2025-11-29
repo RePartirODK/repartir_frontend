@@ -30,6 +30,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   String? _photoUrl;
   File? _selectedImage;
   Uint8List? _selectedImageBytes;
+  String? _photoCacheKey; // Clé de cache pour forcer le rafraîchissement de l'image
 
   @override
   void initState() {
@@ -119,6 +120,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                         photoUrl: _photoUrl,
                                         radius: 48,
                                         isPerson: true,
+                                        cacheKey: _photoCacheKey ?? _photoUrl, // Utiliser la clé de cache pour forcer le rafraîchissement
                                       ),
                                     )),
                           Positioned(
@@ -317,6 +319,13 @@ extension on _EditProfilePageState {
             } catch (e) {
               debugPrint('ℹ️ Impossible de parser le message pour extraire l\'URL: $e');
             }
+          }
+          
+          // Mettre à jour la clé de cache pour forcer le rafraîchissement de l'image
+          if (newPhotoUrl != null) {
+            setState(() {
+              _photoCacheKey = '${newPhotoUrl}_${DateTime.now().millisecondsSinceEpoch}';
+            });
           }
         } catch (e) {
           debugPrint('❌ ERREUR lors de l\'upload de la photo: $e');

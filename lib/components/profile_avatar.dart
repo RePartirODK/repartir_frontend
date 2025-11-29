@@ -83,12 +83,15 @@ class ProfileAvatar extends StatelessWidget {
     
     // Ajouter un timestamp ou cacheKey à l'URL pour forcer le rafraîchissement
     String? imageUrl = fixedUrl;
-    if (fixedUrl != null && cacheKey != null) {
+    if (fixedUrl != null) {
       try {
         final uri = Uri.parse(fixedUrl);
+        // Ajouter un paramètre de version pour forcer le rafraîchissement
+        // Utiliser cacheKey si fourni, sinon utiliser un timestamp unique (une seule fois)
+        final versionParam = cacheKey ?? DateTime.now().millisecondsSinceEpoch.toString();
         final updatedUri = uri.replace(queryParameters: {
           ...uri.queryParameters,
-          'v': cacheKey ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          'v': versionParam,
         });
         imageUrl = updatedUri.toString();
       } catch (e) {
@@ -107,6 +110,7 @@ class ProfileAvatar extends StatelessWidget {
         child: ClipOval(
           child: Image.network(
             imageUrl!,
+            key: cacheKey != null ? ValueKey(cacheKey) : null, // Clé unique pour forcer le rafraîchissement
             width: radius * 2,
             height: radius * 2,
             fit: BoxFit.cover,
@@ -133,8 +137,18 @@ class ProfileAvatar extends StatelessWidget {
                 ),
               );
             },
-            // Headers pour éviter le cache (mais ne pas utiliser Cache-Control qui peut causer des problèmes CORS)
-            headers: kIsWeb ? {} : {'Cache-Control': 'no-cache'},
+            // Headers pour éviter le cache sur mobile
+            // Sur mobile, on utilise des headers plus agressifs pour forcer le rafraîchissement
+            headers: kIsWeb 
+              ? {} 
+              : {
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache',
+                  'Expires': '0',
+                },
+            // Utiliser cacheWidth et cacheHeight pour forcer le rafraîchissement sur mobile
+            cacheWidth: kIsWeb ? null : (radius * 2).toInt(),
+            cacheHeight: kIsWeb ? null : (radius * 2).toInt(),
           ),
         ),
       );
