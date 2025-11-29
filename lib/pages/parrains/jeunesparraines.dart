@@ -174,7 +174,9 @@ class _SponsoredYouthPageState extends State<SponsoredYouthPage> {
     final displayName = (prenom.isNotEmpty || nom.isNotEmpty) ? '$prenom $nom'.trim() : 'Jeune';
     final idFormation = _asInt(item['idFormation']);
     final formationTitle = _formationsById[idFormation]?.titre ?? 'Formation #$idFormation';
-    final hasCertificate = false; // not available yet
+    
+    // Déterminer le statut de certification du jeune avec la logique exacte
+    String statutFinal = _determinerStatutCertificationExact(item);
 
     return Container(
       padding: const EdgeInsets.all(15),
@@ -219,19 +221,95 @@ class _SponsoredYouthPageState extends State<SponsoredYouthPage> {
               ],
             ),
           ),
-          Tooltip(
-            message: hasCertificate
-                ? 'A obtenu le certificat de fin de formation'
-                : 'Formation en cours',
-            child: Icon(
-              hasCertificate ? Icons.workspace_premium : Icons.pending_actions,
-              color: hasCertificate ? primaryGreen : Colors.orange.shade700,
-              size: 30,
-            ),
-          ),
+          _buildCertificationIcon(statutFinal),
         ],
       ),
     );
   }
-
+  
+  // Méthode pour déterminer le statut de certification avec la logique exacte
+  String _determinerStatutCertificationExact(Map<String, dynamic> item) {
+    // Debug des champs disponibles
+    debugPrint('=== Analyse certification exacte ===');
+    item.forEach((key, value) {
+      debugPrint('$key: $value');
+    });
+    
+    // Récupérer les valeurs des champs
+    bool isCertifie = false;
+    String status = '';
+    
+    // Vérifier le champ certifie
+    if (item.containsKey('certifie')) {
+      final certifieValue = item['certifie'];
+      if (certifieValue is bool) {
+        isCertifie = certifieValue;
+      } else if (certifieValue is String) {
+        isCertifie = certifieValue.toLowerCase() == 'true';
+      } else if (certifieValue is int) {
+        isCertifie = certifieValue == 1;
+      }
+      debugPrint('Certifie: $isCertifie');
+    }
+    
+    // Vérifier le champ status
+    if (item.containsKey('status')) {
+      status = item['status'].toString().toUpperCase();
+      debugPrint('Status: $status');
+    }
+    
+    // Logique exacte selon les règles fournies :
+    // 1. Icone certifié : quand le champ certifie est à true
+    if (isCertifie) {
+      return 'certifie';
+    }
+    
+    // 2. Icone non certifié : quand la formation est terminée et certifie est false
+    if (status == 'TERMINE' || status == 'TERMINEE' || status == 'TERMINÉ') {
+      return 'non_certifie';
+    }
+    
+    // 3. Icone pending : quand l'inscription est validée et la formation est en cours
+    if (status == 'VALIDE' || status == 'EN_COURS') {
+      return 'en_cours';
+    }
+    
+    // Par défaut, considérer comme en cours
+    return 'en_cours';
+  }
+  
+  // Méthode pour construire l'icône de certification appropriée
+  Widget _buildCertificationIcon(String statut) {
+    debugPrint('Construction icône pour statut: $statut');
+    switch (statut) {
+      case 'certifie':
+        return Tooltip(
+          message: 'Certificat obtenu',
+          child: Icon(
+            Icons.workspace_premium,
+            color: primaryGreen,
+            size: 30,
+          ),
+        );
+      case 'non_certifie':
+        return Tooltip(
+          message: 'Formation terminée - Non certifié',
+          child: Icon(
+            Icons.assignment_turned_in, // Meilleure icône pour "terminé mais non certifié"
+            color: Colors.grey,
+            size: 30,
+          ),
+        );
+      case 'en_cours':
+      default:
+        return Tooltip(
+          message: 'Formation en cours',
+          child: Icon(
+            Icons.pending_actions,
+            color: Colors.orange.shade700,
+            size: 30,
+          ),
+        );
+    }
+  }
 }

@@ -61,7 +61,23 @@ class OffreDetailPage extends StatelessWidget {
                      const SizedBox(height: 30),
                     Center(
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          // Afficher un message ou naviguer vers une page de candidature
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Fonctionnalité de candidature en développement'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                          
+                          // Ou si vous voulez naviguer vers une autre page :
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (context) => CandidaturePage(), // Remplacer par votre page de candidature
+                          //   ),
+                          // );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,

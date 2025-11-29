@@ -5,7 +5,7 @@ import 'package:repartir_frontend/pages/jeuner/formation_detail_page.dart';
 import 'package:repartir_frontend/components/custom_header.dart';
 
 // Constantes de couleurs pour un style cohérent
-const Color kPrimaryBlue = Color(0xFF007BFF);
+const Color kPrimaryBlue = Color(0xFF3EB2FF);
 const Color kLightGrey = Color(0xFFF0F0F0);
 const Color kDarkText = Color(0xFF333333);
 const Color kLightText = Color(0xFF757575);
@@ -289,7 +289,43 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
         final inscription = formations[index];
         final formation = inscription['formation'] ?? {};
         final titre = (formation['titre'] ?? '—').toString();
-        final certifie = (inscription['certifie'] == true);
+        
+        // Debug: Afficher la structure des données
+        debugPrint('Inscription data: $inscription');
+        
+        // Vérification correcte du statut de certification
+        bool certifie = false;
+        
+        // Essayons plusieurs approches pour récupérer le statut de certification
+        if (inscription.containsKey('certifie')) {
+          final certifieValue = inscription['certifie'];
+          debugPrint('Certifie raw value: $certifieValue, type: ${certifieValue.runtimeType}');
+          
+          if (certifieValue is bool) {
+            certifie = certifieValue;
+          } else if (certifieValue is String) {
+            certifie = certifieValue.toLowerCase() == 'true';
+          } else if (certifieValue is int) {
+            certifie = certifieValue == 1;
+          }
+        }
+        
+        // Vérifions également dans l'objet formation s'il y a un champ certifie
+        if (!certifie && formation.containsKey('certifie')) {
+          final certifieValue = formation['certifie'];
+          debugPrint('Formation certifie raw value: $certifieValue, type: ${certifieValue.runtimeType}');
+          
+          if (certifieValue is bool) {
+            certifie = certifieValue;
+          } else if (certifieValue is String) {
+            certifie = certifieValue.toLowerCase() == 'true';
+          } else if (certifieValue is int) {
+            certifie = certifieValue == 1;
+          }
+        }
+        
+        debugPrint('Certifie final value: $certifie');
+        
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: _buildCoursTermineCard(
@@ -389,6 +425,8 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
 
   /// Widget pour une carte de formation terminée
   Widget _buildCoursTermineCard({required String title, int? formationId, bool certified = false}) {
+    debugPrint('Building course card - Title: $title, Certified: $certified');
+    
     return GestureDetector(
       onTap: formationId != null
           ? () {
@@ -431,31 +469,54 @@ class _MesFormationsPageState extends State<MesFormationsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: kDarkText,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (certified) Row(
+                  Row(
                     children: [
-                      Icon(Icons.workspace_premium_outlined, color: Colors.orange.shade600, size: 20),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Certificat obtenu',
-                        style: TextStyle(
-                          color: kLightText,
-                          fontWeight: FontWeight.w500,
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: kDarkText,
+                          ),
                         ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Formation terminée',
+                    style: TextStyle(
+                      color: kLightText,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  if (certified) 
+                    const Text(
+                      'Certificat obtenu',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                 ],
               ),
             ),
+            // Icône de certification à la toute fin
+            if (certified)
+              Container(
+                margin: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade100,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Icon(
+                  Icons.workspace_premium,
+                  color: Colors.orange.shade700,
+                  size: 24,
+                ),
+              ),
           ],
         ),
       ),

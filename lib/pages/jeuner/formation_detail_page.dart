@@ -88,6 +88,150 @@ class _FormationDetailPageState extends State<FormationDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Afficher un spinner pendant le chargement
+    if (_loading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Stack(
+          children: [
+            // Contenu principal avec spinner
+            Positioned(
+              top: 120,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(60),
+                    topRight: Radius.circular(60),
+                  ),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3EB2FF)),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Chargement des détails...',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            
+            // Header avec bouton retour et titre
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: CustomHeader(
+                showBackButton: true,
+                onBackPressed: () => Navigator.pop(context),
+                title: 'Détail Formation',
+                height: 150,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // Si les données sont chargées mais _formation est null, afficher un message d'erreur
+    if (_formation == null) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Stack(
+          children: [
+            // Contenu principal avec message d'erreur
+            Positioned(
+              top: 120,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(60),
+                    topRight: Radius.circular(60),
+                  ),
+                ),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: Colors.red[400],
+                          size: 50,
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Impossible de charger les détails de la formation',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Veuillez vérifier votre connexion internet et réessayer',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 30),
+                        ElevatedButton(
+                          onPressed: _fetch,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF3EB2FF),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 30,
+                              vertical: 12,
+                            ),
+                          ),
+                          child: const Text('Réessayer'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            
+            // Header avec bouton retour et titre
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: CustomHeader(
+                showBackButton: true,
+                onBackPressed: () => Navigator.pop(context),
+                title: 'Détail Formation',
+                height: 150,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
     // Mapper les données réelles de la formation
     final f = _formation ?? {};
     final centreInfo = f['centre'] ?? f['centreFormation'] ?? {};

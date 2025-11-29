@@ -399,7 +399,7 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
                             label: 'Durée',
                             hintText: '',
                             controller: _durationController,
-                            keyboardType: TextInputType.number,
+                            keyboardType: TextInputType.text,
                             icon: Icons.timelapse,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -610,7 +610,7 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              elevation: 5, // Ajout d'une ombre
+                              elevation: 5, // Ajout d’une ombre
                             ),
                             onPressed: _isSubmitting ? null : _submitForm,
                             child: _isSubmitting

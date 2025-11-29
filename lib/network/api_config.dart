@@ -5,12 +5,18 @@ import 'package:flutter/foundation.dart';
 class ApiConfig {
 
   static String get baseUrl {
+    // Configuration pour les releases en production
+    if (kReleaseMode) {
+      // En production, utiliser l'URL de votre serveur de production
+      return 'https://repartir-backend.onrender.com/api'; // À remplacer par votre URL de production
+    }
+    
     if (kIsWeb) return 'http://localhost:8183/api'; // navigateur
     if (Platform.isAndroid) {
       // Vérifier si on est en mode debug sur un appareil physique
       if (kDebugMode) {
         // Remplacer par l'adresse IP de votre machine sur le réseau local
-        return 'http://192.168.1.4:8183/api'; // remplacer l'adresse du backend
+        return 'https://repartir-backend.onrender.com/api'; // remplacer l'adresse du backend
       }
       return 'http://10.0.2.2:8183/api'; // émulateur Android
     }
