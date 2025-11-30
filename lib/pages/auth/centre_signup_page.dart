@@ -56,11 +56,13 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
     // verifier que le formulaire est valide
     if (_formKey.currentState?.validate() != true) {
       // message d'erreur ou retour
-      CustomAlertDialog.showError(
-        context: context,
-        message: "Veuillez remplir correctement tous les champs obligatoires.",
-        title: "Formulaire incomplet",
-      );
+      if (context.mounted) {
+        CustomAlertDialog.showError(
+          context: context,
+          message: "Veuillez remplir correctement tous les champs obligatoires.",
+          title: "Formulaire incomplet",
+        );
+      }
       return;
     }
 
@@ -75,39 +77,90 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
       domaineIds: _selectedDomainIds.toList(),
     );
     debugPrint(centreRequest.toJson().toString());
+    
+    // Validation supplémentaire
+    if (centreRequest.nom.isEmpty || 
+        centreRequest.email.isEmpty || 
+        centreRequest.motDePasse.isEmpty) {
+      if (context.mounted) {
+        CustomAlertDialog.showError(
+          context: context,
+          message: "Veuillez remplir tous les champs obligatoires.",
+          title: "Données manquantes",
+        );
+      }
+      return;
+    }
+
     //on affiche un loader
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+    }
+    
     try {
       debugPrint("Inscription du centre en cours...");
       //appel de l'api
       final user = await centreService.register(centreRequest);
-     
-      // Associer les domaines si l'entreprise a été créée avec succès
-      if (user != null && _selectedDomainIds.isNotEmpty) {
-        await centreService.associateDomaines(
-          user.id,
-          _selectedDomainIds.toList(),
+      debugPrint('Utilisateur créé: ${user?.id}');
+      
+      // Plus besoin d'associer les domaines séparément
+      
+      if (context.mounted) {
+        Navigator.of(context).pop(); // enlever le loader
+        
+        // Remplacer cette partie :
+        /*
+        CustomAlertDialog.showSuccess(
+          context: context,
+          message: "Votre inscription a été effectuée avec succès !",
+          title: "Inscription réussie",
+          onConfirm: () {
+            if (context.mounted) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+                (Route<dynamic> route) => false,
+              );
+            }
+          },
         );
+        */
+        
+        // Par celle-ci :
+        _showSuccessDialog();
       }
-       // ignore: use_build_context_synchronously
-      Navigator.of(context).pop(); // enlever le loader
-      //affichage de la modal de succes
-      _showSuccessDialog();
     } catch (e) {
       // Fermer le loader
-      // ignore: use_build_context_synchronously
-      Navigator.of(context).pop();
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
 
-      // Afficher l'erreur
-      CustomAlertDialog.showError(
-        context: context,
-        message: "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
-        title: "Erreur d'inscription",
-      );
+      // Afficher l'erreur avec plus de détails
+      String errorMessage = "Une erreur est survenue lors de l'inscription. Veuillez réessayer.";
+      String errorTitle = "Erreur d'inscription";
+      
+      if (e.toString().contains('Email déjà utilisé')) {
+        errorMessage = "Cet email est déjà utilisé. Veuillez en choisir un autre.";
+        errorTitle = "Email déjà utilisé";
+      } else if (e.toString().contains('Données invalides')) {
+        errorMessage = "Les données saisies sont invalides. Veuillez vérifier les informations.";
+        errorTitle = "Données invalides";
+      } else if (e.toString().contains('500')) {
+        errorMessage = "Une erreur interne du serveur s'est produite. Veuillez réessayer plus tard.";
+        errorTitle = "Erreur serveur";
+      }
+      
+      if (context.mounted) {
+        CustomAlertDialog.showError(
+          context: context,
+          message: errorMessage,
+          title: errorTitle,
+        );
+      }
       debugPrint("Erreur lors de l'inscription du Centre: ${e.toString()}");
     }
   }

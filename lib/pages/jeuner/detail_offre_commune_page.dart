@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 import '../../components/custom_header.dart';
 
 class DetailOffreCommunePage extends StatefulWidget {
@@ -197,7 +198,10 @@ class _DetailOffreCommunePageState extends State<DetailOffreCommunePage> {
           const SizedBox(height: 16),
           
           InkWell(
-            onTap: () => _ouvrirLien(lienCandidature),
+            onTap: () {
+              debugPrint('Lien cliqué: $lienCandidature');
+              _ouvrirLien(lienCandidature);
+            },
             borderRadius: BorderRadius.circular(8),
             child: Container(
               width: double.infinity,
@@ -273,14 +277,41 @@ class _DetailOffreCommunePageState extends State<DetailOffreCommunePage> {
 
   Future<void> _ouvrirLien(String url) async {
     try {
-      final Uri uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
+      // Vérifier que l'URL n'est pas vide
+      if (url.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Impossible d\'ouvrir le lien'),
+              content: Text('Lien de candidature non disponible'),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+        return;
+      }
+      
+      // S'assurer que l'URL commence par http:// ou https://
+      String formattedUrl = url;
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        formattedUrl = 'https://$url';
+      }
+      
+      final Uri uri = Uri.parse(formattedUrl);
+      debugPrint('Tentative d\'ouverture de l\'URL: $formattedUrl');
+      
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        debugPrint('URL ouverte avec succès');
+      } else {
+        debugPrint('Impossible de lancer l\'URL: $formattedUrl');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Impossible d\'ouvrir le lien: $formattedUrl'),
               backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -291,10 +322,11 @@ class _DetailOffreCommunePageState extends State<DetailOffreCommunePage> {
         }
       }
     } catch (e) {
+      debugPrint('Erreur lors de l\'ouverture du lien: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur lors de l\'ouverture du lien: $e'),
+            content: Text('Erreur lors de l\'ouverture du lien: ${e.toString()}'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

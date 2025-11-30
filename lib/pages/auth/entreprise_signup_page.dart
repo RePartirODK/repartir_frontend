@@ -97,6 +97,21 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
       domaineIds: _selectedDomainIds.toList(),
     );
     debugPrint(entrepriseRequest.toJson().toString());
+    
+    // Validation supplémentaire
+    if (entrepriseRequest.nom.isEmpty || 
+        entrepriseRequest.email.isEmpty || 
+        entrepriseRequest.motDePasse.isEmpty) {
+      if (context.mounted) {
+        CustomAlertDialog.showError(
+          context: context,
+          message: "Veuillez remplir tous les champs obligatoires.",
+          title: "Données manquantes",
+        );
+      }
+      return;
+    }
+
     //on affiche un loader
     if (context.mounted) {
       showDialog(
@@ -105,41 +120,110 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
         builder: (context) => const Center(child: CircularProgressIndicator()),
       );
     }
+    
     try {
       //appel de l'api
       final user = await entrepriseService.register(entrepriseRequest);
-      // ignore: use_build_context_synchronously
-      if (context.mounted) {
-        Navigator.of(context).pop(); // enlever le loader
-      }
-
-      // Associer les domaines si l'entreprise a été créée avec succès
-      if (user != null && _selectedDomainIds.isNotEmpty) {
-        await entrepriseService.associateDomaines(
-          user.id,
-          _selectedDomainIds.toList(),
-        );
-      }
+      debugPrint('Utilisateur entreprise créé: ${user?.id}');
+      
+      // Plus besoin d'associer les domaines séparément
+      
       //affichage de la modal de succes
       if (context.mounted) {
+        Navigator.of(context).pop(); // enlever le loader
+        
+        // Utiliser la nouvelle méthode de succès
         _showSuccessDialog();
       }
     } catch (e) {
       // Fermer le loader
-      // ignore: use_build_context_synchronously
       if (context.mounted) {
         Navigator.of(context).pop();
       }
 
-      // Afficher l'erreur
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          // ignore: use_build_context_synchronously
-          context,
-        ).showSnackBar(SnackBar(content: Text("Erreur est survenue")));
+      // Afficher l'erreur avec plus de détails
+      String errorMessage = "Une erreur est survenue lors de l'inscription. Veuillez réessayer.";
+      String errorTitle = "Erreur d'inscription";
+      
+      if (e.toString().contains('Email déjà utilisé')) {
+        errorMessage = "Cet email est déjà utilisé. Veuillez en choisir un autre.";
+        errorTitle = "Email déjà utilisé";
+      } else if (e.toString().contains('Données invalides')) {
+        errorMessage = "Les données saisies sont invalides. Veuillez vérifier les informations.";
+        errorTitle = "Données invalides";
+      } else if (e.toString().contains('500')) {
+        errorMessage = "Une erreur interne du serveur s'est produite. Veuillez réessayer plus tard.";
+        errorTitle = "Erreur serveur";
       }
-      debugPrint(
-        "Erreur lors de l'inscription de l'entreprise: ${e.toString()}",
+      
+      if (context.mounted) {
+        CustomAlertDialog.showError(
+          context: context,
+          message: errorMessage,
+          title: errorTitle,
+        );
+      }
+      debugPrint("Erreur lors de l'inscription de l'entreprise: ${e.toString()}");
+    }
+  }
+
+  void _showSuccessDialog() {
+    // Stocker le contexte actuel
+    final currentContext = context;
+
+    if (currentContext.mounted) {
+      showDialog(
+        context: currentContext,
+        barrierDismissible: true, // Permet de fermer en cliquant à l'extérieur
+        builder: (BuildContext context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            content: GestureDetector(
+              onTap: () {
+                // Vérifier que le contexte est encore valide
+                if (currentContext.mounted) {
+                  // Rediriger vers la page d'authentification après avoir fermé la modal
+                  Navigator.of(currentContext).pop(); // Ferme la modal
+                  Navigator.pushAndRemoveUntil(
+                    currentContext,
+                    MaterialPageRoute(
+                      builder: (context) => const AuthenticationPage(),
+                    ),
+                    (Route<dynamic> route) => false,
+                  ); // Redirige vers l'authentification
+                }
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.green,
+                    size: 60,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Inscription reçue',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Nous vous remercions pour votre inscription. Notre équipe va vérifier vos informations dans les plus brefs délais. Nous vous contacterons bientôt pour confirmer votre compte et vous donner accès à nos services.',
+                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       );
     }
   }
@@ -394,67 +478,6 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
         ),
       ),
     );
-  }
-
-  void _showSuccessDialog() {
-    // Stocker le contexte actuel
-    final currentContext = context;
-    
-    if (currentContext.mounted) {
-      showDialog(
-        context: currentContext,
-        barrierDismissible: true, // Permet de fermer en cliquant à l'extérieur
-        builder: (BuildContext context) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            content: GestureDetector(
-              onTap: () {
-                // Vérifier que le contexte est encore valide
-                if (currentContext.mounted) {
-                  // Rediriger vers la page d'authentification après avoir fermé la modal
-                  Navigator.of(currentContext).pop(); // Ferme la modal
-                  Navigator.pushAndRemoveUntil(
-                    currentContext,
-                    MaterialPageRoute(
-                      builder: (context) => const AuthenticationPage(),
-                    ),
-                    (Route<dynamic> route) => false,
-                  ); // Redirige vers l'authentification
-                }
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.check_circle_outline,
-                    color: Colors.green,
-                    size: 60,
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Inscription reçue',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Nous vous remercions pour votre inscription. Notre équipe va vérifier vos informations dans les plus brefs délais. Nous vous contacterons bientôt pour confirmer votre compte et vous donner accès à nos services.',
-                    style: TextStyle(fontSize: 14, color: Colors.black87),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-    }
   }
 
   Widget _buildHeader(String title, String subtitle) {

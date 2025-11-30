@@ -95,33 +95,22 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F5),
+      backgroundColor: Color(0xFF3EB2FF), // Fond blanc pour correspondre au splash natif
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 150,
-              height: 150,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                    strokeWidth: 6,
-                  ),
-                  Image.asset(
-                    'assets/images/repartir_logo.png',
-                    
-                  ),
-                ],
-              ),
-            ),
-          ],
+        child: Container(
+          width: 150,
+          height: 150,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+          ),
+          child: Image.asset(
+            'assets/images/repartir.png',
+            width: 100,
+            height: 135,
+            
+            fit: BoxFit.contain,
+          ),
         ),
       ),
     );

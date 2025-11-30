@@ -1,6 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+
 class CentreRequest {
   final String nom;
   final String motDePasse;
@@ -25,7 +27,7 @@ class CentreRequest {
   });
 
   Map<String, dynamic> toMap() {
-    return <String, dynamic>{
+    final Map<String, dynamic> data = {
       'nom': nom,
       'motDePasse': motDePasse,
       'telephone': telephone,
@@ -33,8 +35,20 @@ class CentreRequest {
       'adresse': adresse,
       'agrement': agrement,
       'role': role,
-      'urlPhoto': urlPhoto,
     };
+    
+    // Ajouter urlPhoto seulement s'il n'est pas null
+    if (urlPhoto != null) {
+      data['urlPhoto'] = urlPhoto;
+    }
+    
+    // Ajouter domaineIds seulement s'il n'est pas null et non vide
+    if (domaineIds != null && domaineIds!.isNotEmpty) {
+      data['domaineIds'] = domaineIds;
+      debugPrint('Ajout de domaineIds au JSON: $domaineIds');
+    }
+    
+    return data;
   }
 
   factory CentreRequest.fromMap(Map<String, dynamic> map) {
