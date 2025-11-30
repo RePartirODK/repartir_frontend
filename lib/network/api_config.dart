@@ -16,7 +16,7 @@ class ApiConfig {
       // Vérifier si on est en mode debug sur un appareil physique
       if (kDebugMode) {
         // Remplacer par l'adresse IP de votre machine sur le réseau local
-        //return 'https://addressewifi/api
+        //return 'https://192.168.1.2:8183/api';
         return 'https://repartir-backend.onrender.com/api'; // remplacer l'adresse du backend
       }
       return 'http://10.0.2.2:8183/api'; // émulateur Android

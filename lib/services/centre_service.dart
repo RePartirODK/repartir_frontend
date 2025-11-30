@@ -13,23 +13,34 @@ class CentreService {
 
   /// --- INSCRIPTION DU CENTRE ---
   Future<Utilisateur?> register(CentreRequest centre) async {
-    final response = await _api.post(
-      '/utilisateurs/register',
-      body: jsonEncode(centre.toMap()),
-    );
-
-    if (response.statusCode == 201) {
-      return _api.decodeJson(response, (data) => Utilisateur.fromJson(data));
-    } else if (response.statusCode == 302) {
-      throw Exception('Email déjà utilisé');
-    } else {
-      return _api.decodeJson(
-        response,
-        (data) => throw Exception(
-          'Erreur lors de l\'inscription du centre: ${response.statusCode}\n'
-          '${data['message']}',
-        ),
+    try {
+      debugPrint('Envoi de la requête d\'inscription: ${centre.toJson()}');
+      final response = await _api.post(
+        '/utilisateurs/register',
+        body: centre.toJson(),
       );
+
+      debugPrint('Réponse du serveur: ${response.statusCode} - ${response.body}');
+
+      if (response.statusCode == 201) {
+        debugPrint('Inscription réussie - parsing de la réponse');
+        return _api.decodeJson(response, (data) => Utilisateur.fromJson(data));
+      } else if (response.statusCode == 302) {
+        debugPrint('Email déjà utilisé');
+        throw Exception('Email déjà utilisé');
+      } else if (response.statusCode == 400) {
+        debugPrint('Données invalides');
+        throw Exception('Données invalides. Veuillez vérifier les informations saisies.');
+      } else if (response.statusCode == 500) {
+        debugPrint('Erreur interne du serveur');
+        throw Exception('Une erreur interne du serveur s\'est produite. Veuillez réessayer plus tard.');
+      } else {
+        debugPrint('Autre erreur: ${response.statusCode}');
+        throw Exception('Autre erreur: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Erreur lors de l\'inscription: $e');
+      rethrow;
     }
   }
 
@@ -93,11 +104,34 @@ class CentreService {
   }
 
   Future<void> associateDomaines(int userId, List<int> domaineIds) async {
-    for (final domaineId in domaineIds) {
-      final response = await _api.post(
-        '/user-domaines/utilisateur/$userId/domaine/$domaineId',
-      );
-      _api.decodeJson(response, (data) => data);
+    try {
+      debugPrint('Association des domaines pour l\'utilisateur $userId: $domaineIds');
+      
+      // Associer chaque domaine individuellement
+      for (final domaineId in domaineIds) {
+        try {
+          debugPrint('Association du domaine $domaineId pour l\'utilisateur $userId');
+          final response = await _api.post(
+            '/user-domaines/utilisateur/$userId/domaine/$domaineId',
+          );
+          
+          debugPrint('Réponse de l\'association: ${response.statusCode} - ${response.body}');
+          
+          if (response.statusCode >= 200 && response.statusCode < 300) {
+            _api.decodeJson(response, (data) => data);
+            debugPrint('Domaine $domaineId associé avec succès');
+          } else {
+            debugPrint('Erreur lors de l\'association du domaine $domaineId: ${response.statusCode}');
+            throw Exception('Erreur lors de l\'association du domaine $domaineId');
+          }
+        } catch (domainError) {
+          debugPrint('Erreur détaillée pour le domaine $domaineId: $domainError');
+          throw domainError;
+        }
+      }
+    } catch (e) {
+      debugPrint('Erreur globale lors de l\'association des domaines: $e');
+      rethrow;
     }
   }
 

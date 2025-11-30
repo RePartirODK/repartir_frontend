@@ -35,34 +35,40 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
     //verifier que tous les champs sont valide
     if (_formKey.currentState?.validate() != true) {
       // message d'erreur ou retour
-      CustomAlertDialog.showError(
-        context: context,
-        message: "Veuillez remplir correctement tous les champs obligatoires.",
-        title: "Formulaire incomplet",
-      );
+      if (context.mounted) {
+        CustomAlertDialog.showError(
+          context: context,
+          message: "Veuillez remplir correctement tous les champs obligatoires.",
+          title: "Formulaire incomplet",
+        );
+      }
       return;
     }
 
     // Afficher le loader
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
+    if (context.mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     try {
       if (_gender == null) {
-        Navigator.of(context).pop(); // Fermer le loader
-        CustomAlertDialog.showError(
-          context: context,
-          message: "Veuillez sélectionner votre genre.",
-          title: "Champ manquant",
-        );
+        if (context.mounted) {
+          Navigator.of(context).pop(); // Fermer le loader
+          CustomAlertDialog.showError(
+            context: context,
+            message: "Veuillez sélectionner votre genre.",
+            title: "Champ manquant",
+          );
+        }
         return;
       }
 
       // Créer l'objet JeuneRequest
-      debugPrint(_gender);
+      debugPrint(_gender!);
       final jeuneRequest = JeuneRequest(
         nom: nomController.text,
         prenom: prenomController.text,
@@ -73,40 +79,64 @@ class _JeuneSignupPageState extends State<JeuneSignupPage> {
         age: int.tryParse(ageController.text) ?? 0,
         aPropos: aProposController.text,
         niveau: niveauController.text.isNotEmpty ? niveauController.text : null,
-      domaineIds: _selectedDomainIds.isEmpty ? null : _selectedDomainIds.toList(),
+        domaineIds: _selectedDomainIds.isEmpty ? null : _selectedDomainIds.toList(),
       );
 
       // Appel au backend
       final utilisateur = await jeuneService.registerJeune(jeuneRequest);
-if (utilisateur != null && _selectedDomainIds.isNotEmpty) {
-       await jeuneService.associateDomaines(utilisateur.id, _selectedDomainIds.toList());
-     }
+      debugPrint('Utilisateur jeune créé: ${utilisateur?.id}');
+      
+      // Plus besoin d'associer les domaines séparément
+
       // Fermer le loader
-      // ignore: use_build_context_synchronously
-      Navigator.of(context).pop();
-
-        Navigator.pushAndRemoveUntil(
-        // ignore: use_build_context_synchronously
-        context,
-        MaterialPageRoute(builder: (context) => AuthenticationPage()),
-        (Route<dynamic> route) => false,
-      );
-
-      // Message de succès
-      ScaffoldMessenger.of(
-        // ignore: use_build_context_synchronously
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Inscription réussie !")));
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        
+        // Message de succès
+        CustomAlertDialog.showSuccess(
+          context: context,
+          message: "Votre inscription a été effectuée avec succès !",
+          title: "Inscription réussie",
+          onConfirm: () {
+            if (context.mounted) {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const AuthenticationPage()),
+                (Route<dynamic> route) => false,
+              );
+            }
+          },
+        );
+      }
     } catch (e) {
       // Fermer le loader
-      // ignore: use_build_context_synchronously
-      Navigator.of(context).pop();
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
 
-      // Afficher l'erreur
-      ScaffoldMessenger.of(
-        // ignore: use_build_context_synchronously
-        context,
-      ).showSnackBar(SnackBar(content: Text("Erreur : ${e.toString()}")));
+      // Afficher l'erreur avec plus de détails
+      String errorMessage = "Une erreur est survenue lors de l'inscription. Veuillez réessayer.";
+      String errorTitle = "Erreur d'inscription";
+      
+      if (e.toString().contains('Email déjà utilisé')) {
+        errorMessage = "Cet email est déjà utilisé. Veuillez en choisir un autre.";
+        errorTitle = "Email déjà utilisé";
+      } else if (e.toString().contains('Données invalides')) {
+        errorMessage = "Les données saisies sont invalides. Veuillez vérifier les informations.";
+        errorTitle = "Données invalides";
+      } else if (e.toString().contains('500')) {
+        errorMessage = "Une erreur interne du serveur s'est produite. Veuillez réessayer plus tard.";
+        errorTitle = "Erreur serveur";
+      }
+      
+      if (context.mounted) {
+        CustomAlertDialog.showError(
+          context: context,
+          message: errorMessage,
+          title: errorTitle,
+        );
+      }
+      debugPrint("Erreur lors de l'inscription du Jeune: ${e.toString()}");
     }
   }
 

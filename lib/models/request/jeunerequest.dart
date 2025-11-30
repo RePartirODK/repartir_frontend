@@ -49,6 +49,7 @@ class JeuneRequest {
     if (urlPhoto != null) data['urlPhoto'] = urlPhoto;
     if (niveau != null) data['niveau'] = niveau;
     if (urlDiplome != null) data['urlDiplome'] = urlDiplome;
+    if (domaineIds != null) data['domaineIds'] = domaineIds;
 
     return data;
   }

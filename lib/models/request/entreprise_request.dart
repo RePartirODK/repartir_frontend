@@ -34,6 +34,9 @@ class EntrepriseRequest {
       "role": role,
     };
     if (urlPhoto !=null) data['urlPhoto'] = urlPhoto;
+    if (domaineIds != null && domaineIds!.isNotEmpty) {
+      data['domaineIds'] = domaineIds;
+    }
     return data;
   }
 }

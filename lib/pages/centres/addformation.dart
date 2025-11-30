@@ -41,6 +41,9 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
   //form key pour la validation du formulaire
   final _formKey = GlobalKey<FormState>();
   final storage = SecureStorageService();
+   //dropdown
+   List<String> _domaineOptions = [];
+  String? _selectedDomaine;
 
   // Pour le Dropdown (Format)
   String? _selectedFormat;
@@ -62,9 +65,7 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
     }
   }
 
-  //dropdown
-   List<String> _domaineOptions = [];
-  String? _selectedDomaine;
+ 
 
   String _labelFromApiFormat(String value) {
     switch (value.toUpperCase()) {
@@ -239,13 +240,24 @@ class _AddFormationPageState extends ConsumerState<AddFormationPage> {
       final userId = int.tryParse(userIdStr ?? '0') ?? 0;
       if (userId == 0) return;
       final res = await _api.get('/user-domaines/utilisateur/$userId');
+      debugPrint('📥 [DEBUG] Réponse API domaines: ${res.body.toString()}');
+
       final List data = _api.decodeJson<List<dynamic>>(res, (d) => d as List<dynamic>);
+      debugPrint('📊 [DEBUG] Données décodées (${data.length} éléments): $data');
+
       final options = <String>[];
       for (final e in data) {
         final m = e as Map<String, dynamic>;
         final d = m['domaine'] as Map<String, dynamic>? ?? {};
         final libelle = (d['libelle'] ?? '').toString();
-        if (libelle.isNotEmpty) options.add(libelle);
+         debugPrint('🏷️ [DEBUG] Domaine trouvé: libelle="$libelle"');
+
+         if (libelle.isNotEmpty) {
+          options.add(libelle);
+          debugPrint('✅ [DEBUG] Domaine ajouté: $libelle');
+        } else {
+          debugPrint('⚠️ [DEBUG] Domaine ignoré (libellé vide)');
+        }
       }
         if (mounted) {
         setState(() {

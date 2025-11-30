@@ -95,19 +95,19 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Fond blanc pour correspondre au splash natif
+      backgroundColor: Color(0xFF3EB2FF), // Fond blanc pour correspondre au splash natif
       body: Center(
         child: Container(
-          width: 700,
-          height: 700,
+          width: 150,
+          height: 150,
           decoration: const BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
           ),
           child: Image.asset(
             'assets/images/repartir.png',
-            width: 584,
-            height: 619,
+            width: 100,
+            height: 135,
             
             fit: BoxFit.contain,
           ),
