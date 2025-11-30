@@ -98,16 +98,17 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white, // Fond blanc pour correspondre au splash natif
       body: Center(
         child: Container(
-          width: 120,
-          height: 120,
+          width: 700,
+          height: 700,
           decoration: const BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
           ),
           child: Image.asset(
-            width: 100,
-            height: 100,
-            'assets/images/repartir_logo.png',
+            'assets/images/repartir.png',
+            width: 584,
+            height: 619,
+            
             fit: BoxFit.contain,
           ),
         ),

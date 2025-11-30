@@ -74,19 +74,20 @@ flutter:
 
 flutter_native_splash:
   color: "#FFFFFF"
-  image: assets/images/logo_in_circle.png
+  image: assets/images/repartir.png
   android: true
   ios: true
   android_gravity: center
+  ios_content_mode: center
   fullscreen: true
 
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/repartir_logo.png"
+  image_path: "assets/images/repartir.png"
   # Pour Android : icône adaptative avec fond blanc
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/repartir_logo.png"
+  adaptive_icon_foreground: "assets/images/repartir.png"
   # Pour iOS : générer toutes les tailles nécessaires
   remove_alpha_ios: true
   # Centrer l'icône
