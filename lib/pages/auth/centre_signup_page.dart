@@ -112,7 +112,8 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
       if (context.mounted) {
         Navigator.of(context).pop(); // enlever le loader
         
-        // Afficher le message de succès AVANT la redirection
+        // Remplacer cette partie :
+        /*
         CustomAlertDialog.showSuccess(
           context: context,
           message: "Votre inscription a été effectuée avec succès !",
@@ -127,6 +128,10 @@ class _CentreSignupPageState extends State<CentreSignupPage> {
             }
           },
         );
+        */
+        
+        // Par celle-ci :
+        _showSuccessDialog();
       }
     } catch (e) {
       // Fermer le loader
