@@ -14,10 +14,11 @@ class ApiConfig {
     if (Platform.isAndroid) {
       // Vérifier si on est en mode debug sur un appareil physique
       if (kDebugMode) {
-        // Remplacer par l'adresse IP de votre machine sur le réseau local
-        return 'http://192.168.1.2:8183/api';
+        // Pour l'émulateur Android, utiliser 10.0.2.2 qui pointe vers localhost de l'hôte
+        return 'http://10.0.2.2:8183/api';
         //return 'https://repartir-backend.onrender.com/api' // remplacer l'adresse du backend
         //return 'https://clay-phylactic-rupert.ngrok-free.dev';
+        //return 'http://192.168.1.2:8183/api'; // À utiliser seulement pour un appareil physique
       }
       return 'http://10.0.2.2:8183/api'; // émulateur Android
     }

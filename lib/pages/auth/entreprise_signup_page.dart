@@ -174,53 +174,60 @@ class _EntrepriseSignupPageState extends State<EntrepriseSignupPage> {
     if (currentContext.mounted) {
       showDialog(
         context: currentContext,
-        barrierDismissible: true, // Permet de fermer en cliquant à l'extérieur
+        barrierDismissible: false, // Empêcher la fermeture en cliquant à l'extérieur
         builder: (BuildContext context) {
           return AlertDialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            content: GestureDetector(
-              onTap: () {
-                // Vérifier que le contexte est encore valide
-                if (currentContext.mounted) {
-                  // Rediriger vers la page d'authentification après avoir fermé la modal
-                  Navigator.of(currentContext).pop(); // Ferme la modal
-                  Navigator.pushAndRemoveUntil(
-                    currentContext,
-                    MaterialPageRoute(
-                      builder: (context) => const AuthenticationPage(),
-                    ),
-                    (Route<dynamic> route) => false,
-                  ); // Redirige vers l'authentification
-                }
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.check_circle_outline,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.green,
+                  size: 60,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Inscription reçue',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                     color: Colors.green,
-                    size: 60,
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Inscription reçue',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Nous vous remercions pour votre inscription. Notre équipe va vérifier vos informations dans les plus brefs délais. Nous vous contacterons bientôt pour confirmer votre compte et vous donner accès à nos services.',
+                  style: TextStyle(fontSize: 14, color: Colors.black87),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    if (currentContext.mounted) {
+                      Navigator.of(currentContext).pop(); // Ferme la modal
+                      Navigator.pushAndRemoveUntil(
+                        currentContext,
+                        MaterialPageRoute(
+                          builder: (context) => const AuthenticationPage(),
+                        ),
+                        (Route<dynamic> route) => false,
+                      ); // Redirige vers l'authentification
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Nous vous remercions pour votre inscription. Notre équipe va vérifier vos informations dans les plus brefs délais. Nous vous contacterons bientôt pour confirmer votre compte et vous donner accès à nos services.',
-                    style: TextStyle(fontSize: 14, color: Colors.black87),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+                  child: const Text('OK'),
+                ),
+              ],
             ),
           );
         },
